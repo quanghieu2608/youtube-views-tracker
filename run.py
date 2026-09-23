@@ -109,11 +109,10 @@ def main():
     now_iso = now_dt.isoformat()
     now_ts = now_dt.timestamp()
 
-    # Kiểm tra chu kỳ 12h
     last_deep_scan = db.get("last_deep_scan_ts", 0)
     need_deep_scan = (now_ts - last_deep_scan) >= (12 * 3600)
 
-    print(f"[{now_iso}] Starting tracking. Need 12h Deep Scan: {need_deep_scan}")
+    print(f"[{now_iso}] Tracking run. Deep scan required: {need_deep_scan}")
 
     channel_meta = batch_get_channel_details(channel_ids)
 
@@ -132,6 +131,7 @@ def main():
                 "history": [],
                 "tracked_video_ids": [],
                 "catalog_snapshots": {},
+                "video_histories": {},
                 "videos": []
             }
 
@@ -143,73 +143,91 @@ def main():
 
         uploads_pl = meta["uploads_playlist"]
 
-        # --- CHU KỲ 12H (HOẶC CHẠY LẦN ĐẦU TIÊN) ---
+        # --- 12H DEEP SCAN ---
         if need_deep_scan or not ch_data.get("tracked_video_ids"):
-            print(f"Deep scanning all videos for: {meta['title']}")
+            print(f"Deep scanning: {meta['title']}")
             all_video_ids = fetch_all_video_ids(uploads_pl)
             all_stats = batch_get_video_stats(all_video_ids)
 
-            # Pool 1: 50 video mới nhất
             pool1_ids = all_video_ids[:50]
             remaining_ids = all_video_ids[50:]
 
             catalog = ch_data.get("catalog_snapshots", {})
-            has_past_12h_data = bool(catalog)
+            has_past = bool(catalog)
 
             candidates = []
             for vid in remaining_ids:
                 if vid in all_stats:
                     curr_v = all_stats[vid]["views"]
-                    if has_past_12h_data:
-                        # Đã có dữ liệu 12h: Tính Delta View tăng thực tế
-                        prev_v = catalog.get(vid, curr_v)
-                        delta_12h = max(0, curr_v - prev_v)
-                    else:
-                        # Lần đầu chạy chưa đủ 12h: Delta = 0 để sắp xếp theo Tổng view (curr_v)
-                        delta_12h = 0
+                    delta_12h = max(0, curr_v - catalog.get(vid, curr_v)) if has_past else 0
                     candidates.append((vid, delta_12h, curr_v))
 
-            # Sắp xếp: Ưu tiên Delta 12h cao nhất; nếu bằng nhau sắp theo Tổng view
             candidates.sort(key=lambda x: (x[1], x[2]), reverse=True)
             pool2_ids = [c[0] for c in candidates[:50]]
 
-            # Cập nhật snapshot chuẩn của toàn bộ video làm mốc so sánh cho 12h sau
             ch_data["catalog_snapshots"] = {vid: s["views"] for vid, s in all_stats.items()}
             ch_data["tracked_video_ids"] = list(dict.fromkeys(pool1_ids + pool2_ids))
 
-        # --- CHU KỲ 15 PHÚT: QUÉT VIEW 100 VIDEO ---
+        # --- QUÉT 15 PHÚT TRÊN 100 VIDEO ---
         tracked_ids = ch_data.get("tracked_video_ids", [])
         if not tracked_ids:
             tracked_ids = fetch_all_video_ids(uploads_pl)[:100]
             ch_data["tracked_video_ids"] = tracked_ids
 
         video_stats = batch_get_video_stats(tracked_ids)
-
-        # Tổng view của 100 video hiệu quả nhất
         active_pool_views = sum(v["views"] for v in video_stats.values())
         ch_data["views"] = active_pool_views
 
-        # Cập nhật danh sách video chi tiết
+        # Quản lý lịch sử view của từng video lẻ
+        v_hists = ch_data.setdefault("video_histories", {})
+
         video_list = []
         for vid, v in video_stats.items():
+            curr_v = v["views"]
+            vh = v_hists.setdefault(vid, [])
+            vh.append([now_ts, curr_v])
+            # Giữ tối đa 200 điểm (~48-50 tiếng)
+            if len(vh) > 200:
+                vh = vh[-200:]
+                v_hists[vid] = vh
+
+            # Tìm view 60m trước & 48h trước của video này
+            def get_vid_view_ago(target_seconds):
+                target = now_ts - target_seconds
+                closest = None
+                min_diff = float("inf")
+                for snap_ts, snap_v in vh:
+                    d = abs(snap_ts - target)
+                    if d < min_diff:
+                        min_diff = d
+                        closest = snap_v
+                return closest
+
+            v_60m_old = get_vid_view_ago(3600)
+            v_48h_old = get_vid_view_ago(48 * 3600)
+
+            v_delta_60m = max(0, curr_v - v_60m_old) if v_60m_old is not None else 0
+            v_delta_48h = max(0, curr_v - v_48h_old) if v_48h_old is not None else 0
+
             video_list.append({
                 "id": vid,
                 "title": v["title"],
-                "views": v["views"],
+                "views": curr_v,
+                "v_60m": v_delta_60m,
+                "v_48h": v_delta_48h,
                 "published_at": v["published_at"]
             })
-        video_list.sort(key=lambda x: x["views"], reverse=True)
-        ch_data["videos"] = video_list[:50]
 
-        # Lưu lịch sử chuỗi thời gian của tổng 100 video
+        # Lưu toàn bộ danh sách video (tối đa 100) để frontend tự do filter/sort
+        ch_data["videos"] = video_list
+
+        # Quản lý lịch sử kênh chung
         history = ch_data.setdefault("history", [])
         history.append([now_iso, active_pool_views])
-
         if len(history) > 1500:
             ch_data["history"] = history[-1500:]
 
-        # --- TÍNH TOÁN BIẾN ĐỘNG REALTIME ---
-        def get_views_ago(minutes_ago):
+        def get_channel_views_ago(minutes_ago):
             target = now_ts - (minutes_ago * 60)
             closest_v = None
             min_diff = float("inf")
@@ -221,11 +239,11 @@ def main():
                     closest_v = item[1]
             return closest_v
 
-        v_15m_ago = get_views_ago(15)
-        v_30m_ago = get_views_ago(30)
-        v_60m_ago = get_views_ago(60)
-        v_24h_ago = get_views_ago(24 * 60)
-        v_48h_ago = get_views_ago(48 * 60)
+        v_15m_ago = get_channel_views_ago(15)
+        v_30m_ago = get_channel_views_ago(30)
+        v_60m_ago = get_channel_views_ago(60)
+        v_24h_ago = get_channel_views_ago(24 * 60)
+        v_48h_ago = get_channel_views_ago(48 * 60)
 
         ch_data["v_15m"] = max(0, active_pool_views - v_15m_ago) if v_15m_ago is not None else 0
         ch_data["v_30m"] = max(0, active_pool_views - v_30m_ago) if v_30m_ago is not None else 0
@@ -241,7 +259,7 @@ def main():
 
     db["updated_at"] = now_iso
     save_data(db)
-    print("Cycle completed.")
+    print("Cycle complete.")
 
 if __name__ == "__main__":
     main()
