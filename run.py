@@ -10,6 +10,12 @@ def api_get(url):
     with urllib.request.urlopen(req) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
+def parse_time(ts_str):
+    try:
+        return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+    except Exception:
+        return datetime.now(timezone.utc)
+
 def get_channel_data(channel_ids):
     ids_str = ",".join(channel_ids)
     url = f"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id={ids_str}&key={API_KEY}"
@@ -45,46 +51,37 @@ def get_latest_videos(playlist_id, max_results=50):
     return videos
 
 def build_48h_sparkline(history, current_views):
-    """Tính view tăng của từng giờ trong 48 giờ qua và vẽ 48 cột Unicode"""
     now = datetime.now(timezone.utc)
-    # Tạo 48 mốc thời gian (mỗi mốc 1 giờ)
     hourly_views = [0] * 48
     
     if not history:
         return 0, 0, " " * 48
 
-    # Lấy mốc cách đây 1 giờ để tính view 60m
     t_1h = now - timedelta(hours=1)
-    rec_1h = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - t_1h), default=None)
+    rec_1h = min(history, key=lambda x: abs(parse_time(x["t"]) - t_1h), default=None)
     v_60m = max(0, current_views - rec_1h["v"]) if rec_1h else 0
 
-    # Lấy mốc cách đây 48 giờ để tính tổng 48h
     t_48h = now - timedelta(hours=48)
-    rec_48h = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - t_48h), default=None)
+    rec_48h = min(history, key=lambda x: abs(parse_time(x["t"]) - t_48h), default=None)
     v_48h = max(0, current_views - rec_48h["v"]) if rec_48h else 0
 
-    # Tính delta cho từng giờ trong 48 giờ
-    # Giờ thứ i (i chạy từ 47 về 0, với 0 là giờ gần nhất)
     for i in range(48):
         target_end = now - timedelta(hours=47 - i)
         target_start = target_end - timedelta(hours=1)
-        
-        r_start = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - target_start), default=None)
-        r_end = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - target_end), default=None)
-        
-        if r_start and r_end and (datetime.fromisoformat(r_end["t"]) > datetime.fromisoformat(r_start["t"])):
+        r_start = min(history, key=lambda x: abs(parse_time(x["t"]) - target_start), default=None)
+        r_end = min(history, key=lambda x: abs(parse_time(x["t"]) - target_end), default=None)
+        if r_start and r_end and (parse_time(r_end["t"]) > parse_time(r_start["t"])):
             hourly_views[i] = max(0, r_end["v"] - r_start["v"])
 
-    # Vẽ biểu đồ ký tự:  ▂▃▄▅▆▇█
     bars = [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
     max_h = max(hourly_views) if max(hourly_views) > 0 else 1
-    sparkline = "".join(bars[int((val / max_h) * 8)] if val > 0 else " " for val in hourly_views)
+    sparkline = "".join(bars[min(8, int((val / max_h) * 8))] if val > 0 else " " for val in hourly_views)
 
     return v_60m, v_48h, sparkline
 
 def prune_history(history):
     cutoff = datetime.now(timezone.utc) - timedelta(hours=50)
-    return [e for e in history if datetime.fromisoformat(e["t"]) >= cutoff]
+    return [e for e in history if parse_time(e["t"]) >= cutoff]
 
 def main():
     if not API_KEY or not os.path.exists("channels.txt"):
@@ -98,8 +95,10 @@ def main():
         try:
             with open("data.json", "r", encoding="utf-8") as f:
                 history_db = json.load(f)
+                if not isinstance(history_db, dict) or "channels" not in history_db:
+                    history_db = {"channels": {}, "videos": {}}
         except Exception:
-            pass
+            history_db = {"channels": {}, "videos": {}}
 
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
@@ -148,10 +147,8 @@ def main():
             "videos": processed_videos
         })
 
-    # Sắp xếp kênh theo View 48h cao nhất xuống thấp
     processed_channels.sort(key=lambda x: (x["v_48h"], x["v_60m"]), reverse=True)
 
-    # Xuất Markdown README
     md = [
         "# 📊 Báo Cáo Realtime: View 48 Giờ (Chi tiết từng giờ) & 60 Phút",
         f"*Cập nhật: `{now_display}`*\n",
