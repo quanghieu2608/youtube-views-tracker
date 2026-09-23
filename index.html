@@ -35,12 +35,10 @@
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
     .btn-header:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Progress Bar 15P */
     .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
     .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
     .meta-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--subtext); margin-top: 5px; padding: 0 2px; }
 
-    /* Form Thêm Kênh */
     .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
     .add-channel-box.active { display: block; }
     .input-group { display: flex; gap: 6px; margin-top: 6px; }
@@ -49,16 +47,37 @@
     .btn-action:disabled { background: #333; color: #777; }
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
-    /* Controls & Tabs */
-    .controls-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-    .controls { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex: 1; }
-    .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 5px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    /* Thanh điều khiển tối ưu hàng ngang */
+    .controls-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .controls { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex: 1; scrollbar-width: none; }
+    .controls::-webkit-scrollbar { display: none; }
+    .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 6px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
-    .action-tools { display: flex; gap: 4px; white-space: nowrap; }
-    .btn-tool { background: #21262d; border: 1px solid var(--border); color: var(--text-bright); padding: 5px 9px; border-radius: 16px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
-    .btn-tool:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-tool.active-privacy { background: rgba(248, 81, 73, 0.2); border-color: var(--danger); color: #ff7b72; }
+    /* 2 NÚT ICON TIỆN ÍCH VUÔNG VẮN, RỘNG RÃI */
+    .action-tools { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-icon-toggle {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      min-width: 42px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .btn-icon-toggle:active { transform: scale(0.92); }
+    .btn-icon-toggle.active-danger {
+      background: rgba(248, 81, 73, 0.2);
+      border-color: var(--danger);
+      color: #ff7b72;
+    }
 
     /* Card Kênh & Thu Gọn */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all 0.2s ease; }
@@ -67,9 +86,9 @@
     .toggle-icon { font-size: 0.7rem; color: var(--subtext); transition: transform 0.2s ease; }
     .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* Lớp bảo vệ ẩn tên kênh */
-    body.privacy-mode .ch-title-text { filter: blur(6px); user-select: none; pointer-events: none; }
-    body.privacy-mode .v-title { filter: blur(5px); user-select: none; pointer-events: none; }
+    /* Chế độ làm mờ ẩn danh */
+    body.privacy-mode .ch-title-text { filter: blur(7px); user-select: none; pointer-events: none; }
+    body.privacy-mode .v-title { filter: blur(6px); user-select: none; pointer-events: none; }
 
     .badges-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
     .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; }
@@ -77,44 +96,37 @@
     .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    /* Thu gọn Card */
     .card.is-collapsed { padding: 8px 12px; }
     .card.is-collapsed .toggle-icon { transform: rotate(-90deg); }
     .card.is-collapsed .card-body,
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* HÀNG REALTIME: 48H - 24H - 60P TO */
     .stats-grid-custom { display: grid; grid-template-columns: 0.9fr 0.9fr 2.4fr; gap: 6px; margin-top: 8px; }
     .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
     .stat-label-compact { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
     .stat-val-compact { font-size: 0.92rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
 
-    /* Ô 60P: 4 CỘT BIỂU ĐỒ 15P MINI-STUDIO */
     .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
     .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 52px; }
     .box-60p-title { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
     .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 2px; }
 
-    /* 4 CỘT BAR 15 PHÚT */
     .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 44px; flex: 1; justify-content: flex-end; }
     .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 40px; height: 100%; justify-content: flex-end; }
     .bar-track-4 { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
     .bar-fill-4 { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
     .bar-val-4 { font-size: 0.52rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin-top: 2px; line-height: 1; white-space: nowrap; }
 
-    /* Dải Dài Hạn */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
     .lt-val { font-size: 0.78rem; font-weight: 700; color: var(--text-bright); margin-top: 1px; }
 
-    /* Sparkline */
     .sparkline-container { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; display: flex; justify-content: space-between; align-items: center; }
     .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
     .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
-    /* Video Drawer */
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
     .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .btn-delete-channel { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
@@ -154,7 +166,6 @@
     </div>
   </header>
 
-  <!-- Form Thêm Kênh Nhanh -->
   <div class="add-channel-box" id="addChannelBox">
     <div style="font-size:0.75rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay:</div>
     <div class="input-group">
@@ -164,7 +175,7 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
-  <!-- Thanh Lọc & Công cụ Nâng cao -->
+  <!-- Thanh Điều Khiển Thu Gọn -->
   <div class="controls-wrapper">
     <div class="controls">
       <button class="btn-tab active" onclick="changeSort('60m')">⏱ 60P</button>
@@ -176,10 +187,10 @@
       <button class="btn-tab" onclick="changeSort('d_90')">📅 90N</button>
       <button class="btn-tab" onclick="changeSort('total')">Toàn bộ</button>
     </div>
+    <!-- 2 Nút Toggle Tối Giản -->
     <div class="action-tools">
-      <button class="btn-tool" id="btnPrivacy" onclick="togglePrivacyMode()">👁️ Ẩn Tên</button>
-      <button class="btn-tool" onclick="collapseAll(true)">▲ Gọn</button>
-      <button class="btn-tool" onclick="collapseAll(false)">▼ Mở</button>
+      <button class="btn-icon-toggle" id="btnEyeToggle" onclick="togglePrivacyMode()" title="Ẩn/Hiện tên kênh">👁</button>
+      <button class="btn-icon-toggle" id="btnFoldToggle" onclick="toggleAllCards()" title="Thu gọn / Mở rộng toàn bộ">▲</button>
     </div>
   </div>
 
@@ -196,8 +207,8 @@
     let nextTarget = null;
     let isFetching = false;
     let pollInterval = null;
+    let isAllFolded = false;
 
-    // Lưu trữ số view cũ của từng thành phần để tạo hiệu ứng chạy số
     const previousValues = {};
 
     function getStoredToken() {
@@ -209,7 +220,7 @@
       return token;
     }
 
-    /* --- HIỆU ỨNG CHẠY SỐ (NUMBER TICKER ANIMATION) --- */
+    /* --- HIỆU ỨNG CHẠY SỐ --- */
     function animateValue(elementId, start, end, prefix = '+', duration = 1300) {
       const el = document.getElementById(elementId);
       if (!el) return;
@@ -223,7 +234,6 @@
       const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        // Hàm làm mượt Ease-Out
         const easeOut = 1 - Math.pow(1 - progress, 3);
         const current = Math.floor(start + (end - start) * easeOut);
         el.innerText = `${prefix}${current.toLocaleString()}`;
@@ -236,17 +246,17 @@
       window.requestAnimationFrame(step);
     }
 
-    /* --- CHẾ ĐỘ ẨN TÊN KÊNH (PRIVACY MODE) --- */
+    /* --- 1 NÚT TOGGLE ẨN / HIỆN TÊN (ICON CON MẮT) --- */
     function togglePrivacyMode() {
       const isPrivacy = document.body.classList.toggle('privacy-mode');
-      const btn = document.getElementById('btnPrivacy');
+      const btn = document.getElementById('btnEyeToggle');
       if (isPrivacy) {
-        btn.innerText = "🔒 Đã Ẩn Tên";
-        btn.classList.add('active-privacy');
+        btn.innerHTML = '🚫👁';
+        btn.classList.add('active-danger');
         localStorage.setItem('privacy_mode', 'true');
       } else {
-        btn.innerText = "👁️ Ẩn Tên";
-        btn.classList.remove('active-privacy');
+        btn.innerHTML = '👁';
+        btn.classList.remove('active-danger');
         localStorage.removeItem('privacy_mode');
       }
     }
@@ -254,12 +264,35 @@
     function initPrivacyMode() {
       if (localStorage.getItem('privacy_mode') === 'true') {
         document.body.classList.add('privacy-mode');
-        const btn = document.getElementById('btnPrivacy');
+        const btn = document.getElementById('btnEyeToggle');
         if (btn) {
-          btn.innerText = "🔒 Đã Ẩn Tên";
-          btn.classList.add('active-privacy');
+          btn.innerHTML = '🚫👁';
+          btn.classList.add('active-danger');
         }
       }
+    }
+
+    /* --- 1 NÚT TOGGLE GỌN / MỞ (ICON MŨI TÊN ▲ / ▼) --- */
+    function toggleAllCards() {
+      isAllFolded = !isAllFolded;
+      const btn = document.getElementById('btnFoldToggle');
+      btn.innerText = isAllFolded ? '▼' : '▲';
+
+      if (!db || !db.channels) return;
+      const collapsedMap = {};
+
+      Object.keys(db.channels).forEach(chId => {
+        const card = document.getElementById(`card-${chId}`);
+        if (card) {
+          if (isAllFolded) {
+            card.classList.add('is-collapsed');
+            collapsedMap[chId] = true;
+          } else {
+            card.classList.remove('is-collapsed');
+          }
+        }
+      });
+      localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
     }
 
     async function triggerRunWorkflow() {
@@ -323,24 +356,6 @@
         card.classList.remove('is-collapsed');
         delete collapsedMap[chId];
       }
-      localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
-    }
-
-    function collapseAll(isCollapse) {
-      if (!db || !db.channels) return;
-      const collapsedMap = {};
-
-      Object.keys(db.channels).forEach(chId => {
-        const card = document.getElementById(`card-${chId}`);
-        if (card) {
-          if (isCollapse) {
-            card.classList.add('is-collapsed');
-            collapsedMap[chId] = true;
-          } else {
-            card.classList.remove('is-collapsed');
-          }
-        }
-      });
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
     }
 
@@ -748,7 +763,6 @@
         `;
         container.appendChild(card);
 
-        // KÍCH HOẠT HIỆU ỨNG CHẠY SỐ CÁC MỐC
         const old48h = previousValues[`48h-${ch.id}`] || 0;
         const old24h = previousValues[`24h-${ch.id}`] || 0;
         const old60p = previousValues[`60p-${ch.id}`] || 0;
@@ -765,7 +779,6 @@
         animateValue(`val-c3-${ch.id}`, oldC3, c3);
         animateValue(`val-c4-${ch.id}`, oldC4, c4);
 
-        // Lưu lại làm mốc xuất phát cho lần làm mới sau
         previousValues[`48h-${ch.id}`] = ch.v_48h || 0;
         previousValues[`24h-${ch.id}`] = ch.v_24h || 0;
         previousValues[`60p-${ch.id}`] = v_total_60;
