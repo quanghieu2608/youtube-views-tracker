@@ -57,7 +57,6 @@ def batch_get_channel_details(channel_ids):
             }
     return details
 
-# LẤY CHUẨN XÁC 50 VIDEO MỚI NHẤT TRÊN ĐẦU
 def get_latest_50_video_ids(uploads_playlist_id):
     res = youtube.playlistItems().list(
         part="contentDetails",
@@ -141,7 +140,8 @@ def main():
                 "tracked_video_ids": [],
                 "catalog_snapshots": {},
                 "video_histories": {},
-                "videos": []
+                "videos": [],
+                "slices_15m": [0, 0, 0, 0]
             }
 
         ch_data = db["channels"][ch_id]
@@ -151,8 +151,6 @@ def main():
         ch_data["total_channel_views"] = meta["total_views"]
 
         uploads_pl = meta["uploads_playlist"]
-
-        # LUÔN ĐẢM BẢO POOL 1 LÀ 50 VIDEO MỚI NHẤT HIỆN TẠI
         latest_50 = get_latest_50_video_ids(uploads_pl)
 
         if need_deep_scan or not ch_data.get("tracked_video_ids"):
@@ -179,7 +177,6 @@ def main():
             ch_data["catalog_snapshots"] = {vid: s["views"] for vid, s in all_stats.items()}
             ch_data["tracked_video_ids"] = list(dict.fromkeys(pool1_ids + pool2_ids))
         else:
-            # Đảm bảo các video mới xuất bản luôn được gộp vào danh sách theo dõi
             existing_tracked = ch_data.get("tracked_video_ids", [])
             merged = list(dict.fromkeys(latest_50 + existing_tracked))[:100]
             ch_data["tracked_video_ids"] = merged
@@ -245,17 +242,44 @@ def main():
                     closest_v = item[1]
             return closest_v
 
+        v_0m = active_pool_views
         v_15m_ago = get_channel_views_ago(15)
         v_30m_ago = get_channel_views_ago(30)
+        v_45m_ago = get_channel_views_ago(45)
         v_60m_ago = get_channel_views_ago(60)
         v_24h_ago = get_channel_views_ago(24 * 60)
         v_48h_ago = get_channel_views_ago(48 * 60)
 
-        ch_data["v_15m"] = max(0, active_pool_views - v_15m_ago) if v_15m_ago is not None else 0
-        ch_data["v_30m"] = max(0, active_pool_views - v_30m_ago) if v_30m_ago is not None else 0
-        ch_data["v_60m"] = max(0, active_pool_views - v_60m_ago) if v_60m_ago is not None else 0
-        ch_data["v_24h"] = max(0, active_pool_views - v_24h_ago) if v_24h_ago is not None else 0
-        ch_data["v_48h"] = max(0, active_pool_views - v_48h_ago) if v_48h_ago is not None else 0
+        # Tính toán chuẩn xác 4 cột 15 phút ngay tại Backend
+        m15 = v_15m_ago if v_15m_ago is not None else v_0m
+        m30 = v_30m_ago if v_30m_ago is not None else m15
+        m45 = v_45m_ago if v_45m_ago is not None else m30
+        m60 = v_60m_ago if v_60m_ago is not None else m45
+
+        c4 = max(0, v_0m - m15)
+        c3 = max(0, m15 - m30)
+        c2 = max(0, m30 - m45)
+        c1 = max(0, m45 - m60)
+
+        total_60 = max(0, v_0m - m60)
+
+        # Khóa chuẩn hóa: Tổng 4 cột luôn bằng v_60m tuyệt đối
+        sum_c = c1 + c2 + c3 + c4
+        if sum_c > 0 and sum_c != total_60:
+            ratio = total_60 / sum_c
+            c1 = round(c1 * ratio)
+            c2 = round(c2 * ratio)
+            c3 = round(c3 * ratio)
+            c4 = max(0, total_60 - (c1 + c2 + c3))
+        elif total_60 == 0:
+            c1, c2, c3, c4 = 0, 0, 0, 0
+
+        ch_data["v_15m"] = c4
+        ch_data["v_30m"] = max(0, v_0m - m30)
+        ch_data["v_60m"] = total_60
+        ch_data["v_24h"] = max(0, v_0m - v_24h_ago) if v_24h_ago is not None else 0
+        ch_data["v_48h"] = max(0, v_0m - v_48h_ago) if v_48h_ago is not None else 0
+        ch_data["slices_15m"] = [c1, c2, c3, c4]
 
         avg_15m = ch_data["v_60m"] / 4 if ch_data["v_60m"] > 0 else 0
         ch_data["is_spike"] = ch_data["v_15m"] > max(50, avg_15m * 2)
