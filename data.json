@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-23T12:30:53.827501+00:00",
+  "updated_at": "2026-09-23T12:45:36.574625+00:00",
   "channels": {
     "UCPaIoX1IOEbPSBQhRIG1FYQ": {
       "id": "UCPaIoX1IOEbPSBQhRIG1FYQ",
@@ -15,6 +15,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           109479
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          109494
         ]
       ],
       "tracked_video_ids": [
@@ -395,7 +399,7 @@
         {
           "id": "CIXdXjKBrfg",
           "title": "Vờ Ngất Trên Xe Ra Bãi Tha Ma Vắng, Người Vợ Thu Âm Tội Ác Của Chồng Và Nhân Tình Khiến Cả Đám Trắng",
-          "views": 373,
+          "views": 374,
           "published_at": "2026-09-19T10:00:37Z"
         },
         {
@@ -465,12 +469,12 @@
           "published_at": "2026-09-15T23:00:27Z"
         }
       ],
-      "views": 109479,
-      "v_15m": 8,
-      "v_30m": 8,
-      "v_60m": 8,
-      "v_24h": 8,
-      "v_48h": 8,
+      "views": 109494,
+      "v_15m": 15,
+      "v_30m": 23,
+      "v_60m": 23,
+      "v_24h": 23,
+      "v_48h": 23,
       "is_spike": false
     },
     "UCsg5xBRx4_z7cBxdQGtc90Q": {
@@ -487,6 +491,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           29937
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          29972
         ]
       ],
       "tracked_video_ids": [
@@ -591,7 +599,7 @@
         {
           "id": "7Lrhy8Er-RQ",
           "title": "Chạy Xe Ôm Cứu Chủ Xưởng Gỗ Giàu Có Được Đền Ơn Bằng Cô Vợ Câm, Đêm Động Phòng Vừa Đưa Ly Sữa Lên",
-          "views": 4997,
+          "views": 5032,
           "published_at": "2026-09-09T09:00:02Z"
         },
         {
@@ -847,12 +855,12 @@
           "published_at": "2026-09-23T10:30:23Z"
         }
       ],
-      "views": 29937,
-      "v_15m": 2,
-      "v_30m": 2,
-      "v_60m": 2,
-      "v_24h": 2,
-      "v_48h": 2,
+      "views": 29972,
+      "v_15m": 35,
+      "v_30m": 37,
+      "v_60m": 37,
+      "v_24h": 37,
+      "v_48h": 37,
       "is_spike": false
     },
     "UCpfE3FcR_JlOsJuihS8yqyQ": {
@@ -868,6 +876,10 @@
         ],
         [
           "2026-09-23T12:30:53.827501+00:00",
+          8612
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
           8612
         ]
       ],
@@ -1142,7 +1154,7 @@
         }
       ],
       "views": 8612,
-      "v_15m": 5,
+      "v_15m": 0,
       "v_30m": 5,
       "v_60m": 5,
       "v_24h": 5,
@@ -1162,6 +1174,10 @@
         ],
         [
           "2026-09-23T12:30:53.827501+00:00",
+          1668
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
           1668
         ]
       ],
@@ -1393,6 +1409,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           206
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          206
         ]
       ],
       "tracked_video_ids": [
@@ -1479,6 +1499,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           5218
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          5214
         ]
       ],
       "tracked_video_ids": [
@@ -1623,7 +1647,7 @@
         {
           "id": "GqLVm_dclEs",
           "title": "Bắt Gian Vợ Cặp Kè Tổng Giám Đốc, Phu Nhân Chủ Tịch Đem HĐ Trăm Tỷ Tới Đề Nghị Đổi Vợ Đổi Chồng",
-          "views": 194,
+          "views": 193,
           "published_at": "2026-09-08T22:00:39Z"
         },
         {
@@ -1665,7 +1689,7 @@
         {
           "id": "89YQ-4_X1bI",
           "title": "Cứu Ông Lão Bên Đường Bị Cả Nhà Chồng Khinh Rẻ, Ngày 12 Chiếc Xe Sang Tới Cổng Sự Thật Mới Vỡ Lòa",
-          "views": 79,
+          "views": 78,
           "published_at": "2026-09-04T01:08:53Z"
         },
         {
@@ -1749,7 +1773,7 @@
         {
           "id": "yDdmuiws_cU",
           "title": "Ép Dâu Ký Giấy Nuôi Cháu 18 Năm Để Giấu Chuyện Chửa Hoang, Mẹ Chồng Tẽn Tò Ngày Chính Thất Tìm Tới",
-          "views": 20,
+          "views": 19,
           "published_at": "2026-09-10T22:00:03Z"
         },
         {
@@ -1809,7 +1833,7 @@
         {
           "id": "eh7OLBXuMo0",
           "title": "Bị Đuổi Khỏi Biệt Thự Vì Ra Đi Tay Trắng, Con Dâu Mở Két Rút Xấp Giấy Lộn Lật Ghế Giám Đốc Của Chồng",
-          "views": 11,
+          "views": 10,
           "published_at": "2026-09-09T22:00:26Z"
         },
         {
@@ -1891,7 +1915,7 @@
           "published_at": "2026-09-21T00:00:23Z"
         }
       ],
-      "views": 5218,
+      "views": 5214,
       "v_15m": 0,
       "v_30m": 0,
       "v_60m": 0,
@@ -1913,6 +1937,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           6522
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          6526
         ]
       ],
       "tracked_video_ids": [
@@ -2043,7 +2071,7 @@
         {
           "id": "lnkCrgvCJPs",
           "title": "Bị nhà chồng khinh rẻ đuổi ra đường với chiếc gối rách, người vợ cũ chết lặng khi mở ra và tìm thấy",
-          "views": 330,
+          "views": 331,
           "published_at": "2026-09-10T01:00:11Z"
         },
         {
@@ -2085,13 +2113,13 @@
         {
           "id": "JIm87yZbiVA",
           "title": "Tiếc Tiền Rút Ống Thở Của Vợ Trong Đêm, Sáng Hôm Sau Chồng Chết Lặng Khi Thấy Vợ Đứng Trước Cửa",
-          "views": 212,
+          "views": 213,
           "published_at": "2026-08-29T08:00:08Z"
         },
         {
           "id": "15iemYeh_5M",
           "title": "Thuê Người Hại Con Dâu Để Rước Nhân Tình Giàu Có: Mẹ Con Nhà Chồng Nhận Quả Báo Trắng Tay Tù Tội",
-          "views": 175,
+          "views": 176,
           "published_at": "2026-08-29T22:00:21Z"
         },
         {
@@ -2109,7 +2137,7 @@
         {
           "id": "Fs8wEO8jA4g",
           "title": "Chồng Giám Đốc Bỏ Vợ Theo Nhân Tình Để Con Bị Bạo Hành, Nào Ngờ Vợ Tái Hôn Với Thẩm Phán Quyền Lực",
-          "views": 134,
+          "views": 135,
           "published_at": "2026-08-28T23:00:22Z"
         },
         {
@@ -2229,7 +2257,7 @@
         {
           "id": "x9UV91s2UwM",
           "title": "Khinh Thường Con Dâu Nhà Quê Dùng Thẻ Đen, Nhà Chồng Nhận Cái Kết Muối Mặt Ngay Tại Cuộc Họp Cổ Đông",
-          "views": 52,
+          "views": 53,
           "published_at": "2026-09-02T04:00:15Z"
         },
         {
@@ -2263,16 +2291,16 @@
           "published_at": "2026-09-17T23:00:05Z"
         },
         {
+          "id": "eWAi_KjNoWg",
+          "title": "Mẹ Chồng Ép Nghỉ Dạy Đãi Khách Quý Và Sự Thật Chua Chát Về Nàng Dâu \"Hàng Hiệu\"",
+          "views": 28,
+          "published_at": "2026-09-19T23:00:39Z"
+        },
+        {
           "id": "88vIF19eanU",
           "title": "Vợ Âm Thầm Thu Thập Bằng Chứng Vạch Trần Chồng Mẫu Mực Bạo Hành Tinh Thần Và Ngoại Tình",
           "views": 28,
           "published_at": "2026-08-26T23:00:13Z"
-        },
-        {
-          "id": "eWAi_KjNoWg",
-          "title": "Mẹ Chồng Ép Nghỉ Dạy Đãi Khách Quý Và Sự Thật Chua Chát Về Nàng Dâu \"Hàng Hiệu\"",
-          "views": 27,
-          "published_at": "2026-09-19T23:00:39Z"
         },
         {
           "id": "d6dxwrP4b4o",
@@ -2289,7 +2317,7 @@
         {
           "id": "kwHe_fdb5kA",
           "title": "Vứt Bó Hoa Cưới Hủy Hôn Sau 300km Rước Dâu & Lời Trăn Trối Tiết Lộ Bí Mật Động Trời Của Mẹ Chồng",
-          "views": 21,
+          "views": 22,
           "published_at": "2026-09-01T04:00:08Z"
         },
         {
@@ -2311,20 +2339,20 @@
           "published_at": "2026-09-21T23:00:13Z"
         },
         {
-          "id": "zxYFbPS2W8E",
-          "title": "Bỏ Mặc Vợ Con Chạy Theo Cuộc Vui, Người Chồng Trả Giá Đắt Khi Trở Về Nhà Chỉ Còn Lại Đống Tro Tàn",
-          "views": 11,
-          "published_at": "2026-09-22T23:00:39Z"
-        },
-        {
           "id": "VdgKX4vOjMQ",
           "title": "Người đàn ông 64 tuổi trải lòng sau 2 lần tái hôn cay đắng: Cái kết đắt cho bài học tuổi già cô đơn",
           "views": 11,
           "published_at": "2026-09-08T09:00:26Z"
+        },
+        {
+          "id": "hXUoj_BVlvs",
+          "title": "Sự Thật Đau Lòng Đằng Sau Vụ Ngoại Tình Năm Xưa Và Màn \"Cưới Lại Vợ Cũ\" Đầy Nước Mắt",
+          "views": 9,
+          "published_at": "2026-08-31T10:00:13Z"
         }
       ],
-      "views": 6522,
-      "v_15m": 0,
+      "views": 6526,
+      "v_15m": 4,
       "v_30m": 0,
       "v_60m": 0,
       "v_24h": 0,
@@ -2345,6 +2373,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           2354036
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          2355362
         ]
       ],
       "tracked_video_ids": [
@@ -2922,7 +2954,7 @@
         {
           "id": "6QlwIsfhvW0",
           "title": "Toàn cảnh tiễn đưa linh cữu Thân phụ Thầy Minh Tuệ về nơi an nghỉ cuối cùng",
-          "views": 45025,
+          "views": 45024,
           "published_at": "2026-08-18T04:02:59Z"
         },
         {
@@ -2970,7 +3002,7 @@
         {
           "id": "6gGZnPcKcbQ",
           "title": "Sư Thích Giác Viên tại Mỹ chia sẻ mới nhất về Thầy Minh Tuệ. Phật tử say sưa nghe Thầy kể chuyện",
-          "views": 34490,
+          "views": 34557,
           "published_at": "2026-09-21T06:35:52Z"
         },
         {
@@ -2982,7 +3014,7 @@
         {
           "id": "vdvwtmASGZo",
           "title": "Huệ Thuận quá vô lương tâm sư cô già 76 tuổi cũng không tha. Sư MH đã chốt về phe của HT",
-          "views": 33620,
+          "views": 33591,
           "published_at": "2026-06-30T23:56:15Z"
         },
         {
@@ -2994,13 +3026,13 @@
         {
           "id": "MtLIt8uZseU",
           "title": "ĐVB quay xe với Hải Sapa. Thầy trả lời 3 câu của 1 người trong ngành ngoại giao về con đường tu tập",
-          "views": 31882,
+          "views": 31878,
           "published_at": "2026-08-25T11:57:41Z"
         },
         {
           "id": "C0yEwNAphtA",
           "title": "Đoàn Văn Báu nói về mối quan hệ với Hải Sapa. Sư An Lạc và sư Bổn Pháp sắp rời Lumbini",
-          "views": 31869,
+          "views": 31861,
           "published_at": "2026-08-23T12:02:03Z"
         },
         {
@@ -3030,7 +3062,7 @@
         {
           "id": "u70fKGlKP68",
           "title": "Lạ kỳ: Cầu vồng đôi xuất hiện. Ngày cuối tiễn đưa cha thầy MT. Sư MĐ cs về chữ Hiếu của thầy",
-          "views": 28709,
+          "views": 28708,
           "published_at": "2026-08-18T00:20:56Z"
         },
         {
@@ -3120,7 +3152,7 @@
         {
           "id": "w5ls--ilGSg",
           "title": "Giác Nhẫn đã rời bỏ Lâm Võ đi cùng một vị sư mới. Thầy Minh Tuệ nói về cận tử nghiệp",
-          "views": 23812,
+          "views": 23810,
           "published_at": "2026-09-14T23:52:12Z"
         },
         {
@@ -3184,12 +3216,12 @@
           "published_at": "2026-06-17T08:51:49Z"
         }
       ],
-      "views": 2354036,
-      "v_15m": 1206,
-      "v_30m": 1206,
-      "v_60m": 1206,
-      "v_24h": 1206,
-      "v_48h": 1206,
+      "views": 2355362,
+      "v_15m": 1326,
+      "v_30m": 2532,
+      "v_60m": 2532,
+      "v_24h": 2532,
+      "v_48h": 2532,
       "is_spike": true
     },
     "UCUyC_mTQ0rh0tTW9fjJJ64Q": {
@@ -3206,6 +3238,10 @@
         [
           "2026-09-23T12:30:53.827501+00:00",
           17629134
+        ],
+        [
+          "2026-09-23T12:45:36.574625+00:00",
+          17629178
         ]
       ],
       "tracked_video_ids": [
@@ -4587,7 +4623,7 @@
         {
           "id": "t93oBaVk17s",
           "title": "THẮP HƯƠNG THẦN TÀI THỔ ĐỊA đúng vào LÚC NÀY gia chủ GIÀU CÓ TIỀN ĐẾM KHÔNG HẾT",
-          "views": 280467,
+          "views": 280494,
           "published_at": "2023-12-27T04:13:59Z"
         },
         {
@@ -4695,7 +4731,7 @@
         {
           "id": "oIyZxfjpjN4",
           "title": "Bạn thân thời quân ngũ bất ngờ tìm đến thầy Minh Tuệ tiết lộ loạt bí mật thú vị chưa từng biết!",
-          "views": 216100,
+          "views": 216142,
           "published_at": "2024-11-20T06:52:24Z"
         },
         {
@@ -4729,12 +4765,12 @@
           "published_at": "2024-06-22T05:31:53Z"
         }
       ],
-      "views": 17629134,
-      "v_15m": 9,
-      "v_30m": 9,
-      "v_60m": 9,
-      "v_24h": 9,
-      "v_48h": 9,
+      "views": 17629178,
+      "v_15m": 44,
+      "v_30m": 53,
+      "v_60m": 53,
+      "v_24h": 53,
+      "v_48h": 53,
       "is_spike": false
     }
   },
