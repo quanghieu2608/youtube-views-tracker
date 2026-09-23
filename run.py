@@ -1,7 +1,7 @@
 import os
 import json
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 API_KEY = os.environ.get("YOUTUBE_API_KEY")
 
@@ -44,69 +44,153 @@ def get_latest_videos(playlist_id, max_results=50):
         })
     return videos
 
-def main():
-    if not API_KEY:
-        print("Lỗi: Chưa thiết lập YOUTUBE_API_KEY")
-        return
+def calculate_delta(history, current_views, target_minutes):
+    """Tìm mốc gần với target_minutes trước để tính view tăng thêm"""
+    if not history:
+        return 0
+    now = datetime.now(timezone.utc)
+    target_time = now - timedelta(minutes=target_minutes)
 
-    if not os.path.exists("channels.txt"):
-        print("Lỗi: Không tìm thấy file channels.txt")
+    # Tìm bản ghi trong quá khứ gần với mốc target_time nhất
+    closest_record = None
+    min_diff = None
+    for entry in history:
+        try:
+            entry_time = datetime.fromisoformat(entry["t"])
+            diff = abs((entry_time - target_time).total_seconds())
+            if min_diff is None or diff < min_diff:
+                min_diff = diff
+                closest_record = entry
+        except Exception:
+            continue
+
+    if closest_record:
+        delta = current_views - closest_record["v"]
+        return max(0, delta)
+    return 0
+
+def prune_history(history, max_hours=49):
+    """Xóa các bản ghi cũ hơn 48-49 tiếng để tối ưu dung lượng"""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=max_hours)
+    pruned = []
+    for entry in history:
+        try:
+            if datetime.fromisoformat(entry["t"]) >= cutoff:
+                pruned.append(entry)
+        except Exception:
+            pass
+    return pruned
+
+def main():
+    if not API_KEY or not os.path.exists("channels.txt"):
+        print("Thiếu API Key hoặc channels.txt")
         return
 
     with open("channels.txt", "r", encoding="utf-8") as f:
         channel_ids = [line.strip() for line in f if line.strip()]
 
-    channels = get_channel_data(channel_ids)
-
-    old_data = {}
+    # Đọc kho lịch sử Time-series cũ
+    history_db = {"channels": {}, "videos": {}}
     if os.path.exists("data.json"):
         try:
             with open("data.json", "r", encoding="utf-8") as f:
-                old_data = json.load(f)
+                history_db = json.load(f)
+                if "channels" not in history_db:
+                    history_db = {"channels": {}, "videos": {}}
         except Exception:
-            pass
+            history_db = {"channels": {}, "videos": {}}
 
-    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    new_snapshot = {"timestamp": now_str, "channels": {}}
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    now_display = now.strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    md_lines = [
-        "# 📊 Báo Cáo View YouTube Tự Động",
-        f"*Lần cập nhật gần nhất: `{now_str}`*\n",
-        "## 1. Bảng Xếp Hạng 20 Kênh",
-        "| Tên Kênh | Tổng Views | Tăng Trưởng | Subs | Số Video |",
-        "| :--- | :---: | :---: | :---: | :---: |"
-    ]
+    channels_data = get_channel_data(channel_ids)
+    processed_channels = []
 
-    for ch in channels:
+    for ch in channels_data:
         ch_id = ch["id"]
-        old_views = old_data.get("channels", {}).get(ch_id, {}).get("views", ch["views"])
-        delta = ch["views"] - old_views
-        delta_str = f"+{delta:,}" if delta > 0 else (f"{delta:,}" if delta < 0 else "0")
+        ch_hist = history_db["channels"].get(ch_id, [])
 
-        md_lines.append(f"| **{ch['title']}** | {ch['views']:,} | `{delta_str}` | {ch['subs']:,} | {ch['videos']:,} |")
+        # Tính View 60 phút và View 48 giờ
+        v_60m = calculate_delta(ch_hist, ch["views"], target_minutes=60)
+        v_48h = calculate_delta(ch_hist, ch["views"], target_minutes=48 * 60)
 
+        # Cập nhật lịch sử mốc mới
+        ch_hist.append({"t": now_iso, "v": ch["views"]})
+        history_db["channels"][ch_id] = prune_history(ch_hist)
+
+        # Lấy video của kênh
         videos = get_latest_videos(ch["uploads_playlist"], max_results=50)
-        new_snapshot["channels"][ch_id] = {
+        processed_videos = []
+
+        for vid in videos:
+            v_id = vid["id"]
+            vid_hist = history_db["videos"].get(v_id, [])
+
+            vid_60m = calculate_delta(vid_hist, vid["views"], target_minutes=60)
+            vid_48h = calculate_delta(vid_hist, vid["views"], target_minutes=48 * 60)
+
+            vid_hist.append({"t": now_iso, "v": vid["views"]})
+            history_db["videos"][v_id] = prune_history(vid_hist)
+
+            processed_videos.append({
+                "id": v_id,
+                "title": vid["title"],
+                "views": vid["views"],
+                "v_60m": vid_60m,
+                "v_48h": vid_48h
+            })
+
+        # Sắp xếp video: Video có View 60 phút cao nhất lên đầu (nếu bằng nhau thì xét View 48h)
+        processed_videos.sort(key=lambda x: (x["v_60m"], x["v_48h"], x["views"]), reverse=True)
+
+        processed_channels.append({
             "title": ch["title"],
             "views": ch["views"],
+            "v_60m": v_60m,
+            "v_48h": v_48h,
             "subs": ch["subs"],
-            "videos": {v["id"]: {"title": v["title"], "views": v["views"]} for v in videos}
-        }
+            "videos_count": ch["videos"],
+            "videos": processed_videos
+        })
 
-    md_lines.append("\n## 2. Chi Tiết Video (Bấm vào từng kênh để xem)")
-    for ch_id, ch_info in new_snapshot["channels"].items():
-        md_lines.append(f"\n<details><summary><b>▶ {ch_info['title']} ({len(ch_info['videos'])} video mới nhất)</b></summary>\n")
-        md_lines.append("| Tiêu đề Video | Lượt Views |")
-        md_lines.append("| :--- | :---: |")
-        for v_id, v_data in ch_info["videos"].items():
-            md_lines.append(f"| [{v_data['title']}](https://youtu.be/{v_id}) | {v_data['views']:,} |")
+    # Sắp xếp kênh: Kênh có View 60 phút cao nhất lên đầu (nếu bằng nhau thì xét View 48h)
+    processed_channels.sort(key=lambda x: (x["v_60m"], x["v_48h"], x["views"]), reverse=True)
+
+    # Tạo bảng báo cáo Markdown
+    md_lines = [
+        "# 📊 Báo Cáo Realtime: View 60 Phút & View 48 Giờ",
+        f"*Cập nhật lần cuối: `{now_display}`*\n",
+        "> *(Bảng đã tự động sắp xếp theo thứ tự **View 60 phút cao nhất** xuống thấp)*\n",
+        "## 1. Xếp Hạng Kênh",
+        "| Top | Tên Kênh | View 60 phút | View 48 giờ | Tổng Views | Subs | Video |",
+        "| :---: | :--- | :---: | :---: | :---: | :---: | :---: |"
+    ]
+
+    for idx, ch in enumerate(processed_channels, 1):
+        v60_str = f"**+{ch['v_60m']:,}**" if ch['v_60m'] > 0 else "0"
+        v48_str = f"+{ch['v_48h']:,}" if ch['v_48h'] > 0 else "0"
+        md_lines.append(
+            f"| #{idx} | **{ch['title']}** | {v60_str} | {v48_str} | {ch['views']:,} | {ch['subs']:,} | {ch['videos_count']:,} |"
+        )
+
+    md_lines.append("\n## 2. Chi Tiết Video Từng Kênh (Đã xếp theo View 60m cao nhất)")
+    for ch in processed_channels:
+        md_lines.append(f"\n<details><summary><b>▶ {ch['title']} (Click để xem {len(ch['videos'])} video)</b></summary>\n")
+        md_lines.append("| Tiêu đề Video | View 60 phút | View 48 giờ | Tổng Views |")
+        md_lines.append("| :--- | :---: | :---: | :---: |")
+        for v in ch["videos"]:
+            v60_str = f"**+{v['v_60m']:,}**" if v['v_60m'] > 0 else "0"
+            v48_str = f"+{v['v_48h']:,}" if v['v_48h'] > 0 else "0"
+            md_lines.append(f"| [{v['title']}](https://youtu.be/{v['id']}) | {v60_str} | {v48_str} | {v['views']:,} |")
         md_lines.append("\n</details>")
 
+    # Ghi file README.md và data.json
     with open("README.md", "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))
 
     with open("data.json", "w", encoding="utf-8") as f:
-        json.dump(new_snapshot, f, ensure_ascii=False, indent=2)
+        json.dump(history_db, f, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()
