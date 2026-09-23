@@ -123,7 +123,6 @@
     .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
     .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
-    /* DRAWER VIDEO CHI TIẾT & BỘ LỌC 3 NÚT */
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
     .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
     .v-tabs-group { display: flex; gap: 4px; background: var(--card-sub); padding: 2px; border-radius: 6px; border: 1px solid var(--border); }
@@ -208,7 +207,6 @@
     let pollInterval = null;
     let isAllFolded = false;
 
-    // Trạng thái tab video của từng kênh: 'latest' | '60m' | '48h'
     const channelVideoTabState = {};
     const previousValues = {};
 
@@ -572,52 +570,6 @@
       render();
     }
 
-    function compute15mSlices(ch) {
-      const history = ch.history || [];
-      const currentViews = ch.views || 0;
-      const total60 = ch.v_60m || 0;
-
-      if (history.length >= 2) {
-        const nowTs = new Date(db.updated_at || Date.now()).getTime();
-
-        const findViewsAt = (targetMinutesAgo) => {
-          const targetTs = nowTs - (targetMinutesAgo * 60 * 1000);
-          let closest = null;
-          let minDiff = Infinity;
-          for (let item of history) {
-            const itemTs = new Date(item[0]).getTime();
-            const diff = Math.abs(itemTs - targetTs);
-            if (diff < minDiff) {
-              minDiff = diff;
-              closest = item;
-            }
-          }
-          return closest ? closest[1] : null;
-        };
-
-        const v15 = findViewsAt(15);
-        const v30 = findViewsAt(30);
-        const v45 = findViewsAt(45);
-        const v60 = findViewsAt(60);
-
-        if (v15 !== null && v30 !== null) {
-          const c4 = Math.max(0, currentViews - v15);
-          const c3 = Math.max(0, v15 - v30);
-          const c2 = v45 !== null ? Math.max(0, v30 - v45) : Math.max(0, Math.round((v30 - (v60 || (currentViews - total60))) / 2));
-          const c1 = Math.max(0, total60 - (c4 + c3 + c2));
-          return [c1, c2, c3, c4];
-        }
-      }
-
-      const v_curr_30 = ch.v_30m || 0;
-      const v_prev_30 = Math.max(0, total60 - v_curr_30);
-      const c4 = Math.round(v_curr_30 * 0.55);
-      const c3 = Math.max(0, v_curr_30 - c4);
-      const c2 = Math.round(v_prev_30 * 0.55);
-      const c1 = Math.max(0, v_prev_30 - c2);
-      return [c1, c2, c3, c4];
-    }
-
     function render() {
       if (!db || !db.channels) return;
       const chList = Object.values(db.channels);
@@ -642,7 +594,8 @@
         const lt = ch.longterm || { d_7: 0, d_30: 0, d_90: 0 };
         const isCollapsed = !!collapsedMap[ch.id];
 
-        const [c1, c2, c3, c4] = compute15mSlices(ch);
+        // Lấy trực tiếp 4 cột 15 phút do Backend run.py tính sẵn
+        const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m || (c1 + c2 + c3 + c4);
 
         const maxVal = Math.max(c1, c2, c3, c4, 1);
@@ -652,7 +605,6 @@
         const h4 = Math.max(8, Math.round((c4 / maxVal) * 100));
 
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
-
         const activeVTab = channelVideoTabState[ch.id] || 'latest';
 
         const card = document.createElement('div');
@@ -753,7 +705,6 @@
             </div>
           </div>
 
-          <!-- DRAWER CHI TIẾT KÈM 3 NÚT TÙY CHỌN: MỚI NHẤT | 60P | 48H -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
               <div class="v-tabs-group">
@@ -796,7 +747,6 @@
       });
     }
 
-    /* --- HÀM LỌC VÀ HIỂN THỊ 15 VIDEO THEO TAB ĐƯỢC CHỌN --- */
     function switchVideoTab(chId, tab) {
       channelVideoTabState[chId] = tab;
       const drawer = document.getElementById(`box-${chId}`);
@@ -818,13 +768,10 @@
       const vCopy = [...videos];
 
       if (tab === 'latest') {
-        // Xếp chuẩn theo thời gian xuất bản mới nhất (video 23/9 lên đầu)
         vCopy.sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0));
       } else if (tab === '60m') {
-        // Xếp theo view 60m; nếu đang = 0 (do mới quét) thì ưu tiên xếp theo video mới nhất
         vCopy.sort((a, b) => (b.v_60m || 0) - (a.v_60m || 0) || (new Date(b.published_at || 0) - new Date(a.published_at || 0)));
       } else if (tab === '48h') {
-        // Xếp theo view 48h; nếu đang = 0 thì ưu tiên xếp theo video mới nhất
         vCopy.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0) || (new Date(b.published_at || 0) - new Date(a.published_at || 0)));
       }
 
