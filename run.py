@@ -44,61 +44,62 @@ def get_latest_videos(playlist_id, max_results=50):
         })
     return videos
 
-def calculate_delta(history, current_views, target_minutes):
-    """Tìm mốc gần với target_minutes trước để tính view tăng thêm"""
-    if not history:
-        return 0
+def build_48h_sparkline(history, current_views):
+    """Tính view tăng của từng giờ trong 48 giờ qua và vẽ 48 cột Unicode"""
     now = datetime.now(timezone.utc)
-    target_time = now - timedelta(minutes=target_minutes)
+    # Tạo 48 mốc thời gian (mỗi mốc 1 giờ)
+    hourly_views = [0] * 48
+    
+    if not history:
+        return 0, 0, " " * 48
 
-    # Tìm bản ghi trong quá khứ gần với mốc target_time nhất
-    closest_record = None
-    min_diff = None
-    for entry in history:
-        try:
-            entry_time = datetime.fromisoformat(entry["t"])
-            diff = abs((entry_time - target_time).total_seconds())
-            if min_diff is None or diff < min_diff:
-                min_diff = diff
-                closest_record = entry
-        except Exception:
-            continue
+    # Lấy mốc cách đây 1 giờ để tính view 60m
+    t_1h = now - timedelta(hours=1)
+    rec_1h = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - t_1h), default=None)
+    v_60m = max(0, current_views - rec_1h["v"]) if rec_1h else 0
 
-    if closest_record:
-        delta = current_views - closest_record["v"]
-        return max(0, delta)
-    return 0
+    # Lấy mốc cách đây 48 giờ để tính tổng 48h
+    t_48h = now - timedelta(hours=48)
+    rec_48h = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - t_48h), default=None)
+    v_48h = max(0, current_views - rec_48h["v"]) if rec_48h else 0
 
-def prune_history(history, max_hours=49):
-    """Xóa các bản ghi cũ hơn 48-49 tiếng để tối ưu dung lượng"""
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=max_hours)
-    pruned = []
-    for entry in history:
-        try:
-            if datetime.fromisoformat(entry["t"]) >= cutoff:
-                pruned.append(entry)
-        except Exception:
-            pass
-    return pruned
+    # Tính delta cho từng giờ trong 48 giờ
+    # Giờ thứ i (i chạy từ 47 về 0, với 0 là giờ gần nhất)
+    for i in range(48):
+        target_end = now - timedelta(hours=47 - i)
+        target_start = target_end - timedelta(hours=1)
+        
+        r_start = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - target_start), default=None)
+        r_end = min(history, key=lambda x: abs(datetime.fromisoformat(x["t"]) - target_end), default=None)
+        
+        if r_start and r_end and (datetime.fromisoformat(r_end["t"]) > datetime.fromisoformat(r_start["t"])):
+            hourly_views[i] = max(0, r_end["v"] - r_start["v"])
+
+    # Vẽ biểu đồ ký tự:  ▂▃▄▅▆▇█
+    bars = [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+    max_h = max(hourly_views) if max(hourly_views) > 0 else 1
+    sparkline = "".join(bars[int((val / max_h) * 8)] if val > 0 else " " for val in hourly_views)
+
+    return v_60m, v_48h, sparkline
+
+def prune_history(history):
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=50)
+    return [e for e in history if datetime.fromisoformat(e["t"]) >= cutoff]
 
 def main():
     if not API_KEY or not os.path.exists("channels.txt"):
-        print("Thiếu API Key hoặc channels.txt")
         return
 
     with open("channels.txt", "r", encoding="utf-8") as f:
         channel_ids = [line.strip() for line in f if line.strip()]
 
-    # Đọc kho lịch sử Time-series cũ
     history_db = {"channels": {}, "videos": {}}
     if os.path.exists("data.json"):
         try:
             with open("data.json", "r", encoding="utf-8") as f:
                 history_db = json.load(f)
-                if "channels" not in history_db:
-                    history_db = {"channels": {}, "videos": {}}
         except Exception:
-            history_db = {"channels": {}, "videos": {}}
+            pass
 
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
@@ -109,27 +110,20 @@ def main():
 
     for ch in channels_data:
         ch_id = ch["id"]
-        ch_hist = history_db["channels"].get(ch_id, [])
+        ch_hist = history_db.setdefault("channels", {}).get(ch_id, [])
 
-        # Tính View 60 phút và View 48 giờ
-        v_60m = calculate_delta(ch_hist, ch["views"], target_minutes=60)
-        v_48h = calculate_delta(ch_hist, ch["views"], target_minutes=48 * 60)
-
-        # Cập nhật lịch sử mốc mới
+        v_60m, v_48h, sparkline = build_48h_sparkline(ch_hist, ch["views"])
         ch_hist.append({"t": now_iso, "v": ch["views"]})
         history_db["channels"][ch_id] = prune_history(ch_hist)
 
-        # Lấy video của kênh
         videos = get_latest_videos(ch["uploads_playlist"], max_results=50)
         processed_videos = []
 
         for vid in videos:
             v_id = vid["id"]
-            vid_hist = history_db["videos"].get(v_id, [])
+            vid_hist = history_db.setdefault("videos", {}).get(v_id, [])
 
-            vid_60m = calculate_delta(vid_hist, vid["views"], target_minutes=60)
-            vid_48h = calculate_delta(vid_hist, vid["views"], target_minutes=48 * 60)
-
+            vid_60m, vid_48h, v_spark = build_48h_sparkline(vid_hist, vid["views"])
             vid_hist.append({"t": now_iso, "v": vid["views"]})
             history_db["videos"][v_id] = prune_history(vid_hist)
 
@@ -138,56 +132,52 @@ def main():
                 "title": vid["title"],
                 "views": vid["views"],
                 "v_60m": vid_60m,
-                "v_48h": vid_48h
+                "v_48h": vid_48h,
+                "sparkline": v_spark
             })
 
-        # Sắp xếp video: Video có View 60 phút cao nhất lên đầu (nếu bằng nhau thì xét View 48h)
-        processed_videos.sort(key=lambda x: (x["v_60m"], x["v_48h"], x["views"]), reverse=True)
+        processed_videos.sort(key=lambda x: (x["v_48h"], x["v_60m"]), reverse=True)
 
         processed_channels.append({
             "title": ch["title"],
             "views": ch["views"],
             "v_60m": v_60m,
             "v_48h": v_48h,
+            "sparkline": sparkline,
             "subs": ch["subs"],
-            "videos_count": ch["videos"],
             "videos": processed_videos
         })
 
-    # Sắp xếp kênh: Kênh có View 60 phút cao nhất lên đầu (nếu bằng nhau thì xét View 48h)
-    processed_channels.sort(key=lambda x: (x["v_60m"], x["v_48h"], x["views"]), reverse=True)
+    # Sắp xếp kênh theo View 48h cao nhất xuống thấp
+    processed_channels.sort(key=lambda x: (x["v_48h"], x["v_60m"]), reverse=True)
 
-    # Tạo bảng báo cáo Markdown
-    md_lines = [
-        "# 📊 Báo Cáo Realtime: View 60 Phút & View 48 Giờ",
-        f"*Cập nhật lần cuối: `{now_display}`*\n",
-        "> *(Bảng đã tự động sắp xếp theo thứ tự **View 60 phút cao nhất** xuống thấp)*\n",
-        "## 1. Xếp Hạng Kênh",
-        "| Top | Tên Kênh | View 60 phút | View 48 giờ | Tổng Views | Subs | Video |",
+    # Xuất Markdown README
+    md = [
+        "# 📊 Báo Cáo Realtime: View 48 Giờ (Chi tiết từng giờ) & 60 Phút",
+        f"*Cập nhật: `{now_display}`*\n",
+        "## 1. Xếp Hạng Kênh (Xếp theo View 48h)",
+        "| Top | Kênh | View 48 Giờ | Biểu đồ 48 Cột Giờ | View 60p | Tổng Views | Subs |",
         "| :---: | :--- | :---: | :---: | :---: | :---: | :---: |"
     ]
 
     for idx, ch in enumerate(processed_channels, 1):
-        v60_str = f"**+{ch['v_60m']:,}**" if ch['v_60m'] > 0 else "0"
-        v48_str = f"+{ch['v_48h']:,}" if ch['v_48h'] > 0 else "0"
-        md_lines.append(
-            f"| #{idx} | **{ch['title']}** | {v60_str} | {v48_str} | {ch['views']:,} | {ch['subs']:,} | {ch['videos_count']:,} |"
-        )
+        v48 = f"+{ch['v_48h']:,}" if ch['v_48h'] > 0 else "0"
+        v60 = f"+{ch['v_60m']:,}" if ch['v_60m'] > 0 else "0"
+        md.append(f"| #{idx} | **{ch['title']}** | **{v48}** | `{ch['sparkline']}` | `{v60}` | {ch['views']:,} | {ch['subs']:,} |")
 
-    md_lines.append("\n## 2. Chi Tiết Video Từng Kênh (Đã xếp theo View 60m cao nhất)")
+    md.append("\n## 2. Chi Tiết Video Từng Kênh (Đã xếp theo View 48h cao nhất)")
     for ch in processed_channels:
-        md_lines.append(f"\n<details><summary><b>▶ {ch['title']} (Click để xem {len(ch['videos'])} video)</b></summary>\n")
-        md_lines.append("| Tiêu đề Video | View 60 phút | View 48 giờ | Tổng Views |")
-        md_lines.append("| :--- | :---: | :---: | :---: |")
+        md.append(f"\n<details><summary><b>▶ {ch['title']} ({len(ch['videos'])} video)</b></summary>\n")
+        md.append("| Tiêu đề Video | View 48 Giờ | Biểu đồ 48 Cột Giờ | View 60p | Tổng Views |")
+        md.append("| :--- | :---: | :---: | :---: | :---: |")
         for v in ch["videos"]:
-            v60_str = f"**+{v['v_60m']:,}**" if v['v_60m'] > 0 else "0"
-            v48_str = f"+{v['v_48h']:,}" if v['v_48h'] > 0 else "0"
-            md_lines.append(f"| [{v['title']}](https://youtu.be/{v['id']}) | {v60_str} | {v48_str} | {v['views']:,} |")
-        md_lines.append("\n</details>")
+            v48 = f"+{v['v_48h']:,}" if v['v_48h'] > 0 else "0"
+            v60 = f"+{v['v_60m']:,}" if v['v_60m'] > 0 else "0"
+            md.append(f"| [{v['title']}](https://youtu.be/{v['id']}) | **{v48}** | `{v['sparkline']}` | `{v60}` | {v['views']:,} |")
+        md.append("\n</details>")
 
-    # Ghi file README.md và data.json
     with open("README.md", "w", encoding="utf-8") as f:
-        f.write("\n".join(md_lines))
+        f.write("\n".join(md))
 
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(history_db, f, ensure_ascii=False)
