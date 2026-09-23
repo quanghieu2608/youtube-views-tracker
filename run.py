@@ -1,300 +1,247 @@
 import os
 import json
-import urllib.request
-from datetime import datetime, timezone, timedelta
+import time
+from datetime import datetime, timezone
+from googleapiclient.discovery import build
 
 API_KEY = os.environ.get("YOUTUBE_API_KEY")
+CHANNELS_FILE = "channels.txt"
+DATA_FILE = "data.json"
 
-def api_get(url):
-    req = urllib.request.Request(url)
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+youtube = build("youtube", "v3", developerKey=API_KEY)
 
-def parse_time(ts_str):
-    try:
-        return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-    except Exception:
-        return datetime.now(timezone.utc)
-
-def get_channel_data(channel_ids):
-    ids_str = ",".join(channel_ids)
-    url = f"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id={ids_str}&key={API_KEY}"
-    res = api_get(url)
-    channels = []
-    for item in res.get("items", []):
-        channels.append({
-            "id": item["id"],
-            "title": item["snippet"].get("title", item["id"]),
-            "views": int(item["statistics"].get("viewCount", 0)),
-            "subs": int(item["statistics"].get("subscriberCount", 0)),
-            "videos": int(item["statistics"].get("videoCount", 0)),
-            "uploads_playlist": item["contentDetails"]["relatedPlaylists"]["uploads"]
-        })
-    return channels
-
-def get_smart_pool_videos(playlist_id, channel_id, existing_watchlist=[]):
-    """
-    Smart Pool 100 Video:
-    - 70 video mới nhất từ playlist uploads (2 trang 50 + 20)
-    - 30 video trong danh sách theo dõi đặc biệt (đang có sóng từ các vòng trước)
-    """
-    video_ids = []
-    
-    # 1. Trang 1: 50 video mới nhất
-    url1 = f"https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId={playlist_id}&maxResults=50&key={API_KEY}"
-    res1 = api_get(url1)
-    for it in res1.get("items", []):
-        video_ids.append(it["contentDetails"]["videoId"])
-        
-    next_page = res1.get("nextPageToken")
-    
-    # 2. Trang 2: Lấy thêm 20-50 video tiếp theo để đủ 70-100 video
-    if next_page:
-        url2 = f"https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId={playlist_id}&maxResults=50&pageToken={next_page}&key={API_KEY}"
-        res2 = api_get(url2)
-        for it in res2.get("items", []):
-            video_ids.append(it["contentDetails"]["videoId"])
-
-    # Gộp thêm danh sách watchlist (video cũ đang cắn view)
-    all_target_ids = list(dict.fromkeys(video_ids + existing_watchlist))[:100]
-
-    # Batch 50 IDs mỗi lượt gọi videos.list
-    videos = []
-    for i in range(0, len(all_target_ids), 50):
-        chunk = all_target_ids[i:i+50]
-        v_url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id={','.join(chunk)}&key={API_KEY}"
-        v_res = api_get(v_url)
-        for item in v_res.get("items", []):
-            pub_at = item["snippet"].get("publishedAt", "")
-            videos.append({
-                "id": item["id"],
-                "title": item["snippet"].get("title", "Video không tiêu đề"),
-                "published_at": pub_at,
-                "views": int(item["statistics"].get("viewCount", 0)),
-                "likes": int(item["statistics"].get("likeCount", 0)),
-                "comments": int(item["statistics"].get("commentCount", 0))
-            })
-    return videos
-
-def calculate_video_deltas(history, current_views):
-    """Tính 30p, 60p, 24h, 48h và chuỗi 48 vạch sóng"""
-    now = datetime.now(timezone.utc)
-    if not history:
-        return 0, 0, 0, 0, [0] * 48
-
-    def get_delta(minutes_ago):
-        t_target = now - timedelta(minutes=minutes_ago)
-        rec = min(history, key=lambda x: abs(parse_time(x["t"]) - t_target), default=None)
-        # Chỉ trừ nếu bản ghi đó cách ít nhất 10 phút
-        if rec and (parse_time(rec["t"]) <= now - timedelta(minutes=10)):
-            return max(0, current_views - rec["v"])
-        return 0
-
-    v_30m = get_delta(30)
-    v_60m = get_delta(60)
-    v_24h = get_delta(24 * 60)
-    v_48h = get_delta(48 * 60)
-
-    # 48 cột từng giờ
-    hourly_views = [0] * 48
-    for i in range(48):
-        t_end = now - timedelta(hours=47 - i)
-        t_start = t_end - timedelta(hours=1)
-        r_start = min(history, key=lambda x: abs(parse_time(x["t"]) - t_start), default=None)
-        r_end = min(history, key=lambda x: abs(parse_time(x["t"]) - t_end), default=None)
-        if r_start and r_end and (parse_time(r_end["t"]) > parse_time(r_start["t"])):
-            hourly_views[i] = max(0, r_end["v"] - r_start["v"])
-
-    return v_30m, v_60m, v_24h, v_48h, hourly_views
-
-def make_sparkline(hourly_views):
-    bars = [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
-    max_h = max(hourly_views) if max(hourly_views) > 0 else 1
-    return "".join(bars[min(8, int((val / max_h) * 8))] if val > 0 else " " for val in hourly_views)
-
-def calculate_channel_longterm(daily_history, current_total_views):
-    """Tính tăng trưởng dài hạn của kênh: 1 ngày, 7 ngày, 30 ngày, 90 ngày"""
-    now = datetime.now(timezone.utc)
-    
-    def get_diff(days_ago):
-        target_date = (now - timedelta(days=days_ago)).strftime("%Y-%m-%d")
-        if target_date in daily_history:
-            return max(0, current_total_views - daily_history[target_date])
-        # Nếu chưa đủ ngày thì lấy ngày cũ nhất có thể
-        sorted_dates = sorted(daily_history.keys())
-        if sorted_dates:
-            oldest_date = sorted_dates[0]
-            if (now - datetime.strptime(oldest_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)).days >= days_ago:
-                return max(0, current_total_views - daily_history[oldest_date])
-        return 0
-
-    return {
-        "d_1": get_diff(1),
-        "d_7": get_diff(7),
-        "d_30": get_diff(30),
-        "d_90": get_diff(90)
-    }
-
-def prune_history(history, hours=50):
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
-    return [e for e in history if parse_time(e["t"]) >= cutoff]
-
-def main():
-    if not API_KEY or not os.path.exists("channels.txt"):
-        return
-
-    with open("channels.txt", "r", encoding="utf-8") as f:
-        channel_ids = [line.strip() for line in f if line.strip()]
-
-    # Khởi tạo dữ liệu
-    db = {
-        "history": {"videos": {}},
-        "daily_channel_history": {},
-        "watchlist": {}
-    }
-    if os.path.exists("data.json"):
+def load_data():
+    if os.path.exists(DATA_FILE):
         try:
-            with open("data.json", "r", encoding="utf-8") as f:
-                loaded = json.load(f)
-                if isinstance(loaded, dict):
-                    db["history"] = loaded.get("history", {"videos": {}})
-                    db["daily_channel_history"] = loaded.get("daily_channel_history", {})
-                    db["watchlist"] = loaded.get("watchlist", {})
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
         except Exception:
             pass
+    return {"updated_at": None, "channels": {}}
 
-    now = datetime.now(timezone.utc)
-    now_iso = now.isoformat()
-    now_display = now.strftime("%Y-%m-%d %H:%M:%S UTC")
-    today_key = now.strftime("%Y-%m-%d")
+def save_data(data):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-    channels_data = get_channel_data(channel_ids)
-    channels_summary = {}
+def get_channel_ids():
+    if not os.path.exists(CHANNELS_FILE):
+        return []
+    with open(CHANNELS_FILE, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    clean_ids = []
+    for l in lines:
+        if "/channel/" in l:
+            clean_ids.append(l.split("/channel/")[1].split("/")[0].split("?")[0])
+        else:
+            clean_ids.append(l)
+    return list(dict.fromkeys(clean_ids))
 
-    for ch in channels_data:
-        ch_id = ch["id"]
+def batch_get_channel_details(channel_ids):
+    details = {}
+    for i in range(0, len(channel_ids), 50):
+        chunk = channel_ids[i:i+50]
+        res = youtube.channels().list(
+            part="snippet,statistics,contentDetails",
+            id=",".join(chunk)
+        ).execute()
+        for item in res.get("items", []):
+            ch_id = item["id"]
+            uploads_playlist = item["contentDetails"]["relatedPlaylists"]["uploads"]
+            details[ch_id] = {
+                "id": ch_id,
+                "title": item["snippet"]["title"],
+                "subs": int(item["statistics"].get("subscriberCount", 0)),
+                "video_count": int(item["statistics"].get("videoCount", 0)),
+                "total_views": int(item["statistics"].get("viewCount", 0)),
+                "uploads_playlist": uploads_playlist
+            }
+    return details
 
-        # 1. BỀN VỮNG: Lưu chốt tổng view kênh theo ngày
-        ch_daily = db["daily_channel_history"].setdefault(ch_id, {})
-        ch_daily[today_key] = ch["views"]
-        longterm_stats = calculate_channel_longterm(ch_daily, ch["views"])
+def fetch_all_video_ids(uploads_playlist_id):
+    video_ids = []
+    next_page_token = None
+    while True:
+        res = youtube.playlistItems().list(
+            part="contentDetails",
+            playlistId=uploads_playlist_id,
+            maxResults=50,
+            pageToken=next_page_token
+        ).execute()
+        for item in res.get("items", []):
+            v_id = item["contentDetails"].get("videoId")
+            if v_id:
+                video_ids.append(v_id)
+        next_page_token = res.get("nextPageToken")
+        if not next_page_token:
+            break
+    return video_ids
 
-        # 2. REALTIME: Quét Smart Pool 100 video
-        existing_ch_watchlist = db["watchlist"].get(ch_id, [])
-        videos = get_smart_pool_videos(ch["uploads_playlist"], ch_id, existing_ch_watchlist)
+def batch_get_video_stats(video_ids):
+    stats = {}
+    for i in range(0, len(video_ids), 50):
+        chunk = video_ids[i:i+50]
+        res = youtube.videos().list(
+            part="snippet,statistics",
+            id=",".join(chunk)
+        ).execute()
+        for item in res.get("items", []):
+            vid = item["id"]
+            stats[vid] = {
+                "id": vid,
+                "title": item["snippet"]["title"],
+                "views": int(item["statistics"].get("viewCount", 0)),
+                "published_at": item["snippet"]["publishedAt"]
+            }
+    return stats
 
+def main():
+    if not API_KEY:
+        print("Missing YOUTUBE_API_KEY.")
+        return
+
+    channel_ids = get_channel_ids()
+    if not channel_ids:
+        print("No channels found.")
+        return
+
+    db = load_data()
+    now_dt = datetime.now(timezone.utc)
+    now_iso = now_dt.isoformat()
+    now_ts = now_dt.timestamp()
+
+    # Kiểm tra chu kỳ 12h
+    last_deep_scan = db.get("last_deep_scan_ts", 0)
+    need_deep_scan = (now_ts - last_deep_scan) >= (12 * 3600)
+
+    print(f"[{now_iso}] Starting tracking. Need 12h Deep Scan: {need_deep_scan}")
+
+    channel_meta = batch_get_channel_details(channel_ids)
+
+    for ch_id in channel_ids:
+        if ch_id not in channel_meta:
+            continue
+        meta = channel_meta[ch_id]
+
+        if ch_id not in db["channels"]:
+            db["channels"][ch_id] = {
+                "id": ch_id,
+                "title": meta["title"],
+                "subs": meta["subs"],
+                "videos_count": meta["video_count"],
+                "total_channel_views": meta["total_views"],
+                "history": [],
+                "tracked_video_ids": [],
+                "catalog_snapshots": {},
+                "videos": []
+            }
+
+        ch_data = db["channels"][ch_id]
+        ch_data["title"] = meta["title"]
+        ch_data["subs"] = meta["subs"]
+        ch_data["videos_count"] = meta["video_count"]
+        ch_data["total_channel_views"] = meta["total_views"]
+
+        uploads_pl = meta["uploads_playlist"]
+
+        # --- CHU KỲ 12H (HOẶC CHẠY LẦN ĐẦU TIÊN) ---
+        if need_deep_scan or not ch_data.get("tracked_video_ids"):
+            print(f"Deep scanning all videos for: {meta['title']}")
+            all_video_ids = fetch_all_video_ids(uploads_pl)
+            all_stats = batch_get_video_stats(all_video_ids)
+
+            # Pool 1: 50 video mới nhất
+            pool1_ids = all_video_ids[:50]
+            remaining_ids = all_video_ids[50:]
+
+            catalog = ch_data.get("catalog_snapshots", {})
+            has_past_12h_data = bool(catalog)
+
+            candidates = []
+            for vid in remaining_ids:
+                if vid in all_stats:
+                    curr_v = all_stats[vid]["views"]
+                    if has_past_12h_data:
+                        # Đã có dữ liệu 12h: Tính Delta View tăng thực tế
+                        prev_v = catalog.get(vid, curr_v)
+                        delta_12h = max(0, curr_v - prev_v)
+                    else:
+                        # Lần đầu chạy chưa đủ 12h: Delta = 0 để sắp xếp theo Tổng view (curr_v)
+                        delta_12h = 0
+                    candidates.append((vid, delta_12h, curr_v))
+
+            # Sắp xếp: Ưu tiên Delta 12h cao nhất; nếu bằng nhau sắp theo Tổng view
+            candidates.sort(key=lambda x: (x[1], x[2]), reverse=True)
+            pool2_ids = [c[0] for c in candidates[:50]]
+
+            # Cập nhật snapshot chuẩn của toàn bộ video làm mốc so sánh cho 12h sau
+            ch_data["catalog_snapshots"] = {vid: s["views"] for vid, s in all_stats.items()}
+            ch_data["tracked_video_ids"] = list(dict.fromkeys(pool1_ids + pool2_ids))
+
+        # --- CHU KỲ 15 PHÚT: QUÉT VIEW 100 VIDEO ---
+        tracked_ids = ch_data.get("tracked_video_ids", [])
+        if not tracked_ids:
+            tracked_ids = fetch_all_video_ids(uploads_pl)[:100]
+            ch_data["tracked_video_ids"] = tracked_ids
+
+        video_stats = batch_get_video_stats(tracked_ids)
+
+        # Tổng view của 100 video hiệu quả nhất
+        active_pool_views = sum(v["views"] for v in video_stats.values())
+        ch_data["views"] = active_pool_views
+
+        # Cập nhật danh sách video chi tiết
         video_list = []
-        ch_total_v30m = 0
-        ch_total_v60m = 0
-        ch_total_v24h = 0
-        ch_total_v48h = 0
-        ch_hourly_sum = [0] * 48
-        new_active_videos = []
-
-        for vid in videos:
-            v_id = vid["id"]
-            vid_hist = db["history"]["videos"].setdefault(v_id, [])
-
-            v_30m, v_60m, v_24h, v_48h, v_hourly = calculate_video_deltas(vid_hist, vid["views"])
-
-            # Lưu mốc & dọn dẹp sau 48h
-            vid_hist.append({"t": now_iso, "v": vid["views"]})
-            db["history"]["videos"][v_id] = prune_history(vid_hist, hours=50)
-
-            # Cộng dồn Realtime Kênh
-            ch_total_v30m += v_30m
-            ch_total_v60m += v_60m
-            ch_total_v24h += v_24h
-            ch_total_v48h += v_48h
-            for i in range(48):
-                ch_hourly_sum[i] += v_hourly[i]
-
-            # Nếu video có view tăng, giữ vào Watchlist
-            if v_30m > 5 or v_60m > 10:
-                new_active_videos.append(v_id)
-
-            # Tính tuổi thọ và vận tốc view
-            pub_date = parse_time(vid["published_at"]) if vid["published_at"] else now
-            hours_old = max(1, int((now - pub_date).total_seconds() / 3600))
-            days_old = max(1, int(hours_old / 24))
-            views_per_day = int(vid["views"] / days_old)
-
-            v_spark = make_sparkline(v_hourly)
-            is_spike = v_30m > 10 and (v_30m > (v_24h / 48) * 2)
-
+        for vid, v in video_stats.items():
             video_list.append({
-                "id": v_id,
-                "title": vid["title"],
-                "views": vid["views"],
-                "likes": vid["likes"],
-                "comments": vid["comments"],
-                "published_at": vid["published_at"],
-                "days_old": days_old,
-                "views_per_day": views_per_day,
-                "v_30m": v_30m,
-                "v_60m": v_60m,
-                "v_24h": v_24h,
-                "v_48h": v_48h,
-                "sparkline": v_spark,
-                "is_spike": is_spike
+                "id": vid,
+                "title": v["title"],
+                "views": v["views"],
+                "published_at": v["published_at"]
             })
+        video_list.sort(key=lambda x: x["views"], reverse=True)
+        ch_data["videos"] = video_list[:50]
 
-        # Cập nhật watchlist video đang cắn sóng (tối đa 30 video)
-        db["watchlist"][ch_id] = list(dict.fromkeys(new_active_videos))[:30]
+        # Lưu lịch sử chuỗi thời gian của tổng 100 video
+        history = ch_data.setdefault("history", [])
+        history.append([now_iso, active_pool_views])
 
-        # Sắp xếp video: Ưu tiên view 30p, sau đó 60p, 48h
-        video_list.sort(key=lambda x: (x["v_30m"], x["v_60m"], x["v_48h"], x["views_per_day"]), reverse=True)
+        if len(history) > 1500:
+            ch_data["history"] = history[-1500:]
 
-        avg_views = int(ch["views"] / ch["videos"]) if ch["videos"] > 0 else 0
-        ch_spark = make_sparkline(ch_hourly_sum)
-        ch_spike = ch_total_v30m > 25
+        # --- TÍNH TOÁN BIẾN ĐỘNG REALTIME ---
+        def get_views_ago(minutes_ago):
+            target = now_ts - (minutes_ago * 60)
+            closest_v = None
+            min_diff = float("inf")
+            for item in history:
+                item_ts = datetime.fromisoformat(item[0]).timestamp()
+                diff = abs(item_ts - target)
+                if diff < min_diff:
+                    min_diff = diff
+                    closest_v = item[1]
+            return closest_v
 
-        channels_summary[ch_id] = {
-            "id": ch_id,
-            "title": ch["title"],
-            "views": ch["views"],
-            "subs": ch["subs"],
-            "videos_count": ch["videos"],
-            "avg_views": avg_views,
-            "v_30m": ch_total_v30m,
-            "v_60m": ch_total_v60m,
-            "v_24h": ch_total_v24h,
-            "v_48h": ch_total_v48h,
-            "longterm": longterm_stats,
-            "sparkline": ch_spark,
-            "is_spike": ch_spike,
-            "videos": video_list
-        }
+        v_15m_ago = get_views_ago(15)
+        v_30m_ago = get_views_ago(30)
+        v_60m_ago = get_views_ago(60)
+        v_24h_ago = get_views_ago(24 * 60)
+        v_48h_ago = get_views_ago(48 * 60)
 
-    output_data = {
-        "updated_at": now_iso,
-        "updated_at_display": now_display,
-        "channels": channels_summary,
-        "history": db["history"],
-        "daily_channel_history": db["daily_channel_history"],
-        "watchlist": db["watchlist"]
-    }
+        ch_data["v_15m"] = max(0, active_pool_views - v_15m_ago) if v_15m_ago is not None else 0
+        ch_data["v_30m"] = max(0, active_pool_views - v_30m_ago) if v_30m_ago is not None else 0
+        ch_data["v_60m"] = max(0, active_pool_views - v_60m_ago) if v_60m_ago is not None else 0
+        ch_data["v_24h"] = max(0, active_pool_views - v_24h_ago) if v_24h_ago is not None else 0
+        ch_data["v_48h"] = max(0, active_pool_views - v_48h_ago) if v_48h_ago is not None else 0
 
-    with open("data.json", "w", encoding="utf-8") as f:
-        json.dump(output_data, f, ensure_ascii=False)
+        avg_15m = ch_data["v_60m"] / 4 if ch_data["v_60m"] > 0 else 0
+        ch_data["is_spike"] = ch_data["v_15m"] > max(50, avg_15m * 2)
 
-    # Cập nhật README.md
-    md = [
-        f"# 📊 YouTube Realtime Analytics Hub (Smart Pool 100 Engine)",
-        f"*Cập nhật: `{now_display}`*\n",
-        "| Top | Kênh | View 30p | View 60p | 48 Giờ | 48 Cột Giờ | 7 Ngày Qua | Tổng Toàn Thời Gian | Subs |",
-        "| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |"
-    ]
-    sorted_ch = sorted(channels_summary.values(), key=lambda x: (x["v_30m"], x["v_60m"], x["v_48h"], x["views"]), reverse=True)
-    for idx, ch in enumerate(sorted_ch, 1):
-        v30 = f"+{ch['v_30m']:,}" if ch['v_30m'] > 0 else "0"
-        v60 = f"+{ch['v_60m']:,}" if ch['v_60m'] > 0 else "0"
-        v48 = f"+{ch['v_48h']:,}" if ch['v_48h'] > 0 else "0"
-        d7 = f"+{ch['longterm']['d_7']:,}" if ch['longterm']['d_7'] > 0 else "-"
-        md.append(f"| #{idx} | **{ch['title']}** | `{v30}` | `{v60}` | **{v48}** | `{ch['sparkline']}` | {d7} | {ch['views']:,} | {ch['subs']:,} |")
+    if need_deep_scan or last_deep_scan == 0:
+        db["last_deep_scan_ts"] = now_ts
 
-    with open("README.md", "w", encoding="utf-8") as f:
-        f.write("\n".join(md))
+    db["updated_at"] = now_iso
+    save_data(db)
+    print("Cycle completed.")
 
 if __name__ == "__main__":
     main()
