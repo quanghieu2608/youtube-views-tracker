@@ -24,7 +24,7 @@ def get_channel_data(channel_ids):
     for item in res.get("items", []):
         channels.append({
             "id": item["id"],
-            "title": item["snippet"]["title"],
+            "title": item["snippet"].get("title", item["id"]),
             "views": int(item["statistics"].get("viewCount", 0)),
             "subs": int(item["statistics"].get("subscriberCount", 0)),
             "videos": int(item["statistics"].get("videoCount", 0)),
@@ -46,7 +46,7 @@ def get_latest_videos(playlist_id, max_results=50):
         pub_at = item["snippet"].get("publishedAt", "")
         videos.append({
             "id": item["id"],
-            "title": item["snippet"]["title"],
+            "title": item["snippet"].get("title", "Video không tiêu đề"),
             "published_at": pub_at,
             "views": int(item["statistics"].get("viewCount", 0)),
             "likes": int(item["statistics"].get("likeCount", 0)),
@@ -54,21 +54,23 @@ def get_latest_videos(playlist_id, max_results=50):
         })
     return videos
 
-def build_48h_sparkline(history, current_views):
+def calculate_deltas(history, current_views):
     now = datetime.now(timezone.utc)
-    hourly_views = [0] * 48
-    
     if not history:
-        return 0, 0, " " * 48
+        return 0, 0, " " * 48, False
 
+    # Mốc 1 giờ
     t_1h = now - timedelta(hours=1)
     rec_1h = min(history, key=lambda x: abs(parse_time(x["t"]) - t_1h), default=None)
     v_60m = max(0, current_views - rec_1h["v"]) if rec_1h else 0
 
+    # Mốc 48 giờ
     t_48h = now - timedelta(hours=48)
     rec_48h = min(history, key=lambda x: abs(parse_time(x["t"]) - t_48h), default=None)
     v_48h = max(0, current_views - rec_48h["v"]) if rec_48h else 0
 
+    # 48 cột từng giờ
+    hourly_views = [0] * 48
     for i in range(48):
         target_end = now - timedelta(hours=47 - i)
         target_start = target_end - timedelta(hours=1)
@@ -81,7 +83,11 @@ def build_48h_sparkline(history, current_views):
     max_h = max(hourly_views) if max(hourly_views) > 0 else 1
     sparkline = "".join(bars[min(8, int((val / max_h) * 8))] if val > 0 else " " for val in hourly_views)
 
-    return v_60m, v_48h, sparkline
+    # Phát hiện đột biến (Spike): nếu view 60m > 1.5 lần trung bình view/h của 48h
+    avg_hourly = (v_48h / 48) if v_48h > 0 else 0
+    is_spike = v_60m > 30 and (v_60m > avg_hourly * 1.8)
+
+    return v_60m, v_48h, sparkline, is_spike
 
 def prune_history(history):
     cutoff = datetime.now(timezone.utc) - timedelta(hours=50)
@@ -94,15 +100,17 @@ def main():
     with open("channels.txt", "r", encoding="utf-8") as f:
         channel_ids = [line.strip() for line in f if line.strip()]
 
-    db = {"channels": {}, "videos": {}, "history": {"channels": {}, "videos": {}}}
+    # Khởi tạo db an toàn
+    history_db = {"channels": {}, "videos": {}}
     if os.path.exists("data.json"):
         try:
             with open("data.json", "r", encoding="utf-8") as f:
                 loaded = json.load(f)
-                if isinstance(loaded, dict):
-                    db = loaded
-                    if "history" not in db:
-                        db["history"] = {"channels": {}, "videos": {}}
+                if isinstance(loaded, dict) and "history" in loaded:
+                    history_db = loaded["history"]
+                elif isinstance(loaded, dict) and "channels" in loaded:
+                    # Tương thích ngược nếu lưu dạng cũ
+                    history_db = {"channels": {}, "videos": {}}
         except Exception:
             pass
 
@@ -115,13 +123,13 @@ def main():
 
     for ch in channels_data:
         ch_id = ch["id"]
-        ch_hist = db["history"]["channels"].setdefault(ch_id, [])
+        ch_hist = history_db.setdefault("channels", {}).get(ch_id, [])
 
-        v_60m, v_48h, sparkline = build_48h_sparkline(ch_hist, ch["views"])
+        v_60m, v_48h, sparkline, ch_spike = calculate_deltas(ch_hist, ch["views"])
         ch_hist.append({"t": now_iso, "v": ch["views"]})
-        db["history"]["channels"][ch_id] = prune_history(ch_hist)
+        history_db["channels"][ch_id] = prune_history(ch_hist)
 
-        # Tính chỉ số vận hành kênh
+        # Chỉ số hiệu suất kênh
         avg_views_per_video = int(ch["views"] / ch["videos"]) if ch["videos"] > 0 else 0
 
         videos = get_latest_videos(ch["uploads_playlist"], max_results=50)
@@ -129,15 +137,16 @@ def main():
 
         for vid in videos:
             v_id = vid["id"]
-            vid_hist = db["history"]["videos"].setdefault(v_id, [])
+            vid_hist = history_db.setdefault("videos", {}).get(v_id, [])
 
-            vid_60m, vid_48h, v_spark = build_48h_sparkline(vid_hist, vid["views"])
+            vid_60m, vid_48h, v_spark, v_spike = calculate_deltas(vid_hist, vid["views"])
             vid_hist.append({"t": now_iso, "v": vid["views"]})
-            db["history"]["videos"][v_id] = prune_history(vid_hist)
+            history_db["videos"][v_id] = prune_history(vid_hist)
 
-            # Tính tuổi thọ video (theo ngày)
+            # Vận tốc view (Views/ngày)
             pub_date = parse_time(vid["published_at"]) if vid["published_at"] else now
-            days_old = max(1, (now - pub_date).days)
+            hours_old = max(1, int((now - pub_date).total_seconds() / 3600))
+            days_old = max(1, int(hours_old / 24))
             views_per_day = int(vid["views"] / days_old)
 
             video_list.append({
@@ -151,11 +160,12 @@ def main():
                 "views_per_day": views_per_day,
                 "v_60m": vid_60m,
                 "v_48h": vid_48h,
-                "sparkline": v_spark
+                "sparkline": v_spark,
+                "is_spike": v_spike
             })
 
-        # Sắp xếp video: nếu chưa có view 48h, xếp theo views tổng giảm dần
-        video_list.sort(key=lambda x: (x["v_48h"], x["v_60m"], x["views"]), reverse=True)
+        # Sắp xếp video theo view tăng trưởng, nếu bằng 0 thì xếp theo vận tốc v/ngày
+        video_list.sort(key=lambda x: (x["v_48h"], x["v_60m"], x["views_per_day"], x["views"]), reverse=True)
 
         channels_summary[ch_id] = {
             "id": ch_id,
@@ -167,6 +177,7 @@ def main():
             "v_60m": v_60m,
             "v_48h": v_48h,
             "sparkline": sparkline,
+            "is_spike": ch_spike,
             "videos": video_list
         }
 
@@ -174,22 +185,21 @@ def main():
         "updated_at": now_iso,
         "updated_at_display": now_display,
         "channels": channels_summary,
-        "history": db["history"]
+        "history": history_db
     }
 
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False)
 
-    sorted_channels = sorted(channels_summary.values(), key=lambda x: (x["v_48h"], x["v_60m"], x["views"]), reverse=True)
+    # Cập nhật README.md
     md = [
-        "# 📊 Báo Cáo View YouTube Realtime",
+        f"# 📊 YouTube Realtime Analytics Hub",
         f"*Cập nhật: `{now_display}`*\n",
-        "## 1. Xếp Hạng Kênh",
-        "| Top | Kênh | View 48 Giờ | 48 Cột Giờ | View 60p | Tổng Views | Subs | TB View/Video |",
+        "| Top | Kênh | 48 Giờ | 48 Cột Giờ | 60 Phút | Tổng Views | Subs | TB View/Video |",
         "| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |"
     ]
-
-    for idx, ch in enumerate(sorted_channels, 1):
+    sorted_ch = sorted(channels_summary.values(), key=lambda x: (x["v_48h"], x["v_60m"], x["views"]), reverse=True)
+    for idx, ch in enumerate(sorted_ch, 1):
         v48 = f"+{ch['v_48h']:,}" if ch['v_48h'] > 0 else "0"
         v60 = f"+{ch['v_60m']:,}" if ch['v_60m'] > 0 else "0"
         md.append(f"| #{idx} | **{ch['title']}** | **{v48}** | `{ch['sparkline']}` | `{v60}` | {ch['views']:,} | {ch['subs']:,} | {ch['avg_views']:,} |")
