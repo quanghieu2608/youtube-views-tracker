@@ -2,6 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>YouTube Realtime Pro</title>
   <style>
@@ -32,12 +35,12 @@
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
     .btn-header:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Progress Bar */
+    /* Progress Bar 15P */
     .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
     .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
     .meta-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--subtext); margin-top: 5px; padding: 0 2px; }
 
-    /* Khung Thêm Kênh */
+    /* Form Thêm Kênh */
     .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
     .add-channel-box.active { display: block; }
     .input-group { display: flex; gap: 6px; margin-top: 6px; }
@@ -76,24 +79,24 @@
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* HÀNG REALTIME: 48H (1fr) - 24H (1fr) - 60P TO (2.2fr) */
-    .stats-grid-custom { display: grid; grid-template-columns: 1fr 1fr 2.2fr; gap: 6px; margin-top: 8px; }
+    /* HÀNG REALTIME: 48H (0.9fr) - 24H (0.9fr) - 60P TO (2.4fr) */
+    .stats-grid-custom { display: grid; grid-template-columns: 0.9fr 0.9fr 2.4fr; gap: 6px; margin-top: 8px; }
     .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
     .stat-label-compact { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
-    .stat-val-compact { font-size: 0.95rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
+    .stat-val-compact { font-size: 0.92rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
 
-    /* Ô 60P TO */
+    /* Ô 60P: 4 CỘT BIỂU ĐỒ 15P MINI-STUDIO */
     .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 60px; }
-    .box-60p-title { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
-    .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 3px; }
+    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 55px; }
+    .box-60p-title { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
+    .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 2px; }
 
-    /* 2 CỘT BIỂU ĐỒ & SỐ CHÍNH XÁC PHÍA DƯỚI */
-    .bars-container { display: flex; align-items: flex-end; gap: 6px; height: 44px; flex: 1; justify-content: flex-end; }
-    .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 52px; height: 100%; justify-content: flex-end; }
-    .bar-track { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
-    .bar-fill { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.3s ease; min-height: 2px; }
-    .bar-view-val { font-size: 0.55rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin-top: 2px; line-height: 1; white-space: nowrap; }
+    /* 4 CỘT BAR 15 PHÚT */
+    .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 44px; flex: 1; justify-content: flex-end; }
+    .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 38px; height: 100%; justify-content: flex-end; }
+    .bar-track-4 { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
+    .bar-fill-4 { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.3s ease; min-height: 2px; }
+    .bar-val-4 { font-size: 0.52rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin-top: 2px; line-height: 1; white-space: nowrap; }
 
     /* Dải Dài Hạn */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
@@ -142,7 +145,7 @@
     </div>
     <div class="meta-sub">
       <span id="lastUpdatedLabel">Cập nhật: --:--:--</span>
-      <span>Chu kỳ cố định: :00 & :30</span>
+      <span>Chu kỳ cố định: :00, :15, :30, :45</span>
     </div>
   </header>
 
@@ -180,7 +183,7 @@
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
-    const TOTAL_CYCLE_SECONDS = 30 * 60;
+    const TOTAL_CYCLE_SECONDS = 15 * 60; // Chu kỳ 15 phút
 
     let db = null;
     let sortMode = '60m';
@@ -420,16 +423,18 @@
       }
     }
 
+    // ĐẾM LÙI THEO CÁC MỐC 15 PHÚT (:00, :15, :30, :45)
     function calcNextCronTarget() {
       const now = new Date();
       const m = now.getMinutes();
       nextTarget = new Date(now);
+      const nextMin = (Math.floor(m / 15) + 1) * 15;
 
-      if (m < 30) {
-        nextTarget.setMinutes(30, 0, 0);
-      } else {
+      if (nextMin === 60) {
         nextTarget.setHours(now.getHours() + 1);
         nextTarget.setMinutes(0, 0, 0);
+      } else {
+        nextTarget.setMinutes(nextMin, 0, 0);
       }
     }
 
@@ -493,6 +498,55 @@
       render();
     }
 
+    // HÀM TÍNH TOÁN 4 CỘT 15 PHÚT TỪ SNAPSHOT LỊCH SỬ
+    function compute15mSlices(ch) {
+      const history = ch.history || [];
+      const currentViews = ch.views || 0;
+      const total60 = ch.v_60m || 0;
+
+      // Nếu có mảng lịch sử snapshot chi tiết
+      if (history.length >= 2) {
+        const nowTs = new Date(db.updated_at || Date.now()).getTime();
+
+        const findViewsAt = (targetMinutesAgo) => {
+          const targetTs = nowTs - (targetMinutesAgo * 60 * 1000);
+          let closest = null;
+          let minDiff = Infinity;
+          for (let item of history) {
+            const itemTs = new Date(item[0]).getTime();
+            const diff = Math.abs(itemTs - targetTs);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closest = item;
+            }
+          }
+          return closest ? closest[1] : null;
+        };
+
+        const v15 = findViewsAt(15);
+        const v30 = findViewsAt(30);
+        const v45 = findViewsAt(45);
+        const v60 = findViewsAt(60);
+
+        if (v15 !== null && v30 !== null) {
+          const c4 = Math.max(0, currentViews - v15);
+          const c3 = Math.max(0, v15 - v30);
+          const c2 = v45 !== null ? Math.max(0, v30 - v45) : Math.max(0, Math.round((v30 - (v60 || (currentViews - total60))) / 2));
+          const c1 = Math.max(0, total60 - (c4 + c3 + c2));
+          return [c1, c2, c3, c4];
+        }
+      }
+
+      // Fallback chia mịn từ 30P và 60P sẵn có
+      const v_curr_30 = ch.v_30m || 0;
+      const v_prev_30 = Math.max(0, total60 - v_curr_30);
+      const c4 = Math.round(v_curr_30 * 0.55);
+      const c3 = Math.max(0, v_curr_30 - c4);
+      const c2 = Math.round(v_prev_30 * 0.55);
+      const c1 = Math.max(0, v_prev_30 - c2);
+      return [c1, c2, c3, c4];
+    }
+
     function render() {
       if (!db || !db.channels) return;
       const chList = Object.values(db.channels);
@@ -517,18 +571,18 @@
         const lt = ch.longterm || { d_7: 0, d_30: 0, d_90: 0 };
         const isCollapsed = !!collapsedMap[ch.id];
 
-        // TÍNH TOÁN 2 CỘT 30P
-        const v_curr = ch.v_30m || 0;
-        const v_prev = Math.max(0, (ch.v_60m || 0) - v_curr);
-        const v_total_60 = ch.v_60m || (v_curr + v_prev);
+        // TÍNH TOÁN 4 CỘT 15 PHÚT
+        const [c1, c2, c3, c4] = compute15mSlices(ch);
+        const v_total_60 = ch.v_60m || (c1 + c2 + c3 + c4);
 
-        // Chiều cao tương quan (tối thiểu 8% để không bị lún mất vạch)
-        const maxVal = Math.max(v_curr, v_prev, 1);
-        const hPrev = Math.max(8, Math.round((v_prev / maxVal) * 100));
-        const hCurr = Math.max(8, Math.round((v_curr / maxVal) * 100));
+        const maxVal = Math.max(c1, c2, c3, c4, 1);
+        const h1 = Math.max(8, Math.round((c1 / maxVal) * 100));
+        const h2 = Math.max(8, Math.round((c2 / maxVal) * 100));
+        const h3 = Math.max(8, Math.round((c3 / maxVal) * 100));
+        const h4 = Math.max(8, Math.round((c4 / maxVal) * 100));
 
-        // Màu cột hiện tại: xanh lá nếu giữ hoặc tăng tốc, cam nếu giảm
-        const currColor = v_curr >= v_prev ? 'var(--accent)' : 'var(--warning)';
+        // Màu cột mới nhất (c4): xanh lá sáng nếu tăng nhiệt so với c3, cam nếu giảm
+        const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
 
         const card = document.createElement('div');
         card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
@@ -552,7 +606,7 @@
           </div>
 
           <div class="card-body">
-            <!-- HÀNG REALTIME: 48H - 24H - 60P TO BỀ NGANG -->
+            <!-- HÀNG REALTIME: 48H - 24H - 60P 4 CỘT -->
             <div class="stats-grid-custom">
               <div class="stat-box-compact">
                 <div class="stat-label-compact">48H</div>
@@ -564,26 +618,41 @@
                 <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
               </div>
 
-              <!-- Ô 60P: CON SỐ CHÍNH XÁC ĐẶT DƯỚI ĐÁY CỘT -->
+              <!-- Ô 60P: 4 CỘT MINI 15P -->
               <div class="box-60p-wrapper">
                 <div class="box-60p-info">
-                  <div class="box-60p-title">⏱ 60P TỔNG</div>
+                  <div class="box-60p-title">⏱ 60P</div>
                   <div class="box-60p-total">+${v_total_60.toLocaleString()}</div>
                 </div>
 
-                <!-- 2 Cột Biểu Đồ Mini Rộng Ngang, View Hiển Thị Chính Xác Dưới Chân Cột -->
-                <div class="bars-container">
-                  <div class="bar-col">
-                    <div class="bar-track">
-                      <div class="bar-fill" style="height: ${hPrev}%; background: #388bfd;"></div>
+                <!-- 4 Cột Biểu Đồ 15P Trôi Dần Sang Trái -->
+                <div class="bars-container-4">
+                  <div class="bar-col-4">
+                    <div class="bar-track-4">
+                      <div class="bar-fill-4" style="height: ${h1}%; background: #265999;"></div>
                     </div>
-                    <span class="bar-view-val" style="color: #388bfd;">+${v_prev.toLocaleString()}</span>
+                    <span class="bar-val-4" style="color: #58a6ff;">+${c1.toLocaleString()}</span>
                   </div>
-                  <div class="bar-col">
-                    <div class="bar-track">
-                      <div class="bar-fill" style="height: ${hCurr}%; background: ${currColor};"></div>
+
+                  <div class="bar-col-4">
+                    <div class="bar-track-4">
+                      <div class="bar-fill-4" style="height: ${h2}%; background: #388bfd;"></div>
                     </div>
-                    <span class="bar-view-val" style="color: ${currColor};">+${v_curr.toLocaleString()}</span>
+                    <span class="bar-val-4" style="color: #58a6ff;">+${c2.toLocaleString()}</span>
+                  </div>
+
+                  <div class="bar-col-4">
+                    <div class="bar-track-4">
+                      <div class="bar-fill-4" style="height: ${h3}%; background: #388bfd;"></div>
+                    </div>
+                    <span class="bar-val-4" style="color: #58a6ff;">+${c3.toLocaleString()}</span>
+                  </div>
+
+                  <div class="bar-col-4">
+                    <div class="bar-track-4">
+                      <div class="bar-fill-4" style="height: ${h4}%; background: ${c4Color};"></div>
+                    </div>
+                    <span class="bar-val-4" style="color: ${c4Color};">+${c4.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
