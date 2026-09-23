@@ -3,198 +3,202 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>YouTube Realtime Analytics</title>
+  <title>YouTube Realtime Pro</title>
   <style>
     :root {
-      --bg: #0b0e14;
-      --card-bg: #151a23;
-      --card-inner: #1c2331;
-      --primary: #38bdf8;
-      --accent: #22c55e;
-      --warning: #f59e0b;
-      --spike: #ef4444;
-      --text: #f8fafc;
-      --subtext: #94a3b8;
-      --border: #2e384d;
+      --bg: #090c10;
+      --card-bg: #161b22;
+      --card-sub: #0d1117;
+      --primary: #58a6ff;
+      --accent: #3fb950;
+      --warning: #d29922;
+      --danger: #f85149;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --subtext: #8b949e;
+      --border: #30363d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 14px; padding-bottom: 70px; }
-    
-    header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    h1 { font-size: 1.15rem; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    body { background: var(--bg); color: var(--text); padding: 12px; padding-bottom: 70px; }
+
+    /* Header & Timer */
+    header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 1.15rem; color: var(--text-bright); display: flex; align-items: center; gap: 8px; font-weight: 700; }
     .live-dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
-    
-    /* Countdown Timer Bar */
-    .timer-bar { margin-top: 10px; background: var(--card-inner); padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; }
-    .countdown-text { color: var(--primary); font-weight: bold; font-family: monospace; font-size: 0.88rem; }
 
-    .controls { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
-    .btn-filter { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 7px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
-    .btn-filter.active { background: #fff; color: #000; font-weight: bold; border-color: #fff; }
+    .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+    .countdown { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--primary); }
 
-    .card { background: var(--card-bg); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-    .ch-title { font-weight: 700; font-size: 1.05rem; color: #fff; line-height: 1.3; }
-    
-    .meta-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    .badge { background: #1e293b; color: var(--subtext); padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; }
-    .badge.highlight { background: #1e3a8a; color: #93c5fd; }
-    .badge.spike { background: #7f1d1d; color: #fca5a5; font-weight: bold; animation: pulse 1.5s infinite; }
+    /* Bộ lọc */
+    .controls { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+    .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
-    @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+    /* Card Kênh */
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
+    .ch-title { font-size: 1.05rem; font-weight: 700; color: var(--text-bright); line-height: 1.3; }
 
+    .badges-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+    .badge-gray { background: #21262d; color: var(--subtext); }
+    .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
+    @keyframes blink { 50% { opacity: 0.6; } }
+
+    /* Lưới thống kê 4 ô */
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
-    .stat-box { background: var(--card-inner); padding: 9px 12px; border-radius: 8px; }
-    .stat-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-val { font-size: 1.15rem; font-weight: 800; margin-top: 2px; }
-    .stat-sub { font-size: 0.65rem; color: #64748b; margin-top: 2px; }
+    .stat-box { background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .stat-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; font-weight: 600; }
+    .stat-val { font-size: 1.18rem; font-weight: 800; color: var(--text-bright); margin-top: 2px; }
+    .stat-note { font-size: 0.65rem; color: var(--subtext); margin-top: 2px; }
 
-    .sparkline-box { margin-top: 10px; background: var(--card-inner); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 2px; overflow-x: auto; white-space: nowrap; }
+    .sparkline-container { margin-top: 10px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+    .sparkline-title { font-size: 0.65rem; color: var(--subtext); margin-bottom: 4px; font-weight: bold; }
+    .sparkline-bars { font-family: monospace; font-size: 0.95rem; color: var(--primary); letter-spacing: 2px; overflow-x: auto; white-space: nowrap; }
 
-    /* Video con */
-    .video-list { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; display: none; }
-    .v-item { padding: 9px 0; border-bottom: 1px solid #1f2937; display: flex; flex-direction: column; gap: 4px; }
+    /* Danh sách Video con */
+    .video-drawer { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; display: none; }
+    .v-item { padding: 10px 0; border-bottom: 1px solid #21262d; }
     .v-item:last-child { border-bottom: none; }
-    .v-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .v-title { font-size: 0.82rem; color: #e2e8f0; text-decoration: none; font-weight: 500; line-height: 1.35; flex: 1; }
-    .v-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: var(--subtext); margin-top: 2px; }
-    .v-nums { display: flex; gap: 10px; font-weight: 600; }
+    .v-title-row { display: flex; justify-content: space-between; gap: 8px; }
+    .v-title { color: var(--text-bright); font-size: 0.82rem; text-decoration: none; font-weight: 500; line-height: 1.35; flex: 1; }
+    .v-metrics { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.72rem; }
+    .v-growth { display: flex; gap: 8px; font-weight: 700; font-family: monospace; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="header-top">
-      <h1><span class="live-dot"></span> YouTube Analytics Hub</h1>
-      <span class="badge highlight" id="channelCount">Đang tải...</span>
+    <div class="header-row">
+      <h1><span class="live-dot"></span> YouTube Analytics Pro</h1>
+      <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
-    <div class="timer-bar">
-      <span>Đợt quét mới sau:</span>
-      <span class="countdown-text" id="countdown">--:--</span>
+    <div class="timer-pill">
+      <span>Lần quét tiếp theo:</span>
+      <span class="countdown" id="timer">--:--</span>
     </div>
   </header>
 
   <div class="controls">
-    <button class="btn-filter active" onclick="setSort('48h')">48 Giờ Qua</button>
-    <button class="btn-filter" onclick="setSort('60m')">60 Phút Qua</button>
-    <button class="btn-filter" onclick="setSort('total')">Tổng View Kênh</button>
-    <button class="btn-filter" onclick="setSort('avg')">TB View/Video</button>
+    <button class="btn-tab active" onclick="changeSort('48h')">48 Giờ Qua</button>
+    <button class="btn-tab" onclick="changeSort('60m')">60 Phút Qua</button>
+    <button class="btn-tab" onclick="changeSort('velocity')">Vận Tốc (v/ngày)</button>
+    <button class="btn-tab" onclick="changeSort('total')">Tổng Views</button>
   </div>
 
-  <div id="channelsContainer"></div>
+  <div id="appContainer">Đang tải và tính toán dữ liệu...</div>
 
   <script>
-    let rawData = null;
-    let currentSort = '48h';
-    let nextScanTime = null;
+    let db = null;
+    let sortMode = '48h';
+    let targetTime = null;
 
-    async function fetchData() {
+    async function loadData() {
       try {
-        const res = await fetch('data.json?_=' + new Date().getTime());
-        rawData = await res.json();
-        
-        // Tính toán mốc quét kế tiếp (mỗi 30 phút ở phút :00 hoặc :30)
-        calcNextScan(rawData.updated_at);
+        const res = await fetch('data.json?v=' + Date.now());
+        db = await res.json();
+        setupTimer(db.updated_at);
         render();
       } catch (e) {
-        document.getElementById('countdown').innerText = 'Chờ đồng bộ...';
+        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được data.json mới từ GitHub Actions. Vui lòng chạy workflow trước!</div>';
       }
     }
 
-    function calcNextScan(lastIso) {
-      const now = new Date();
-      let next = new Date(now);
-      if (now.getMinutes() < 30) {
+    function setupTimer(isoString) {
+      const last = isoString ? new Date(isoString) : new Date();
+      // Chu kỳ mỗi 30 phút ở phút 00 và phút 30
+      let next = new Date(last);
+      if (last.getMinutes() < 30) {
         next.setMinutes(30, 0, 0);
       } else {
-        next.setHours(now.getHours() + 1, 0, 0, 0);
+        next.setHours(last.getHours() + 1, 0, 0, 0);
       }
-      nextScanTime = next;
+      targetTime = next;
     }
 
-    function updateCountdown() {
-      if (!nextScanTime) return;
-      const diff = Math.max(0, Math.floor((nextScanTime - new Date()) / 1000));
+    setInterval(() => {
+      if (!targetTime) return;
+      const diff = Math.max(0, Math.floor((targetTime - new Date()) / 1000));
       const m = String(Math.floor(diff / 60)).padStart(2, '0');
       const s = String(diff % 60).padStart(2, '0');
-      document.getElementById('countdown').innerText = `${m}m ${s}s`;
-      if (diff === 0) {
-        setTimeout(fetchData, 5000);
-      }
-    }
-    setInterval(updateCountdown, 1000);
+      document.getElementById('timer').innerText = `${m}m ${s}s`;
+    }, 1000);
 
-    function setSort(type) {
-      currentSort = type;
-      document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+    function changeSort(mode) {
+      sortMode = mode;
+      document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
       event.target.classList.add('active');
       render();
     }
 
     function render() {
-      if (!rawData || !rawData.channels) return;
-      const list = Object.values(rawData.channels);
-      document.getElementById('channelCount').innerText = `${list.length} Kênh`;
+      if (!db || !db.channels) return;
+      const chList = Object.values(db.channels);
+      document.getElementById('channelSummary').innerText = `${chList.length} Kênh`;
 
-      list.sort((a, b) => {
-        if (currentSort === '60m') return (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views);
-        if (currentSort === 'total') return b.views - a.views;
-        if (currentSort === 'avg') return (b.avg_views || 0) - (a.avg_views || 0);
+      // Sắp xếp thông minh
+      chList.sort((a, b) => {
+        if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views);
+        if (sortMode === 'velocity') return (b.avg_views || 0) - (a.avg_views || 0);
+        if (sortMode === 'total') return (b.views || 0) - (a.views || 0);
         return (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views);
       });
 
-      const container = document.getElementById('channelsContainer');
+      const container = document.getElementById('appContainer');
       container.innerHTML = '';
 
-      list.forEach((ch, idx) => {
-        const isSpike = (ch.v_60m || 0) > 100;
+      chList.forEach((ch, idx) => {
+        const hasHistory = (ch.v_48h > 0 || ch.v_60m > 0);
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <div class="card-header" onclick="toggleVideos('${ch.id}')">
+          <div class="card-top" onclick="toggleDrawer('${ch.id}')">
             <div>
-              <div class="ch-title">#${idx + 1}. ${ch.title}</div>
-              <div class="meta-badges">
-                <span class="badge">${(ch.subs || 0).toLocaleString()} Subs</span>
-                <span class="badge">${(ch.videos_count || 0)} Video</span>
-                <span class="badge">TB: ${(ch.avg_views || 0).toLocaleString()} v/vid</span>
-                ${isSpike ? `<span class="badge spike">🔥 ĐANG BÙNG VIEW</span>` : ''}
+              <div class="ch-title">#${idx + 1}. ${ch.title || 'Chưa nhận diện'}</div>
+              <div class="badges-row">
+                <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
+                <span class="badge badge-gray">${ch.videos_count || 0} Video</span>
+                <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()} v/vid</span>
+                ${ch.is_spike ? `<span class="badge badge-spike">🔥 TĂNG ĐỘT BIẾN</span>` : ''}
               </div>
             </div>
-            <span style="font-size:0.8rem; color:var(--subtext);">▾ Chi tiết</span>
+            <span style="font-size:0.75rem; color:var(--primary);">Chi tiết ▾</span>
           </div>
 
           <div class="stats-grid">
             <div class="stat-box">
               <div class="stat-label">48 Giờ Qua</div>
-              <div class="stat-val" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
-              <div class="stat-sub">View chu kỳ 2 ngày</div>
+              <div class="stat-val" style="color:var(--primary);">${ch.v_48h > 0 ? '+' + ch.v_48h.toLocaleString() : (hasHistory ? '0' : 'Đang đo...')}</div>
+              <div class="stat-note">${hasHistory ? 'Tăng thực tế' : 'Cần đủ 2 mốc quét'}</div>
             </div>
+
             <div class="stat-box">
               <div class="stat-label">60 Phút Qua</div>
-              <div class="stat-val" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
-              <div class="stat-sub">Vừa tăng 1 giờ</div>
+              <div class="stat-val" style="color:var(--accent);">${ch.v_60m > 0 ? '+' + ch.v_60m.toLocaleString() : (hasHistory ? '0' : 'Đang đo...')}</div>
+              <div class="stat-note">${hasHistory ? 'Tăng 1 giờ gần nhất' : 'Cần 2 lần quét'}</div>
             </div>
+
             <div class="stat-box">
               <div class="stat-label">Tổng Lượt Xem</div>
               <div class="stat-val">${(ch.views || 0).toLocaleString()}</div>
-              <div class="stat-sub">Toàn thời gian</div>
+              <div class="stat-note">Toàn thời gian</div>
             </div>
+
             <div class="stat-box">
-              <div class="stat-label">Sức bật Kênh</div>
-              <div class="stat-val" style="color:var(--warning);">${((ch.subs / (ch.videos_count || 1))).toFixed(0)}</div>
-              <div class="stat-sub">Subs / Video</div>
+              <div class="stat-label">Hiệu Quả Nội Dung</div>
+              <div class="stat-val" style="color:var(--warning);">${(ch.videos_count > 0 ? (ch.subs / ch.videos_count).toFixed(0) : 0)}</div>
+              <div class="stat-note">Subs / Video</div>
             </div>
           </div>
 
-          <div class="sparkline-box">
-            <div style="font-size:0.65rem; color:#64748b; margin-bottom:2px;">BIỂU ĐỒ 48 CỘT GIỜ:</div>
-            ${ch.sparkline || 'Đang tích lũy các cột sóng...'}
+          <div class="sparkline-container">
+            <div class="sparkline-title">XU HƯỚNG 48 GIỜ (MỖI VẠCH = 1 TIẾNG):</div>
+            <div class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█ (Đang gom chu kỳ theo từng giờ...)'}</div>
           </div>
 
-          <div class="video-list" id="vbox-${ch.id}">
-            <div style="font-size:0.75rem; color:var(--subtext); margin-bottom:8px; font-weight:bold;">DANH SÁCH VIDEO MỚI NHẤT:</div>
+          <div class="video-drawer" id="box-${ch.id}">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--subtext); margin-bottom:8px;">DANH SÁCH VIDEO THEO HIỆU SUẤT:</div>
             ${renderVideos(ch.videos)}
           </div>
         `;
@@ -203,34 +207,31 @@
     }
 
     function renderVideos(videos) {
-      if (!videos || !videos.length) return '<div style="font-size:0.75rem; color:#666;">Chưa có video</div>';
-      return videos.slice(0, 20).map(v => {
-        const vSpike = (v.v_60m || 0) > 10;
-        return `
-          <div class="v-item">
-            <div class="v-top">
-              <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
-              ${vSpike ? `<span class="badge spike">Tăng vọt</span>` : ''}
-            </div>
-            <div class="v-meta">
-              <span>Đã đăng: ${v.days_old} ngày (${(v.views_per_day || 0).toLocaleString()} v/ngày)</span>
-              <div class="v-nums">
-                <span style="color:var(--accent);">+${(v.v_60m || 0).toLocaleString()} (60p)</span>
-                <span style="color:var(--primary);">+${(v.v_48h || 0).toLocaleString()} (48h)</span>
-                <span style="color:#e2e8f0;">${(v.views || 0).toLocaleString()}</span>
-              </div>
+      if (!videos || !videos.length) return '<div style="font-size:0.75rem; color:var(--subtext);">Chưa có video</div>';
+      return videos.slice(0, 15).map(v => `
+        <div class="v-item">
+          <div class="v-title-row">
+            <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
+            ${v.is_spike ? '<span class="badge badge-spike">Spike</span>' : ''}
+          </div>
+          <div class="v-metrics">
+            <span style="color:var(--subtext);">${v.days_old} ngày tuổi • <b>${(v.views_per_day || 0).toLocaleString()}</b> v/ngày</span>
+            <div class="v-growth">
+              <span style="color:var(--accent);">+${(v.v_60m || 0).toLocaleString()} (60p)</span>
+              <span style="color:var(--primary);">+${(v.v_48h || 0).toLocaleString()} (48h)</span>
+              <span style="color:var(--text);">${(v.views || 0).toLocaleString()}</span>
             </div>
           </div>
-        `;
-      }).join('');
+        </div>
+      `).join('');
     }
 
-    function toggleVideos(id) {
-      const el = document.getElementById('vbox-' + id);
-      if (el) el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    function toggleDrawer(id) {
+      const el = document.getElementById('box-' + id);
+      if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
-    fetchData();
+    loadData();
   </script>
 </body>
 </html>
