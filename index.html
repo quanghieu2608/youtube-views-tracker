@@ -19,81 +19,82 @@
       --border: #30363d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 12px; padding-bottom: 70px; }
+    body { background: var(--bg); color: var(--text); padding: 8px; padding-bottom: 60px; }
 
-    header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
     .header-row { display: flex; justify-content: space-between; align-items: center; }
-    h1 { font-size: 1.15rem; color: var(--text-bright); display: flex; align-items: center; gap: 8px; font-weight: 700; }
-    .live-dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
+    h1 { font-size: 1rem; color: var(--text-bright); display: flex; align-items: center; gap: 6px; font-weight: 700; }
+    .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
 
-    .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
-    .countdown-box { display: flex; align-items: center; gap: 8px; }
-    .countdown { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--primary); }
-    .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; }
+    .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
+    .countdown-box { display: flex; align-items: center; gap: 6px; }
+    .countdown { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+    .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
 
     /* Khung Thêm Kênh */
-    .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; display: none; }
+    .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
     .add-channel-box.active { display: block; }
-    .input-group { display: flex; gap: 8px; margin-top: 8px; }
-    .input-box { background: var(--card-sub); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; flex: 1; outline: none; }
-    .input-box:focus { border-color: var(--primary); }
-    .btn-action { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+    .input-group { display: flex; gap: 6px; margin-top: 6px; }
+    .input-box { background: var(--card-sub); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.78rem; flex: 1; outline: none; }
+    .btn-action { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
     .btn-action:disabled { background: #333; color: #777; }
-    .status-msg { font-size: 0.75rem; margin-top: 6px; min-height: 18px; }
+    .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
     /* Controls & Tabs */
-    .controls { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
-    .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .controls { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 5px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
     /* Card Kênh */
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-    .ch-title { font-size: 1.05rem; font-weight: 700; color: var(--text-bright); line-height: 1.3; }
+    .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; }
 
-    .badges-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+    .badges-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+    .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; }
     .badge-gray { background: #21262d; color: var(--subtext); }
     .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
-    .stat-box { background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
-    .stat-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; font-weight: 600; }
-    .stat-val { font-size: 1.18rem; font-weight: 800; color: var(--text-bright); margin-top: 2px; }
-    .stat-note { font-size: 0.65rem; color: var(--subtext); margin-top: 2px; }
+    /* 4 Ô REALTIME GỌN CHUNG 1 HÀNG */
+    .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 8px; }
+    .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; }
+    .stat-label-compact { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+    .stat-val-compact { font-size: 0.95rem; font-weight: 800; margin-top: 2px; line-height: 1.1; }
 
-    .longterm-strip { margin-top: 10px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+    /* Dải Dài Hạn 1 Hàng */
+    .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
-    .lt-label { font-size: 0.62rem; color: var(--subtext); font-weight: 600; }
-    .lt-val { font-size: 0.85rem; font-weight: 700; color: var(--text-bright); margin-top: 2px; }
+    .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
+    .lt-val { font-size: 0.78rem; font-weight: 700; color: var(--text-bright); margin-top: 1px; }
 
-    .sparkline-container { margin-top: 10px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
-    .sparkline-title { font-size: 0.65rem; color: var(--subtext); margin-bottom: 4px; font-weight: bold; }
-    .sparkline-bars { font-family: monospace; font-size: 0.95rem; color: var(--primary); letter-spacing: 2px; overflow-x: auto; white-space: nowrap; }
+    /* Sparkline thu nhỏ */
+    .sparkline-container { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; display: flex; justify-content: space-between; align-items: center; }
+    .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
+    .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
-    .video-drawer { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; display: none; }
-    .v-item { padding: 10px 0; border-bottom: 1px solid #21262d; }
+    .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
+    .v-item { padding: 8px 0; border-bottom: 1px solid #21262d; }
     .v-item:last-child { border-bottom: none; }
-    .v-title-row { display: flex; justify-content: space-between; gap: 8px; }
-    .v-title { color: var(--text-bright); font-size: 0.82rem; text-decoration: none; font-weight: 500; line-height: 1.35; flex: 1; }
-    .v-metrics { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.72rem; }
-    .v-growth { display: flex; gap: 8px; font-weight: 700; font-family: monospace; }
+    .v-title-row { display: flex; justify-content: space-between; gap: 6px; }
+    .v-title { color: var(--text-bright); font-size: 0.78rem; text-decoration: none; font-weight: 500; line-height: 1.3; flex: 1; }
+    .v-metrics { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.68rem; }
+    .v-growth { display: flex; gap: 6px; font-weight: 700; font-family: monospace; }
   </style>
 </head>
 <body>
 
   <header>
     <div class="header-row">
-      <h1><span class="live-dot"></span> YouTube Analytics Pro</h1>
-      <div style="display:flex; gap:6px;">
-        <button class="btn-header" onclick="toggleAddBox()">➕ Thêm Kênh</button>
-        <button class="btn-header" onclick="loadData(true)">🔄 Cập nhật</button>
+      <h1><span class="live-dot"></span> YouTube Realtime Pro</h1>
+      <div style="display:flex; gap:5px;">
+        <button class="btn-header" onclick="toggleAddBox()">➕ Thêm</button>
+        <button class="btn-header" onclick="loadData(true)">🔄 Quét</button>
       </div>
     </div>
     <div class="timer-pill">
       <div class="countdown-box">
-        <span id="timerLabel">Lần quét tiếp theo:</span>
+        <span id="timerLabel" style="color:var(--subtext);">Kế tiếp:</span>
         <span class="countdown" id="timer">--:--</span>
       </div>
       <span class="badge badge-gray" id="channelSummary">...</span>
@@ -102,22 +103,22 @@
 
   <!-- Form Thêm Kênh Nhanh -->
   <div class="add-channel-box" id="addChannelBox">
-    <div style="font-size:0.8rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay</div>
+    <div style="font-size:0.75rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay:</div>
     <div class="input-group">
-      <input type="text" id="channelInput" class="input-box" placeholder="Dán Channel ID (ví dụ: UCxxxxxxxxxxxx)">
+      <input type="text" id="channelInput" class="input-box" placeholder="Dán Channel ID (UC...)">
       <button class="btn-action" id="btnAdd" onclick="submitNewChannel()">Thêm & Quét</button>
     </div>
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
   <div class="controls">
-    <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30 Phút</button>
-    <button class="btn-tab" onclick="changeSort('60m')">60 Phút</button>
-    <button class="btn-tab" onclick="changeSort('24h')">24 Giờ</button>
-    <button class="btn-tab" onclick="changeSort('48h')">48 Giờ</button>
-    <button class="btn-tab" onclick="changeSort('d_7')">📅 7 Ngày</button>
-    <button class="btn-tab" onclick="changeSort('d_30')">📅 30 Ngày</button>
-    <button class="btn-tab" onclick="changeSort('total')">Toàn thời gian</button>
+    <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30P</button>
+    <button class="btn-tab" onclick="changeSort('60m')">⏱ 60P</button>
+    <button class="btn-tab" onclick="changeSort('24h')">24H</button>
+    <button class="btn-tab" onclick="changeSort('48h')">48H</button>
+    <button class="btn-tab" onclick="changeSort('d_7')">📅 7N</button>
+    <button class="btn-tab" onclick="changeSort('d_30')">📅 30N</button>
+    <button class="btn-tab" onclick="changeSort('total')">Toàn bộ</button>
   </div>
 
   <div id="appContainer">Đang tải dữ liệu...</div>
@@ -132,11 +133,10 @@
     let nextTarget = null;
     let isFetching = false;
 
-    // Lấy Token đã lưu trong trình duyệt (hoặc hỏi nếu chưa có)
     function getStoredToken() {
       let token = localStorage.getItem('gh_token');
       if (!token) {
-        token = prompt("Vui lòng dán GitHub Personal Access Token (ghp_...) để kích hoạt tính năng thêm kênh từ xa:");
+        token = prompt("Vui lòng dán GitHub Personal Access Token (ghp_...):");
         if (token) localStorage.setItem('gh_token', token.trim());
       }
       return token;
@@ -158,7 +158,6 @@
         return;
       }
 
-      // Lấy channel ID nếu người dùng dán cả link
       let chId = rawVal;
       if (rawVal.includes('/channel/')) {
         chId = rawVal.split('/channel/')[1].split('/')[0].split('?')[0];
@@ -168,66 +167,42 @@
       if (!token) return;
 
       btn.disabled = true;
-      msg.innerHTML = '<span style="color:var(--primary)">1/2. Đang ghi kênh vào channels.txt...</span>';
+      msg.innerHTML = '<span style="color:var(--primary)">1/2. Đang ghi file...</span>';
 
       try {
-        // 1. Lấy file channels.txt hiện tại
         const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/channels.txt`;
-        const res = await fetch(getUrl, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        const res = await fetch(getUrl, { headers: { 'Authorization': `Bearer ${token}` } });
         if (!res.ok) throw new Error("Sai Token hoặc không có quyền truy cập repo!");
         const data = await res.json();
         const currentContent = decodeURIComponent(escape(atob(data.content)));
 
-        if (currentContent.includes(chId)) {
-          msg.innerHTML = '<span style="color:var(--warning)">Kênh này đã có trong danh sách! Đang kích hoạt quét lại...</span>';
-        } else {
-          // Ghi thêm ID mới
+        if (!currentContent.includes(chId)) {
           const updatedContent = currentContent.trim() + '\n' + chId + '\n';
-          const updateRes = await fetch(getUrl, {
+          await fetch(getUrl, {
             method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              message: `Add channel ${chId} via Web App`,
+              message: `Add ${chId} via App`,
               content: btoa(unescape(encodeURIComponent(updatedContent))),
               sha: data.sha
             })
           });
-          if (!updateRes.ok) throw new Error("Không thể ghi file channels.txt");
         }
 
-        // 2. Kích hoạt GitHub Action chạy ngay lập tức!
-        msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt máy chủ quét ngay lập tức...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt Action...</span>';
         const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
         const trigRes = await fetch(triggerUrl, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ ref: 'main' })
         });
-
         if (!trigRes.ok) throw new Error("Không thể kích hoạt Action!");
 
-        msg.innerHTML = '<span style="color:var(--accent)">✅ Thành công! Hệ thống đang quét ngầm, trang sẽ tự làm mới sau 30 giây...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">✅ Đang quét ngầm, trang sẽ tự làm mới sau 25s...</span>';
         input.value = '';
-
-        // Tự động kiểm tra nạp dữ liệu mới sau 30 giây
-        setTimeout(() => {
-          loadData(true);
-          toggleAddBox();
-          msg.innerHTML = '';
-        }, 30000);
-
+        setTimeout(() => { loadData(true); toggleAddBox(); msg.innerHTML = ''; }, 25000);
       } catch (err) {
         msg.innerHTML = `<span style="color:var(--danger)">Lỗi: ${err.message}</span>`;
-        if (err.message.includes("Token")) localStorage.removeItem('gh_token');
       } finally {
         btn.disabled = false;
       }
@@ -235,15 +210,14 @@
 
     async function loadData(manual = false) {
       const timerLabel = document.getElementById('timerLabel');
-      if (manual) timerLabel.innerText = "Đang tải dữ liệu...";
+      if (manual) timerLabel.innerText = "Đang tải...";
 
       try {
         const res = await fetch('data.json?t=' + Date.now());
         db = await res.json();
-        
         calcNextScan(db.updated_at);
         render();
-        timerLabel.innerText = "Lần quét tiếp theo:";
+        timerLabel.innerText = "Kế tiếp:";
       } catch (e) {
         document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu.</div>';
       }
@@ -264,19 +238,16 @@
       const timerLabel = document.getElementById('timerLabel');
 
       if (diff <= 0) {
-        timerLabel.innerText = "🔄 Đang chờ máy chủ quét...";
-        timerEl.innerText = "Vui lòng đợi";
+        timerLabel.innerText = "Đang quét...";
+        timerEl.innerText = "--:--";
         if (!isFetching) {
           isFetching = true;
-          setTimeout(async () => {
-            await loadData();
-            isFetching = false;
-          }, 15000);
+          setTimeout(async () => { await loadData(); isFetching = false; }, 15000);
         }
       } else {
         const m = String(Math.floor(diff / 60)).padStart(2, '0');
         const s = String(diff % 60).padStart(2, '0');
-        timerLabel.innerText = "Lần quét tiếp theo:";
+        timerLabel.innerText = "Kế tiếp:";
         timerEl.innerText = `${m}m ${s}s`;
       }
     }, 1000);
@@ -312,70 +283,67 @@
         card.className = 'card';
         card.innerHTML = `
           <div class="card-top" onclick="toggleDrawer('${ch.id}')">
-            <div>
-              <div class="ch-title">#${idx + 1}. ${ch.title || 'Chưa nhận diện'}</div>
+            <div style="flex:1;">
+              <div class="ch-title">#${idx + 1}. ${ch.title || 'Kênh'}</div>
               <div class="badges-row">
                 <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
-                <span class="badge badge-gray">${ch.videos_count || 0} Video</span>
-                <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()} v/vid</span>
+                <span class="badge badge-gray">${ch.videos_count || 0} Vid</span>
+                <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()}</span>
                 ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
               </div>
             </div>
-            <span style="font-size:0.75rem; color:var(--primary);">Chi tiết ▾</span>
+            <span style="font-size:0.7rem; color:var(--primary); margin-left:6px;">Chi tiết ▾</span>
           </div>
 
-          <div class="stats-grid">
-            <div class="stat-box">
-              <div class="stat-label">30 Phút Qua</div>
-              <div class="stat-val" style="color:var(--accent);">+${(ch.v_30m || 0).toLocaleString()}</div>
-              <div class="stat-note">Độ nhạy cao nhất</div>
+          <!-- 4 Ô REALTIME GỌN CHUNG 1 HÀNG DUY NHẤT -->
+          <div class="stats-grid-4">
+            <div class="stat-box-compact">
+              <div class="stat-label-compact">⚡ 30P</div>
+              <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_30m || 0).toLocaleString()}</div>
             </div>
-
-            <div class="stat-box">
-              <div class="stat-label">60 Phút Qua</div>
-              <div class="stat-val" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
-              <div class="stat-note">Tốc độ chuẩn 1 giờ</div>
+            <div class="stat-box-compact">
+              <div class="stat-label-compact">⏱ 60P</div>
+              <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
             </div>
-
-            <div class="stat-box">
-              <div class="stat-label">24 Giờ Qua</div>
-              <div class="stat-val" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
-              <div class="stat-note">Hiệu suất 1 ngày</div>
+            <div class="stat-box-compact">
+              <div class="stat-label-compact">24H</div>
+              <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
             </div>
-
-            <div class="stat-box">
-              <div class="stat-label">48 Giờ Qua</div>
-              <div class="stat-val" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
-              <div class="stat-note">Chu kỳ 2 ngày Studio</div>
+            <div class="stat-box-compact">
+              <div class="stat-label-compact">48H</div>
+              <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
             </div>
           </div>
 
+          <!-- Dải Dài Hạn 1 Hàng -->
           <div class="longterm-strip">
             <div class="lt-item">
-              <span class="lt-label">1 NGÀY</span>
+              <span class="lt-label">1N</span>
               <span class="lt-val">+${lt.d_1 > 0 ? lt.d_1.toLocaleString() : '-'}</span>
             </div>
             <div class="lt-item">
-              <span class="lt-label">7 NGÀY</span>
+              <span class="lt-label">7N</span>
               <span class="lt-val">+${lt.d_7 > 0 ? lt.d_7.toLocaleString() : '-'}</span>
             </div>
             <div class="lt-item">
-              <span class="lt-label">30 NGÀY</span>
+              <span class="lt-label">30N</span>
               <span class="lt-val">+${lt.d_30 > 0 ? lt.d_30.toLocaleString() : '-'}</span>
             </div>
             <div class="lt-item">
-              <span class="lt-label">TỔNG KÊNH</span>
+              <span class="lt-label">TỔNG</span>
               <span class="lt-val">${(ch.views || 0).toLocaleString()}</span>
             </div>
           </div>
 
+          <!-- Sparkline Tối Giản -->
           <div class="sparkline-container">
-            <div class="sparkline-title">XU HƯỚNG 48 GIỜ (MỖI VẠCH = 1 TIẾNG):</div>
-            <div class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█ (Đang gom chu kỳ theo từng giờ...)'}</div>
+            <span class="sparkline-title">48H:</span>
+            <span class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█'}</span>
           </div>
 
+          <!-- Video Drawer -->
           <div class="video-drawer" id="box-${ch.id}">
-            <div style="font-size:0.75rem; font-weight:700; color:var(--subtext); margin-bottom:8px;">TOP VIDEO ĐANG CẮN VIEW (SMART POOL 100):</div>
+            <div style="font-size:0.7rem; font-weight:700; color:var(--subtext); margin-bottom:6px;">TOP VIDEO CẮN VIEW (SMART POOL):</div>
             ${renderVideos(ch.videos)}
           </div>
         `;
@@ -384,19 +352,19 @@
     }
 
     function renderVideos(videos) {
-      if (!videos || !videos.length) return '<div style="font-size:0.75rem; color:var(--subtext);">Chưa có video</div>';
-      return videos.slice(0, 20).map(v => `
+      if (!videos || !videos.length) return '<div style="font-size:0.7rem; color:var(--subtext);">Chưa có video</div>';
+      return videos.slice(0, 15).map(v => `
         <div class="v-item">
           <div class="v-title-row">
             <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
             ${v.is_spike ? '<span class="badge badge-spike">Spike</span>' : ''}
           </div>
           <div class="v-metrics">
-            <span style="color:var(--subtext);">${v.days_old} ngày • <b>${(v.views_per_day || 0).toLocaleString()}</b> v/ngày</span>
+            <span style="color:var(--subtext);">${v.days_old}n • ${(v.views_per_day || 0).toLocaleString()} v/n</span>
             <div class="v-growth">
-              <span style="color:var(--accent);">+${(v.v_30m || 0).toLocaleString()} (30p)</span>
-              <span style="color:var(--accent);">+${(v.v_60m || 0).toLocaleString()} (60p)</span>
-              <span style="color:var(--primary);">+${(v.v_48h || 0).toLocaleString()} (48h)</span>
+              <span style="color:var(--accent);">+${(v.v_30m || 0).toLocaleString()}</span>
+              <span style="color:var(--accent); margin-left:4px;">+${(v.v_60m || 0).toLocaleString()}</span>
+              <span style="color:var(--primary); margin-left:4px;">+${(v.v_48h || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>
