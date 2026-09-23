@@ -27,16 +27,21 @@
     header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
     .header-row { display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 1rem; color: var(--text-bright); display: flex; align-items: center; gap: 6px; font-weight: 700; }
-    .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+    .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); transition: background 0.3s; }
+    .live-dot.syncing { background: var(--warning); box-shadow: 0 0 8px var(--warning); animation: blink 1s infinite; }
 
     .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
     .countdown-box { display: flex; align-items: center; gap: 6px; }
     .countdown { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+    .wait-counter { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--warning); display: none; }
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
     .btn-header:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
-    .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
+    /* Thanh tiến trình tích hợp 2 chế độ */
+    .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; position: relative; }
+    .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.8s linear; }
+    .progress-fill.syncing-mode { background: linear-gradient(90deg, var(--warning), #ffb020); transition: width 0.4s ease-out; }
+
     .meta-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--subtext); margin-top: 5px; padding: 0 2px; }
 
     .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
@@ -144,7 +149,7 @@
 
   <header>
     <div class="header-row">
-      <h1><span class="live-dot"></span> YouTube Realtime Pro</h1>
+      <h1><span class="live-dot" id="liveDot"></span> YouTube Realtime Pro</h1>
       <div style="display:flex; gap:5px;">
         <button class="btn-header" onclick="toggleAddBox()">➕ Thêm</button>
         <button class="btn-header" id="btnTriggerScan" onclick="triggerRunWorkflow()">⚡ Quét Ngay</button>
@@ -154,6 +159,7 @@
       <div class="countdown-box">
         <span id="timerLabel" style="color:var(--subtext);">Kế tiếp:</span>
         <span class="countdown" id="timer">--:--</span>
+        <span class="wait-counter" id="waitTimer">--s</span>
       </div>
       <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
@@ -199,6 +205,7 @@
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
     const TOTAL_CYCLE_SECONDS = 15 * 60;
+    const ESTIMATED_SYNC_SECONDS = 50; // Thời gian chạy trung bình của GitHub Actions + CDN
 
     let db = null;
     let sortMode = '60m';
@@ -206,6 +213,7 @@
     let isFetching = false;
     let pollInterval = null;
     let isAllFolded = false;
+    let syncStartTs = null;
 
     const channelVideoTabState = {};
     const previousValues = {};
@@ -315,12 +323,12 @@
         const scanPoll = setInterval(async () => {
           tries++;
           const hasNew = await loadData();
-          if (hasNew || tries > 12) {
+          if (hasNew || tries > 15) {
             clearInterval(scanPoll);
             btn.disabled = false;
             btn.innerText = "⚡ Quét Ngay";
           }
-        }, 5000);
+        }, 4000);
       } catch (err) {
         alert("Lỗi kích hoạt: " + err.message);
         btn.disabled = false;
@@ -469,6 +477,9 @@
 
     async function loadData(manual = false) {
       const timerLabel = document.getElementById('timerLabel');
+      const waitTimer = document.getElementById('waitTimer');
+      const progressBar = document.getElementById('progressBar');
+      const liveDot = document.getElementById('liveDot');
 
       try {
         const res = await fetch('data.json?t=' + Date.now());
@@ -478,7 +489,17 @@
           return false;
         }
 
+        // Dữ liệu mới đã có: Tăng tốc thanh progress lên 100% rồi hoàn tất
+        if (progressBar && syncStartTs) {
+          progressBar.style.width = "100%";
+        }
+
         db = newData;
+        syncStartTs = null;
+        if (waitTimer) waitTimer.style.display = "none";
+        if (progressBar) progressBar.classList.remove('syncing-mode');
+        if (liveDot) liveDot.classList.remove('syncing');
+
         calcNextCronTarget();
         render();
 
@@ -510,19 +531,49 @@
       }
     }
 
+    /* --- CƠ CHẾ ĐẾM LÙI KÉP & TIẾN TRÌNH THÍCH ỨNG --- */
     setInterval(() => {
       if (!nextTarget) return;
       const now = new Date();
       const diff = Math.floor((nextTarget - now) / 1000);
       const timerEl = document.getElementById('timer');
       const timerLabel = document.getElementById('timerLabel');
+      const waitTimer = document.getElementById('waitTimer');
       const progressBar = document.getElementById('progressBar');
+      const liveDot = document.getElementById('liveDot');
 
       if (diff <= 0) {
-        timerLabel.innerText = "⏳ Đang cập nhật...";
-        timerEl.innerText = "--:--";
-        if (progressBar) progressBar.style.width = "0%";
+        // Giai đoạn đồng bộ sau 15 phút
+        if (!syncStartTs) syncStartTs = Date.now();
+        const elapsedSecs = Math.floor((Date.now() - syncStartTs) / 1000);
+        const remainSync = Math.max(0, ESTIMATED_SYNC_SECONDS - elapsedSecs);
 
+        timerLabel.innerText = "Đồng bộ view:";
+        timerEl.innerText = "";
+        waitTimer.style.display = "inline";
+
+        // Đếm lùi từ 50s -> 01s; nếu mạng trễ hơn sẽ hiện (+...s)
+        if (remainSync > 0) {
+          waitTimer.innerText = `${remainSync}s`;
+        } else {
+          waitTimer.innerText = `(+${elapsedSecs - ESTIMATED_SYNC_SECONDS}s)`;
+        }
+
+        if (liveDot) liveDot.classList.add('syncing');
+
+        // Thanh tiến trình thích ứng: Tăng nhanh tới 85% trong 40s đầu, sau đó giảm tốc chờ phản hồi thực tế
+        if (progressBar) {
+          progressBar.classList.add('syncing-mode');
+          let progressPct = 0;
+          if (elapsedSecs <= 40) {
+            progressPct = (elapsedSecs / 40) * 85;
+          } else {
+            progressPct = 85 + Math.min(12, ((elapsedSecs - 40) / 30) * 12);
+          }
+          progressBar.style.width = Math.min(97, progressPct) + "%";
+        }
+
+        // Tần suất thăm dò dữ liệu mới: mỗi 4 giây
         if (!pollInterval && !isFetching) {
           isFetching = true;
           loadData().then(success => {
@@ -543,9 +594,15 @@
               clearInterval(pollInterval);
               pollInterval = null;
             }
-          }, 10000);
+          }, 4000);
         }
       } else {
+        // Chu kỳ 15 phút thông thường
+        syncStartTs = null;
+        waitTimer.style.display = "none";
+        if (progressBar) progressBar.classList.remove('syncing-mode');
+        if (liveDot) liveDot.classList.remove('syncing');
+
         if (pollInterval) {
           clearInterval(pollInterval);
           pollInterval = null;
@@ -594,7 +651,6 @@
         const lt = ch.longterm || { d_7: 0, d_30: 0, d_90: 0 };
         const isCollapsed = !!collapsedMap[ch.id];
 
-        // Lấy trực tiếp 4 cột 15 phút do Backend run.py tính sẵn
         const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m || (c1 + c2 + c3 + c4);
 
