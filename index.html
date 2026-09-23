@@ -32,10 +32,9 @@
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
     .btn-header:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* THANH TIẾN TRÌNH PROGRESS BAR */
+    /* Progress Bar */
     .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
     .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
-
     .meta-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--subtext); margin-top: 5px; padding: 0 2px; }
 
     /* Khung Thêm Kênh */
@@ -70,20 +69,34 @@
     .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    /* Trạng thái thu gọn */
+    /* Thu gọn Card */
     .card.is-collapsed { padding: 8px 12px; }
     .card.is-collapsed .toggle-icon { transform: rotate(-90deg); }
     .card.is-collapsed .card-body,
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* 4 Ô Realtime */
-    .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 8px; }
-    .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; }
-    .stat-label-compact { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
-    .stat-val-compact { font-size: 0.95rem; font-weight: 800; margin-top: 2px; line-height: 1.1; }
+    /* BỐ CỤC REALTIME: 48H (1fr) - 24H (1fr) - 60P (2fr) */
+    .stats-grid-custom { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 6px; margin-top: 8px; }
+    .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .stat-label-compact { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
+    .stat-val-compact { font-size: 1rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
 
-    /* Dải Dài Hạn 1 Hàng: 7N - 30N - 90N - TỔNG */
+    /* Ô 60P KÉP PHONG CÁCH STUDIO */
+    .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; }
+    .box-60p-title { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px; }
+    .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 1px; }
+    .box-60p-split-text { font-size: 0.62rem; color: var(--subtext); font-family: monospace; margin-top: 1px; }
+
+    /* 2 Cột Bar Song Song */
+    .bars-container { display: flex; align-items: flex-end; gap: 5px; height: 38px; padding-bottom: 2px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; width: 22px; height: 100%; justify-content: flex-end; }
+    .bar-track { width: 100%; height: 30px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
+    .bar-fill { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
+    .bar-label { font-size: 0.55rem; color: var(--subtext); margin-top: 2px; text-transform: uppercase; }
+
+    /* Dải Dài Hạn 1 Hàng */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
@@ -94,7 +107,7 @@
     .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
     .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
-    /* Drawer & Nút Xóa */
+    /* Video Drawer */
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
     .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .btn-delete-channel { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
@@ -115,7 +128,6 @@
       <h1><span class="live-dot"></span> YouTube Realtime Pro</h1>
       <div style="display:flex; gap:5px;">
         <button class="btn-header" onclick="toggleAddBox()">➕ Thêm</button>
-        <!-- NÚT GỌI TRỰC TIẾP RUN WORKFLOW -->
         <button class="btn-header" id="btnTriggerScan" onclick="triggerRunWorkflow()">⚡ Quét Ngay</button>
       </div>
     </div>
@@ -148,8 +160,8 @@
   <!-- Thanh Lọc & Thu Gọn Toàn Bộ -->
   <div class="controls-wrapper">
     <div class="controls">
-      <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30P</button>
-      <button class="btn-tab" onclick="changeSort('60m')">⏱ 60P</button>
+      <button class="btn-tab active" onclick="changeSort('60m')">⏱ 60P</button>
+      <button class="btn-tab" onclick="changeSort('30m')">⚡ 30P</button>
       <button class="btn-tab" onclick="changeSort('24h')">24H</button>
       <button class="btn-tab" onclick="changeSort('48h')">48H</button>
       <button class="btn-tab" onclick="changeSort('d_7')">📅 7N</button>
@@ -172,7 +184,7 @@
     const TOTAL_CYCLE_SECONDS = 30 * 60;
 
     let db = null;
-    let sortMode = '30m';
+    let sortMode = '60m';
     let nextTarget = null;
     let isFetching = false;
     let pollInterval = null;
@@ -186,7 +198,6 @@
       return token;
     }
 
-    // HÀM GỌI CHẠY RUN WORKFLOW TRỰC TIẾP TỪ NÚT BẤM TRÊN WEB
     async function triggerRunWorkflow() {
       const btn = document.getElementById('btnTriggerScan');
       const timerLabel = document.getElementById('timerLabel');
@@ -205,20 +216,18 @@
           body: JSON.stringify({ ref: 'main' })
         });
 
-        if (!res.ok) throw new Error("Lỗi xác thực Token hoặc không có quyền Workflow!");
+        if (!res.ok) throw new Error("Lỗi Token hoặc quyền hạn Workflow!");
 
-        // Khởi động thăm dò mỗi 5s để đón ngay khi máy ảo hoàn thành
         let tries = 0;
         const scanPoll = setInterval(async () => {
           tries++;
           const hasNew = await loadData();
-          if (hasNew || tries > 12) { // Dừng sau tối đa 60 giây
+          if (hasNew || tries > 12) {
             clearInterval(scanPoll);
             btn.disabled = false;
             btn.innerText = "⚡ Quét Ngay";
           }
         }, 5000);
-
       } catch (err) {
         alert("Lỗi kích hoạt: " + err.message);
         btn.disabled = false;
@@ -268,13 +277,11 @@
           }
         }
       });
-
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
     }
 
     function toggleAddBox() {
-      const box = document.getElementById('addChannelBox');
-      box.classList.toggle('active');
+      document.getElementById('addChannelBox').classList.toggle('active');
     }
 
     async function submitNewChannel() {
@@ -327,7 +334,7 @@
           body: JSON.stringify({ ref: 'main' })
         });
 
-        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã thêm! Đang quét ngầm, trang sẽ tự làm mới sau 20s...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã thêm! Trang tự làm mới sau 20s...</span>';
         input.value = '';
         setTimeout(() => { loadData(true); toggleAddBox(); msg.innerHTML = ''; }, 20000);
       } catch (err) {
@@ -338,7 +345,7 @@
     }
 
     async function deleteChannel(chId, chTitle) {
-      const confirmDel = confirm(`Bạn có chắc chắn muốn XÓA kênh "${chTitle}" (${chId}) khỏi danh sách theo dõi?`);
+      const confirmDel = confirm(`Bạn có chắc muốn XÓA kênh "${chTitle}"?`);
       if (!confirmDel) return;
 
       const token = getStoredToken();
@@ -436,7 +443,7 @@
       const progressBar = document.getElementById('progressBar');
 
       if (diff <= 0) {
-        timerLabel.innerText = "⏳ Đang quét dữ liệu mới...";
+        timerLabel.innerText = "⏳ Đang cập nhật...";
         timerEl.innerText = "--:--";
         if (progressBar) progressBar.style.width = "0%";
 
@@ -493,8 +500,8 @@
       document.getElementById('channelSummary').innerText = `${chList.length} Kênh`;
 
       chList.sort((a, b) => {
-        if (sortMode === '30m') return (b.v_30m || 0) - (a.v_30m || 0) || (b.views - a.views);
         if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views);
+        if (sortMode === '30m') return (b.v_30m || 0) - (a.v_30m || 0) || (b.views - a.views);
         if (sortMode === '24h') return (b.v_24h || 0) - (a.v_24h || 0) || (b.views - a.views);
         if (sortMode === '48h') return (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views);
         if (sortMode === 'd_7') return (b.longterm?.d_7 || 0) - (a.longterm?.d_7 || 0);
@@ -508,8 +515,21 @@
       const collapsedMap = getCollapsedChannels();
 
       chList.forEach((ch, idx) => {
-        const lt = ch.longterm || { d_1: 0, d_7: 0, d_30: 0, d_90: 0 };
+        const lt = ch.longterm || { d_7: 0, d_30: 0, d_90: 0 };
         const isCollapsed = !!collapsedMap[ch.id];
+
+        // TÍNH TOÁN 2 CỘT 30P TẠO NÊN 60P
+        const v_curr = ch.v_30m || 0; // Cột 30P hiện tại (mới nhất)
+        const v_prev = Math.max(0, (ch.v_60m || 0) - v_curr); // Cột 30P liền trước (quá khứ)
+        const v_total_60 = ch.v_60m || (v_curr + v_prev);
+
+        // Chiều cao cột bar mini
+        const maxVal = Math.max(v_curr, v_prev, 1);
+        const hPrev = Math.max(10, Math.round((v_prev / maxVal) * 100));
+        const hCurr = Math.max(10, Math.round((v_curr / maxVal) * 100));
+
+        // Màu cột hiện tại: sáng xanh nếu tăng trưởng tốt, cam nếu giảm tốc
+        const currColor = v_curr >= v_prev ? 'var(--accent)' : 'var(--warning)';
 
         const card = document.createElement('div');
         card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
@@ -533,25 +553,45 @@
           </div>
 
           <div class="card-body">
-            <div class="stats-grid-4">
-              <div class="stat-box-compact">
-                <div class="stat-label-compact">⚡ 30P</div>
-                <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_30m || 0).toLocaleString()}</div>
-              </div>
-              <div class="stat-box-compact">
-                <div class="stat-label-compact">⏱ 60P</div>
-                <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
-              </div>
-              <div class="stat-box-compact">
-                <div class="stat-label-compact">24H</div>
-                <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
-              </div>
+            <!-- HÀNG REALTIME MỚI: 48H (1fr) - 24H (1fr) - 60P KÉP (2fr) -->
+            <div class="stats-grid-custom">
               <div class="stat-box-compact">
                 <div class="stat-label-compact">48H</div>
                 <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
               </div>
+
+              <div class="stat-box-compact">
+                <div class="stat-label-compact">24H</div>
+                <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
+              </div>
+
+              <!-- Ô 60P KÉP KÈM 2 CỘT 30P MINI-STUDIO -->
+              <div class="box-60p-wrapper">
+                <div class="box-60p-info">
+                  <div class="box-60p-title">⏱ 60P TỔNG</div>
+                  <div class="box-60p-total">+${v_total_60.toLocaleString()}</div>
+                  <div class="box-60p-split-text">T: +${v_prev.toLocaleString()} | N: +${v_curr.toLocaleString()}</div>
+                </div>
+
+                <!-- 2 Cột Mini Bar: Cột Trái = 30P Trước, Cột Phải = 30P Hiện Tại -->
+                <div class="bars-container">
+                  <div class="bar-col">
+                    <div class="bar-track">
+                      <div class="bar-fill" style="height: ${hPrev}%; background: #388bfd;"></div>
+                    </div>
+                    <span class="bar-label">-60m</span>
+                  </div>
+                  <div class="bar-col">
+                    <div class="bar-track">
+                      <div class="bar-fill" style="height: ${hCurr}%; background: ${currColor};"></div>
+                    </div>
+                    <span class="bar-label">-30m</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            <!-- Dải Dài Hạn: 7N - 30N - 90N - TỔNG -->
             <div class="longterm-strip">
               <div class="lt-item">
                 <span class="lt-label">7N</span>
@@ -571,12 +611,14 @@
               </div>
             </div>
 
+            <!-- Sparkline -->
             <div class="sparkline-container">
               <span class="sparkline-title">48H:</span>
               <span class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█'}</span>
             </div>
           </div>
 
+          <!-- Drawer Chi Tiết Video -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
               <span style="font-size:0.7rem; font-weight:700; color:var(--subtext);">TOP VIDEO (SMART POOL):</span>
