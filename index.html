@@ -47,14 +47,12 @@
     .btn-action:disabled { background: #333; color: #777; }
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
-    /* Thanh điều khiển tối ưu hàng ngang */
     .controls-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
     .controls { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex: 1; scrollbar-width: none; }
     .controls::-webkit-scrollbar { display: none; }
     .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 6px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
-    /* 2 NÚT ICON TIỆN ÍCH VUÔNG VẮN, RỘNG RÃI */
     .action-tools { display: flex; gap: 6px; flex-shrink: 0; }
     .btn-icon-toggle {
       background: #21262d;
@@ -79,14 +77,12 @@
       color: #ff7b72;
     }
 
-    /* Card Kênh & Thu Gọn */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all 0.2s ease; }
     .card-top { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
     .ch-title-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
     .toggle-icon { font-size: 0.7rem; color: var(--subtext); transition: transform 0.2s ease; }
     .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* Chế độ làm mờ ẩn danh */
     body.privacy-mode .ch-title-text { filter: blur(7px); user-select: none; pointer-events: none; }
     body.privacy-mode .v-title { filter: blur(6px); user-select: none; pointer-events: none; }
 
@@ -127,8 +123,13 @@
     .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
     .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
+    /* DRAWER VIDEO CHI TIẾT & BỘ LỌC 3 NÚT */
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
-    .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+    .v-tabs-group { display: flex; gap: 4px; background: var(--card-sub); padding: 2px; border-radius: 6px; border: 1px solid var(--border); }
+    .btn-v-tab { background: transparent; border: none; color: var(--subtext); padding: 4px 8px; font-size: 0.65rem; font-weight: 700; border-radius: 4px; cursor: pointer; }
+    .btn-v-tab.active { background: #21262d; color: var(--text-bright); }
+
     .btn-delete-channel { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     .btn-delete-channel:hover { background: var(--danger); color: #fff; }
 
@@ -137,7 +138,7 @@
     .v-title-row { display: flex; justify-content: space-between; gap: 6px; }
     .v-title { color: var(--text-bright); font-size: 0.78rem; text-decoration: none; font-weight: 500; line-height: 1.3; flex: 1; }
     .v-metrics { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.68rem; }
-    .v-growth { display: flex; gap: 6px; font-weight: 700; font-family: monospace; }
+    .v-growth { font-weight: 700; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -175,7 +176,6 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
-  <!-- Thanh Điều Khiển Thu Gọn -->
   <div class="controls-wrapper">
     <div class="controls">
       <button class="btn-tab active" onclick="changeSort('60m')">⏱ 60P</button>
@@ -187,7 +187,6 @@
       <button class="btn-tab" onclick="changeSort('d_90')">📅 90N</button>
       <button class="btn-tab" onclick="changeSort('total')">Toàn bộ</button>
     </div>
-    <!-- 2 Nút Toggle Tối Giản -->
     <div class="action-tools">
       <button class="btn-icon-toggle" id="btnEyeToggle" onclick="togglePrivacyMode()" title="Ẩn/Hiện tên kênh">👁</button>
       <button class="btn-icon-toggle" id="btnFoldToggle" onclick="toggleAllCards()" title="Thu gọn / Mở rộng toàn bộ">▲</button>
@@ -209,6 +208,8 @@
     let pollInterval = null;
     let isAllFolded = false;
 
+    // Trạng thái tab video của từng kênh: 'latest' | '60m' | '48h'
+    const channelVideoTabState = {};
     const previousValues = {};
 
     function getStoredToken() {
@@ -220,7 +221,6 @@
       return token;
     }
 
-    /* --- HIỆU ỨNG CHẠY SỐ --- */
     function animateValue(elementId, start, end, prefix = '+', duration = 1300) {
       const el = document.getElementById(elementId);
       if (!el) return;
@@ -246,7 +246,6 @@
       window.requestAnimationFrame(step);
     }
 
-    /* --- 1 NÚT TOGGLE ẨN / HIỆN TÊN (ICON CON MẮT) --- */
     function togglePrivacyMode() {
       const isPrivacy = document.body.classList.toggle('privacy-mode');
       const btn = document.getElementById('btnEyeToggle');
@@ -272,7 +271,6 @@
       }
     }
 
-    /* --- 1 NÚT TOGGLE GỌN / MỞ (ICON MŨI TÊN ▲ / ▼) --- */
     function toggleAllCards() {
       isAllFolded = !isAllFolded;
       const btn = document.getElementById('btnFoldToggle');
@@ -655,6 +653,8 @@
 
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
 
+        const activeVTab = channelVideoTabState[ch.id] || 'latest';
+
         const card = document.createElement('div');
         card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
         card.id = `card-${ch.id}`;
@@ -753,12 +753,19 @@
             </div>
           </div>
 
+          <!-- DRAWER CHI TIẾT KÈM 3 NÚT TÙY CHỌN: MỚI NHẤT | 60P | 48H -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
-              <span style="font-size:0.7rem; font-weight:700; color:var(--subtext);">DANH SÁCH 50 VIDEO VIEW CAO NHẤT (POOL):</span>
+              <div class="v-tabs-group">
+                <button class="btn-v-tab ${activeVTab === 'latest' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', 'latest')">🕒 Mới nhất</button>
+                <button class="btn-v-tab ${activeVTab === '60m' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', '60m')">⏱ Top 60P</button>
+                <button class="btn-v-tab ${activeVTab === '48h' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', '48h')">🔥 Top 48H</button>
+              </div>
               <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${ch.title ? ch.title.replace(/'/g, "\\'") : 'Kênh'}')">🗑 Xóa kênh này</button>
             </div>
-            ${renderVideos(ch.videos)}
+            <div id="v-list-${ch.id}">
+              ${renderVideos(ch.videos, activeVTab)}
+            </div>
           </div>
         `;
         container.appendChild(card);
@@ -789,21 +796,68 @@
       });
     }
 
-    function renderVideos(videos) {
-      if (!videos || !videos.length) return '<div style="font-size:0.7rem; color:var(--subtext);">Chưa có video</div>';
-      return videos.slice(0, 15).map(v => `
-        <div class="v-item">
-          <div class="v-title-row">
-            <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
-          </div>
-          <div class="v-metrics">
+    /* --- HÀM LỌC VÀ HIỂN THỊ 15 VIDEO THEO TAB ĐƯỢC CHỌN --- */
+    function switchVideoTab(chId, tab) {
+      channelVideoTabState[chId] = tab;
+      const drawer = document.getElementById(`box-${chId}`);
+      if (!drawer || !db || !db.channels[chId]) return;
+
+      drawer.querySelectorAll('.btn-v-tab').forEach(b => b.classList.remove('active'));
+      const activeBtn = drawer.querySelector(`button[onclick*="'${tab}'"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const vContainer = document.getElementById(`v-list-${chId}`);
+      if (vContainer) {
+        vContainer.innerHTML = renderVideos(db.channels[chId].videos, tab);
+      }
+    }
+
+    function renderVideos(videos, tab = 'latest') {
+      if (!videos || !videos.length) return '<div style="font-size:0.7rem; color:var(--subtext); padding:6px 0;">Chưa có video</div>';
+
+      const vCopy = [...videos];
+
+      if (tab === 'latest') {
+        // Xếp theo ngày xuất bản mới nhất
+        vCopy.sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0));
+      } else if (tab === '60m') {
+        // Xếp theo view tăng trong 60P cao nhất
+        vCopy.sort((a, b) => (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views));
+      } else if (tab === '48h') {
+        // Xếp theo view tăng trong 48H cao nhất
+        vCopy.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views));
+      }
+
+      return vCopy.slice(0, 15).map((v, i) => {
+        let badgeInfo = '';
+        if (tab === 'latest') {
+          badgeInfo = `
             <span style="color:var(--subtext);">Xuất bản: ${v.published_at ? v.published_at.slice(0,10) : ''}</span>
-            <div class="v-growth">
-              <span style="color:var(--accent);">👁 ${(v.views || 0).toLocaleString()}</span>
+            <div class="v-growth" style="color:var(--text-bright);">👁 ${(v.views || 0).toLocaleString()}</div>
+          `;
+        } else if (tab === '60m') {
+          badgeInfo = `
+            <span style="color:var(--subtext);">Tổng: ${(v.views || 0).toLocaleString()}</span>
+            <div class="v-growth" style="color:var(--accent);">+${(v.v_60m || 0).toLocaleString()} <span style="font-size:0.6rem; color:var(--subtext); font-weight:normal;">(60P)</span></div>
+          `;
+        } else if (tab === '48h') {
+          badgeInfo = `
+            <span style="color:var(--subtext);">Tổng: ${(v.views || 0).toLocaleString()}</span>
+            <div class="v-growth" style="color:var(--primary);">+${(v.v_48h || 0).toLocaleString()} <span style="font-size:0.6rem; color:var(--subtext); font-weight:normal;">(48H)</span></div>
+          `;
+        }
+
+        return `
+          <div class="v-item">
+            <div class="v-title-row">
+              <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">#${i+1}. ${v.title}</a>
+            </div>
+            <div class="v-metrics">
+              ${badgeInfo}
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function toggleDrawer(id) {
