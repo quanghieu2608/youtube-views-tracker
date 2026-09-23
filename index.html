@@ -76,27 +76,26 @@
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* BỐ CỤC REALTIME: 48H (1fr) - 24H (1fr) - 60P (2fr) */
-    .stats-grid-custom { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 6px; margin-top: 8px; }
-    .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    /* HÀNG REALTIME: 48H (1fr) - 24H (1fr) - 60P TO (2.2fr) */
+    .stats-grid-custom { display: grid; grid-template-columns: 1fr 1fr 2.2fr; gap: 6px; margin-top: 8px; }
+    .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
     .stat-label-compact { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
-    .stat-val-compact { font-size: 1rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
+    .stat-val-compact { font-size: 0.95rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
 
-    /* Ô 60P KÉP PHONG CÁCH STUDIO */
-    .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; }
-    .box-60p-title { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px; }
-    .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 1px; }
-    .box-60p-split-text { font-size: 0.62rem; color: var(--subtext); font-family: monospace; margin-top: 1px; }
+    /* Ô 60P TO */
+    .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 60px; }
+    .box-60p-title { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
+    .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 3px; }
 
-    /* 2 Cột Bar Song Song */
-    .bars-container { display: flex; align-items: flex-end; gap: 5px; height: 38px; padding-bottom: 2px; }
-    .bar-col { display: flex; flex-direction: column; align-items: center; width: 22px; height: 100%; justify-content: flex-end; }
-    .bar-track { width: 100%; height: 30px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
-    .bar-fill { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
-    .bar-label { font-size: 0.55rem; color: var(--subtext); margin-top: 2px; text-transform: uppercase; }
+    /* 2 CỘT BIỂU ĐỒ & SỐ CHÍNH XÁC PHÍA DƯỚI */
+    .bars-container { display: flex; align-items: flex-end; gap: 6px; height: 44px; flex: 1; justify-content: flex-end; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 52px; height: 100%; justify-content: flex-end; }
+    .bar-track { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
+    .bar-fill { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.3s ease; min-height: 2px; }
+    .bar-view-val { font-size: 0.55rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin-top: 2px; line-height: 1; white-space: nowrap; }
 
-    /* Dải Dài Hạn 1 Hàng */
+    /* Dải Dài Hạn */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
@@ -518,17 +517,17 @@
         const lt = ch.longterm || { d_7: 0, d_30: 0, d_90: 0 };
         const isCollapsed = !!collapsedMap[ch.id];
 
-        // TÍNH TOÁN 2 CỘT 30P TẠO NÊN 60P
-        const v_curr = ch.v_30m || 0; // Cột 30P hiện tại (mới nhất)
-        const v_prev = Math.max(0, (ch.v_60m || 0) - v_curr); // Cột 30P liền trước (quá khứ)
+        // TÍNH TOÁN 2 CỘT 30P
+        const v_curr = ch.v_30m || 0;
+        const v_prev = Math.max(0, (ch.v_60m || 0) - v_curr);
         const v_total_60 = ch.v_60m || (v_curr + v_prev);
 
-        // Chiều cao cột bar mini
+        // Chiều cao tương quan (tối thiểu 8% để không bị lún mất vạch)
         const maxVal = Math.max(v_curr, v_prev, 1);
-        const hPrev = Math.max(10, Math.round((v_prev / maxVal) * 100));
-        const hCurr = Math.max(10, Math.round((v_curr / maxVal) * 100));
+        const hPrev = Math.max(8, Math.round((v_prev / maxVal) * 100));
+        const hCurr = Math.max(8, Math.round((v_curr / maxVal) * 100));
 
-        // Màu cột hiện tại: sáng xanh nếu tăng trưởng tốt, cam nếu giảm tốc
+        // Màu cột hiện tại: xanh lá nếu giữ hoặc tăng tốc, cam nếu giảm
         const currColor = v_curr >= v_prev ? 'var(--accent)' : 'var(--warning)';
 
         const card = document.createElement('div');
@@ -553,7 +552,7 @@
           </div>
 
           <div class="card-body">
-            <!-- HÀNG REALTIME MỚI: 48H (1fr) - 24H (1fr) - 60P KÉP (2fr) -->
+            <!-- HÀNG REALTIME: 48H - 24H - 60P TO BỀ NGANG -->
             <div class="stats-grid-custom">
               <div class="stat-box-compact">
                 <div class="stat-label-compact">48H</div>
@@ -565,33 +564,32 @@
                 <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
               </div>
 
-              <!-- Ô 60P KÉP KÈM 2 CỘT 30P MINI-STUDIO -->
+              <!-- Ô 60P: CON SỐ CHÍNH XÁC ĐẶT DƯỚI ĐÁY CỘT -->
               <div class="box-60p-wrapper">
                 <div class="box-60p-info">
                   <div class="box-60p-title">⏱ 60P TỔNG</div>
                   <div class="box-60p-total">+${v_total_60.toLocaleString()}</div>
-                  <div class="box-60p-split-text">T: +${v_prev.toLocaleString()} | N: +${v_curr.toLocaleString()}</div>
                 </div>
 
-                <!-- 2 Cột Mini Bar: Cột Trái = 30P Trước, Cột Phải = 30P Hiện Tại -->
+                <!-- 2 Cột Biểu Đồ Mini Rộng Ngang, View Hiển Thị Chính Xác Dưới Chân Cột -->
                 <div class="bars-container">
                   <div class="bar-col">
                     <div class="bar-track">
                       <div class="bar-fill" style="height: ${hPrev}%; background: #388bfd;"></div>
                     </div>
-                    <span class="bar-label">-60m</span>
+                    <span class="bar-view-val" style="color: #388bfd;">+${v_prev.toLocaleString()}</span>
                   </div>
                   <div class="bar-col">
                     <div class="bar-track">
                       <div class="bar-fill" style="height: ${hCurr}%; background: ${currColor};"></div>
                     </div>
-                    <span class="bar-label">-30m</span>
+                    <span class="bar-view-val" style="color: ${currColor};">+${v_curr.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Dải Dài Hạn: 7N - 30N - 90N - TỔNG -->
+            <!-- Dải Dài Hạn -->
             <div class="longterm-strip">
               <div class="lt-item">
                 <span class="lt-label">7N</span>
