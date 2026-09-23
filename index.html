@@ -31,6 +31,10 @@
     .countdown { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
 
+    /* PROGRESS BAR ĐẾM LÙI */
+    .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
+
     /* Khung Thêm Kênh */
     .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
     .add-channel-box.active { display: block; }
@@ -45,10 +49,12 @@
     .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 5px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
-    /* Card Kênh */
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-    .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; }
+    /* Card Kênh & Cơ Chế Thu Gọn */
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all 0.2s ease; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    .ch-title-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .toggle-icon { font-size: 0.7rem; color: var(--subtext); transition: transform 0.2s ease; }
+    .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .badges-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
     .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; }
@@ -56,13 +62,20 @@
     .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    /* 4 Ô REALTIME GỌN CHUNG 1 HÀNG */
+    /* Khi card ở chế độ thu gọn (collapsed) */
+    .card.is-collapsed { padding: 8px 12px; }
+    .card.is-collapsed .toggle-icon { transform: rotate(-90deg); }
+    .card.is-collapsed .card-body,
+    .card.is-collapsed .video-drawer,
+    .card.is-collapsed .badges-row { display: none !important; }
+
+    /* 4 Ô REALTIME GỌN TRÊN 1 HÀNG */
     .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 8px; }
     .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; }
     .stat-label-compact { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
     .stat-val-compact { font-size: 0.95rem; font-weight: 800; margin-top: 2px; line-height: 1.1; }
 
-    /* Dải Dài Hạn 1 Hàng */
+    /* Dải Dài Hạn 1 Hàng: 7N - 30N - 90N - TỔNG */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
@@ -73,7 +86,12 @@
     .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
     .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
+    /* Drawer & Nút Xóa Kênh */
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
+    .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .btn-delete-channel { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-delete-channel:hover { background: var(--danger); color: #fff; }
+
     .v-item { padding: 8px 0; border-bottom: 1px solid #21262d; }
     .v-item:last-child { border-bottom: none; }
     .v-title-row { display: flex; justify-content: space-between; gap: 6px; }
@@ -99,6 +117,10 @@
       </div>
       <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
+    <!-- THANH TIẾN TRÌNH PROGRESS BAR -->
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progressBar"></div>
+    </div>
   </header>
 
   <!-- Form Thêm Kênh Nhanh -->
@@ -118,6 +140,7 @@
     <button class="btn-tab" onclick="changeSort('48h')">48H</button>
     <button class="btn-tab" onclick="changeSort('d_7')">📅 7N</button>
     <button class="btn-tab" onclick="changeSort('d_30')">📅 30N</button>
+    <button class="btn-tab" onclick="changeSort('d_90')">📅 90N</button>
     <button class="btn-tab" onclick="changeSort('total')">Toàn bộ</button>
   </div>
 
@@ -127,11 +150,39 @@
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
+    const TOTAL_CYCLE_SECONDS = 30 * 60; // 30 phút = 1800s
 
     let db = null;
     let sortMode = '30m';
     let nextTarget = null;
     let isFetching = false;
+
+    // Quản lý trạng thái thu gọn kênh (lưu trong localStorage)
+    function getCollapsedChannels() {
+      try {
+        return JSON.parse(localStorage.getItem('collapsed_channels') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function toggleCollapse(chId, event) {
+      if (event) event.stopPropagation();
+      const card = document.getElementById(`card-${chId}`);
+      if (!card) return;
+
+      const collapsedMap = getCollapsedChannels();
+      const isNowCollapsed = !card.classList.contains('is-collapsed');
+
+      if (isNowCollapsed) {
+        card.classList.add('is-collapsed');
+        collapsedMap[chId] = true;
+      } else {
+        card.classList.remove('is-collapsed');
+        delete collapsedMap[chId];
+      }
+      localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
+    }
 
     function getStoredToken() {
       let token = localStorage.getItem('gh_token');
@@ -167,12 +218,12 @@
       if (!token) return;
 
       btn.disabled = true;
-      msg.innerHTML = '<span style="color:var(--primary)">1/2. Đang ghi file...</span>';
+      msg.innerHTML = '<span style="color:var(--primary)">1/2. Đang ghi file channels.txt...</span>';
 
       try {
         const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/channels.txt`;
         const res = await fetch(getUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!res.ok) throw new Error("Sai Token hoặc không có quyền truy cập repo!");
+        if (!res.ok) throw new Error("Sai Token hoặc không có quyền ghi repository!");
         const data = await res.json();
         const currentContent = decodeURIComponent(escape(atob(data.content)));
 
@@ -189,7 +240,7 @@
           });
         }
 
-        msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt Action...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt Action track.yml...</span>';
         const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
         const trigRes = await fetch(triggerUrl, {
           method: 'POST',
@@ -198,13 +249,62 @@
         });
         if (!trigRes.ok) throw new Error("Không thể kích hoạt Action!");
 
-        msg.innerHTML = '<span style="color:var(--accent)">✅ Đang quét ngầm, trang sẽ tự làm mới sau 25s...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã thêm! Đang quét ngầm, trang sẽ tự làm mới sau 25s...</span>';
         input.value = '';
         setTimeout(() => { loadData(true); toggleAddBox(); msg.innerHTML = ''; }, 25000);
       } catch (err) {
         msg.innerHTML = `<span style="color:var(--danger)">Lỗi: ${err.message}</span>`;
       } finally {
         btn.disabled = false;
+      }
+    }
+
+    // XÓA KÊNH
+    async function deleteChannel(chId, chTitle) {
+      const confirmDel = confirm(`Bạn có chắc chắn muốn XÓA kênh "${chTitle}" (${chId}) khỏi danh sách theo dõi?`);
+      if (!confirmDel) return;
+
+      const token = getStoredToken();
+      if (!token) return;
+
+      const cardEl = document.getElementById(`card-${chId}`);
+      if (cardEl) cardEl.style.opacity = '0.3';
+
+      try {
+        const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/channels.txt`;
+        const res = await fetch(getUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error("Không thể đọc file channels.txt từ GitHub!");
+        const data = await res.json();
+        const currentContent = decodeURIComponent(escape(atob(data.content)));
+
+        const lines = currentContent.split('\n').map(l => l.trim()).filter(l => l && l !== chId);
+        const updatedContent = lines.join('\n') + '\n';
+
+        await fetch(getUrl, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Remove ${chId} via App`,
+            content: btoa(unescape(encodeURIComponent(updatedContent))),
+            sha: data.sha
+          })
+        });
+
+        const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
+        await fetch(triggerUrl, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ref: 'main' })
+        });
+
+        if (db && db.channels && db.channels[chId]) {
+          delete db.channels[chId];
+          render();
+        }
+        alert(`Đã xóa thành công kênh "${chTitle}"!`);
+      } catch (err) {
+        alert("Lỗi khi xóa: " + err.message);
+        if (cardEl) cardEl.style.opacity = '1';
       }
     }
 
@@ -231,15 +331,19 @@
       }
     }
 
+    // ĐỒNG HỒ ĐẾM LÙI + THANH TIẾN TRÌNH (PROGRESS BAR)
     setInterval(() => {
       if (!nextTarget) return;
       const diff = Math.floor((nextTarget - new Date()) / 1000);
       const timerEl = document.getElementById('timer');
       const timerLabel = document.getElementById('timerLabel');
+      const progressBar = document.getElementById('progressBar');
 
       if (diff <= 0) {
         timerLabel.innerText = "Đang quét...";
         timerEl.innerText = "--:--";
+        if (progressBar) progressBar.style.width = "0%";
+
         if (!isFetching) {
           isFetching = true;
           setTimeout(async () => { await loadData(); isFetching = false; }, 15000);
@@ -249,6 +353,12 @@
         const s = String(diff % 60).padStart(2, '0');
         timerLabel.innerText = "Kế tiếp:";
         timerEl.innerText = `${m}m ${s}s`;
+
+        // Tính % hiển thị trên progress bar
+        if (progressBar) {
+          const pct = Math.max(0, Math.min(100, (diff / TOTAL_CYCLE_SECONDS) * 100));
+          progressBar.style.width = pct + "%";
+        }
       }
     }, 1000);
 
@@ -271,79 +381,93 @@
         if (sortMode === '48h') return (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views);
         if (sortMode === 'd_7') return (b.longterm?.d_7 || 0) - (a.longterm?.d_7 || 0);
         if (sortMode === 'd_30') return (b.longterm?.d_30 || 0) - (a.longterm?.d_30 || 0);
+        if (sortMode === 'd_90') return (b.longterm?.d_90 || 0) - (a.longterm?.d_90 || 0);
         return (b.views || 0) - (a.views || 0);
       });
 
       const container = document.getElementById('appContainer');
       container.innerHTML = '';
+      const collapsedMap = getCollapsedChannels();
 
       chList.forEach((ch, idx) => {
         const lt = ch.longterm || { d_1: 0, d_7: 0, d_30: 0, d_90: 0 };
+        const isCollapsed = !!collapsedMap[ch.id];
+
         const card = document.createElement('div');
-        card.className = 'card';
+        card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
+        card.id = `card-${ch.id}`;
         card.innerHTML = `
-          <div class="card-top" onclick="toggleDrawer('${ch.id}')">
-            <div style="flex:1;">
+          <div class="card-top" onclick="toggleCollapse('${ch.id}', event)">
+            <div class="ch-title-wrap">
+              <span class="toggle-icon">▼</span>
               <div class="ch-title">#${idx + 1}. ${ch.title || 'Kênh'}</div>
-              <div class="badges-row">
-                <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
-                <span class="badge badge-gray">${ch.videos_count || 0} Vid</span>
-                <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()}</span>
-                ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
+              <span style="font-size:0.68rem; color:var(--primary);" onclick="event.stopPropagation(); toggleDrawer('${ch.id}')">Chi tiết ▾</span>
+            </div>
+          </div>
+
+          <div class="badges-row">
+            <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
+            <span class="badge badge-gray">${ch.videos_count || 0} Vid</span>
+            <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()}</span>
+          </div>
+
+          <div class="card-body">
+            <!-- 4 Ô REALTIME GỌN TRÊN 1 HÀNG -->
+            <div class="stats-grid-4">
+              <div class="stat-box-compact">
+                <div class="stat-label-compact">⚡ 30P</div>
+                <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_30m || 0).toLocaleString()}</div>
+              </div>
+              <div class="stat-box-compact">
+                <div class="stat-label-compact">⏱ 60P</div>
+                <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
+              </div>
+              <div class="stat-box-compact">
+                <div class="stat-label-compact">24H</div>
+                <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
+              </div>
+              <div class="stat-box-compact">
+                <div class="stat-label-compact">48H</div>
+                <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
               </div>
             </div>
-            <span style="font-size:0.7rem; color:var(--primary); margin-left:6px;">Chi tiết ▾</span>
-          </div>
 
-          <!-- 4 Ô REALTIME GỌN CHUNG 1 HÀNG DUY NHẤT -->
-          <div class="stats-grid-4">
-            <div class="stat-box-compact">
-              <div class="stat-label-compact">⚡ 30P</div>
-              <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_30m || 0).toLocaleString()}</div>
+            <!-- Dải Dài Hạn 1 Hàng: 7N - 30N - 90N - TỔNG -->
+            <div class="longterm-strip">
+              <div class="lt-item">
+                <span class="lt-label">7N</span>
+                <span class="lt-val">+${lt.d_7 > 0 ? lt.d_7.toLocaleString() : '-'}</span>
+              </div>
+              <div class="lt-item">
+                <span class="lt-label">30N</span>
+                <span class="lt-val">+${lt.d_30 > 0 ? lt.d_30.toLocaleString() : '-'}</span>
+              </div>
+              <div class="lt-item">
+                <span class="lt-label">90N (3T)</span>
+                <span class="lt-val">+${lt.d_90 > 0 ? lt.d_90.toLocaleString() : '-'}</span>
+              </div>
+              <div class="lt-item">
+                <span class="lt-label">TỔNG</span>
+                <span class="lt-val">${(ch.views || 0).toLocaleString()}</span>
+              </div>
             </div>
-            <div class="stat-box-compact">
-              <div class="stat-label-compact">⏱ 60P</div>
-              <div class="stat-val-compact" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
-            </div>
-            <div class="stat-box-compact">
-              <div class="stat-label-compact">24H</div>
-              <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
-            </div>
-            <div class="stat-box-compact">
-              <div class="stat-label-compact">48H</div>
-              <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
-            </div>
-          </div>
 
-          <!-- Dải Dài Hạn 1 Hàng -->
-          <div class="longterm-strip">
-            <div class="lt-item">
-              <span class="lt-label">1N</span>
-              <span class="lt-val">+${lt.d_1 > 0 ? lt.d_1.toLocaleString() : '-'}</span>
-            </div>
-            <div class="lt-item">
-              <span class="lt-label">7N</span>
-              <span class="lt-val">+${lt.d_7 > 0 ? lt.d_7.toLocaleString() : '-'}</span>
-            </div>
-            <div class="lt-item">
-              <span class="lt-label">30N</span>
-              <span class="lt-val">+${lt.d_30 > 0 ? lt.d_30.toLocaleString() : '-'}</span>
-            </div>
-            <div class="lt-item">
-              <span class="lt-label">TỔNG</span>
-              <span class="lt-val">${(ch.views || 0).toLocaleString()}</span>
+            <!-- Sparkline Tối Giản -->
+            <div class="sparkline-container">
+              <span class="sparkline-title">48H:</span>
+              <span class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█'}</span>
             </div>
           </div>
 
-          <!-- Sparkline Tối Giản -->
-          <div class="sparkline-container">
-            <span class="sparkline-title">48H:</span>
-            <span class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█'}</span>
-          </div>
-
-          <!-- Video Drawer -->
+          <!-- Video Drawer kèm Nút Xóa Kênh -->
           <div class="video-drawer" id="box-${ch.id}">
-            <div style="font-size:0.7rem; font-weight:700; color:var(--subtext); margin-bottom:6px;">TOP VIDEO CẮN VIEW (SMART POOL):</div>
+            <div class="drawer-header-row">
+              <span style="font-size:0.7rem; font-weight:700; color:var(--subtext);">TOP VIDEO (SMART POOL):</span>
+              <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${ch.title ? ch.title.replace(/'/g, "\\'") : 'Kênh'}')">🗑 Xóa kênh này</button>
+            </div>
             ${renderVideos(ch.videos)}
           </div>
         `;
