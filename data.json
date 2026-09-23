@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-23T12:20:56.834289+00:00",
+  "updated_at": "2026-09-23T12:30:53.827501+00:00",
   "channels": {
     "UCPaIoX1IOEbPSBQhRIG1FYQ": {
       "id": "UCPaIoX1IOEbPSBQhRIG1FYQ",
@@ -11,6 +11,10 @@
         [
           "2026-09-23T12:20:56.834289+00:00",
           109471
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          109479
         ]
       ],
       "tracked_video_ids": [
@@ -461,12 +465,12 @@
           "published_at": "2026-09-15T23:00:27Z"
         }
       ],
-      "views": 109471,
-      "v_15m": 0,
-      "v_30m": 0,
-      "v_60m": 0,
-      "v_24h": 0,
-      "v_48h": 0,
+      "views": 109479,
+      "v_15m": 8,
+      "v_30m": 8,
+      "v_60m": 8,
+      "v_24h": 8,
+      "v_48h": 8,
       "is_spike": false
     },
     "UCsg5xBRx4_z7cBxdQGtc90Q": {
@@ -479,6 +483,10 @@
         [
           "2026-09-23T12:20:56.834289+00:00",
           29935
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          29937
         ]
       ],
       "tracked_video_ids": [
@@ -607,7 +615,7 @@
         {
           "id": "WBaOU1ssYOc",
           "title": "Chồng Bảo Không Nghỉ Việc Hầu Hạ Thì Ly Hôn, Tôi Ký Ngay Khiến Cả Nhà Chồng Sụp Đổ Sau 3 Ngày Rời Đi",
-          "views": 688,
+          "views": 690,
           "published_at": "2026-09-06T23:00:10Z"
         },
         {
@@ -839,12 +847,12 @@
           "published_at": "2026-09-23T10:30:23Z"
         }
       ],
-      "views": 29935,
-      "v_15m": 0,
-      "v_30m": 0,
-      "v_60m": 0,
-      "v_24h": 0,
-      "v_48h": 0,
+      "views": 29937,
+      "v_15m": 2,
+      "v_30m": 2,
+      "v_60m": 2,
+      "v_24h": 2,
+      "v_48h": 2,
       "is_spike": false
     },
     "UCpfE3FcR_JlOsJuihS8yqyQ": {
@@ -857,6 +865,10 @@
         [
           "2026-09-23T12:20:56.834289+00:00",
           8607
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          8612
         ]
       ],
       "tracked_video_ids": [
@@ -933,7 +945,7 @@
         {
           "id": "JB9eFvneKsE",
           "title": "Hôn Mê 72h Chồng Ký Giấy Ngừng Cấp Cứu, Tôi Tỉnh Lại Thều Thào Một Câu Khiến Bác Sĩ Báo Công An Ngay",
-          "views": 1040,
+          "views": 1044,
           "published_at": "2026-09-09T23:00:03Z"
         },
         {
@@ -1071,7 +1083,7 @@
         {
           "id": "pEkc5OSY_S4",
           "title": "Vừa Ly Hôn 4 Ngày Nhà Chồng Cũ Đã Đến Cậy Khóa Cướp Biệt Thự 60 Tỷ, Bố Đẻ Ra Mặt Chặn Cổng Tuyên Bố",
-          "views": 76,
+          "views": 77,
           "published_at": "2026-09-20T23:00:10Z"
         },
         {
@@ -1129,12 +1141,12 @@
           "published_at": "2026-09-23T10:00:00Z"
         }
       ],
-      "views": 8607,
-      "v_15m": 0,
-      "v_30m": 0,
-      "v_60m": 0,
-      "v_24h": 0,
-      "v_48h": 0,
+      "views": 8612,
+      "v_15m": 5,
+      "v_30m": 5,
+      "v_60m": 5,
+      "v_24h": 5,
+      "v_48h": 5,
       "is_spike": false
     },
     "UCioadX9cstej8nD2MkfjiUA": {
@@ -1146,6 +1158,10 @@
       "history": [
         [
           "2026-09-23T12:20:56.834289+00:00",
+          1668
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
           1668
         ]
       ],
@@ -1373,6 +1389,10 @@
         [
           "2026-09-23T12:20:56.834289+00:00",
           206
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          206
         ]
       ],
       "tracked_video_ids": [
@@ -1454,6 +1474,10 @@
       "history": [
         [
           "2026-09-23T12:20:56.834289+00:00",
+          5218
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
           5218
         ]
       ],
@@ -1878,13 +1902,17 @@
     "UC_v068SSfHQLBolvRZ3hfpQ": {
       "id": "UC_v068SSfHQLBolvRZ3hfpQ",
       "title": "Nhân Sinh Tuổi Xế Chiều",
-      "subs": 35,
+      "subs": 36,
       "videos_count": 51,
       "total_channel_views": 6461,
       "history": [
         [
           "2026-09-23T12:20:56.834289+00:00",
           6526
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          6522
         ]
       ],
       "tracked_video_ids": [
@@ -2015,7 +2043,7 @@
         {
           "id": "lnkCrgvCJPs",
           "title": "Bị nhà chồng khinh rẻ đuổi ra đường với chiếc gối rách, người vợ cũ chết lặng khi mở ra và tìm thấy",
-          "views": 331,
+          "views": 330,
           "published_at": "2026-09-10T01:00:11Z"
         },
         {
@@ -2057,13 +2085,13 @@
         {
           "id": "JIm87yZbiVA",
           "title": "Tiếc Tiền Rút Ống Thở Của Vợ Trong Đêm, Sáng Hôm Sau Chồng Chết Lặng Khi Thấy Vợ Đứng Trước Cửa",
-          "views": 213,
+          "views": 212,
           "published_at": "2026-08-29T08:00:08Z"
         },
         {
           "id": "15iemYeh_5M",
           "title": "Thuê Người Hại Con Dâu Để Rước Nhân Tình Giàu Có: Mẹ Con Nhà Chồng Nhận Quả Báo Trắng Tay Tù Tội",
-          "views": 176,
+          "views": 175,
           "published_at": "2026-08-29T22:00:21Z"
         },
         {
@@ -2081,7 +2109,7 @@
         {
           "id": "Fs8wEO8jA4g",
           "title": "Chồng Giám Đốc Bỏ Vợ Theo Nhân Tình Để Con Bị Bạo Hành, Nào Ngờ Vợ Tái Hôn Với Thẩm Phán Quyền Lực",
-          "views": 135,
+          "views": 134,
           "published_at": "2026-08-28T23:00:22Z"
         },
         {
@@ -2201,7 +2229,7 @@
         {
           "id": "x9UV91s2UwM",
           "title": "Khinh Thường Con Dâu Nhà Quê Dùng Thẻ Đen, Nhà Chồng Nhận Cái Kết Muối Mặt Ngay Tại Cuộc Họp Cổ Đông",
-          "views": 53,
+          "views": 52,
           "published_at": "2026-09-02T04:00:15Z"
         },
         {
@@ -2235,16 +2263,16 @@
           "published_at": "2026-09-17T23:00:05Z"
         },
         {
-          "id": "eWAi_KjNoWg",
-          "title": "Mẹ Chồng Ép Nghỉ Dạy Đãi Khách Quý Và Sự Thật Chua Chát Về Nàng Dâu \"Hàng Hiệu\"",
-          "views": 28,
-          "published_at": "2026-09-19T23:00:39Z"
-        },
-        {
           "id": "88vIF19eanU",
           "title": "Vợ Âm Thầm Thu Thập Bằng Chứng Vạch Trần Chồng Mẫu Mực Bạo Hành Tinh Thần Và Ngoại Tình",
           "views": 28,
           "published_at": "2026-08-26T23:00:13Z"
+        },
+        {
+          "id": "eWAi_KjNoWg",
+          "title": "Mẹ Chồng Ép Nghỉ Dạy Đãi Khách Quý Và Sự Thật Chua Chát Về Nàng Dâu \"Hàng Hiệu\"",
+          "views": 27,
+          "published_at": "2026-09-19T23:00:39Z"
         },
         {
           "id": "d6dxwrP4b4o",
@@ -2261,7 +2289,7 @@
         {
           "id": "kwHe_fdb5kA",
           "title": "Vứt Bó Hoa Cưới Hủy Hôn Sau 300km Rước Dâu & Lời Trăn Trối Tiết Lộ Bí Mật Động Trời Của Mẹ Chồng",
-          "views": 22,
+          "views": 21,
           "published_at": "2026-09-01T04:00:08Z"
         },
         {
@@ -2283,19 +2311,19 @@
           "published_at": "2026-09-21T23:00:13Z"
         },
         {
+          "id": "zxYFbPS2W8E",
+          "title": "Bỏ Mặc Vợ Con Chạy Theo Cuộc Vui, Người Chồng Trả Giá Đắt Khi Trở Về Nhà Chỉ Còn Lại Đống Tro Tàn",
+          "views": 11,
+          "published_at": "2026-09-22T23:00:39Z"
+        },
+        {
           "id": "VdgKX4vOjMQ",
           "title": "Người đàn ông 64 tuổi trải lòng sau 2 lần tái hôn cay đắng: Cái kết đắt cho bài học tuổi già cô đơn",
           "views": 11,
           "published_at": "2026-09-08T09:00:26Z"
-        },
-        {
-          "id": "hXUoj_BVlvs",
-          "title": "Sự Thật Đau Lòng Đằng Sau Vụ Ngoại Tình Năm Xưa Và Màn \"Cưới Lại Vợ Cũ\" Đầy Nước Mắt",
-          "views": 9,
-          "published_at": "2026-08-31T10:00:13Z"
         }
       ],
-      "views": 6526,
+      "views": 6522,
       "v_15m": 0,
       "v_30m": 0,
       "v_60m": 0,
@@ -2313,6 +2341,10 @@
         [
           "2026-09-23T12:20:56.834289+00:00",
           2352830
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          2354036
         ]
       ],
       "tracked_video_ids": [
@@ -2890,7 +2922,7 @@
         {
           "id": "6QlwIsfhvW0",
           "title": "Toàn cảnh tiễn đưa linh cữu Thân phụ Thầy Minh Tuệ về nơi an nghỉ cuối cùng",
-          "views": 45024,
+          "views": 45025,
           "published_at": "2026-08-18T04:02:59Z"
         },
         {
@@ -2938,7 +2970,7 @@
         {
           "id": "6gGZnPcKcbQ",
           "title": "Sư Thích Giác Viên tại Mỹ chia sẻ mới nhất về Thầy Minh Tuệ. Phật tử say sưa nghe Thầy kể chuyện",
-          "views": 34436,
+          "views": 34490,
           "published_at": "2026-09-21T06:35:52Z"
         },
         {
@@ -2950,7 +2982,7 @@
         {
           "id": "vdvwtmASGZo",
           "title": "Huệ Thuận quá vô lương tâm sư cô già 76 tuổi cũng không tha. Sư MH đã chốt về phe của HT",
-          "views": 33591,
+          "views": 33620,
           "published_at": "2026-06-30T23:56:15Z"
         },
         {
@@ -2962,13 +2994,13 @@
         {
           "id": "MtLIt8uZseU",
           "title": "ĐVB quay xe với Hải Sapa. Thầy trả lời 3 câu của 1 người trong ngành ngoại giao về con đường tu tập",
-          "views": 31878,
+          "views": 31882,
           "published_at": "2026-08-25T11:57:41Z"
         },
         {
           "id": "C0yEwNAphtA",
           "title": "Đoàn Văn Báu nói về mối quan hệ với Hải Sapa. Sư An Lạc và sư Bổn Pháp sắp rời Lumbini",
-          "views": 31861,
+          "views": 31869,
           "published_at": "2026-08-23T12:02:03Z"
         },
         {
@@ -2998,7 +3030,7 @@
         {
           "id": "u70fKGlKP68",
           "title": "Lạ kỳ: Cầu vồng đôi xuất hiện. Ngày cuối tiễn đưa cha thầy MT. Sư MĐ cs về chữ Hiếu của thầy",
-          "views": 28708,
+          "views": 28709,
           "published_at": "2026-08-18T00:20:56Z"
         },
         {
@@ -3152,13 +3184,13 @@
           "published_at": "2026-06-17T08:51:49Z"
         }
       ],
-      "views": 2352830,
-      "v_15m": 0,
-      "v_30m": 0,
-      "v_60m": 0,
-      "v_24h": 0,
-      "v_48h": 0,
-      "is_spike": false
+      "views": 2354036,
+      "v_15m": 1206,
+      "v_30m": 1206,
+      "v_60m": 1206,
+      "v_24h": 1206,
+      "v_48h": 1206,
+      "is_spike": true
     },
     "UCUyC_mTQ0rh0tTW9fjJJ64Q": {
       "id": "UCUyC_mTQ0rh0tTW9fjJJ64Q",
@@ -3170,6 +3202,10 @@
         [
           "2026-09-23T12:20:56.834289+00:00",
           17629125
+        ],
+        [
+          "2026-09-23T12:30:53.827501+00:00",
+          17629134
         ]
       ],
       "tracked_video_ids": [
@@ -4693,12 +4729,12 @@
           "published_at": "2024-06-22T05:31:53Z"
         }
       ],
-      "views": 17629125,
-      "v_15m": 0,
-      "v_30m": 0,
-      "v_60m": 0,
-      "v_24h": 0,
-      "v_48h": 0,
+      "views": 17629134,
+      "v_15m": 9,
+      "v_30m": 9,
+      "v_60m": 9,
+      "v_24h": 9,
+      "v_48h": 9,
       "is_spike": false
     }
   },
