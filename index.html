@@ -47,9 +47,14 @@
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
     /* Controls & Tabs */
-    .controls { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .controls-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .controls { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex: 1; }
     .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 5px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
+
+    .global-collapse-btns { display: flex; gap: 4px; white-space: nowrap; }
+    .btn-collapse-global { background: #21262d; border: 1px solid var(--border); color: var(--text-bright); padding: 5px 9px; border-radius: 16px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+    .btn-collapse-global:hover { border-color: var(--primary); color: var(--primary); }
 
     /* Card Kênh & Cơ Chế Thu Gọn */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all 0.2s ease; }
@@ -139,15 +144,22 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
-  <div class="controls">
-    <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30P</button>
-    <button class="btn-tab" onclick="changeSort('60m')">⏱ 60P</button>
-    <button class="btn-tab" onclick="changeSort('24h')">24H</button>
-    <button class="btn-tab" onclick="changeSort('48h')">48H</button>
-    <button class="btn-tab" onclick="changeSort('d_7')">📅 7N</button>
-    <button class="btn-tab" onclick="changeSort('d_30')">📅 30N</button>
-    <button class="btn-tab" onclick="changeSort('d_90')">📅 90N</button>
-    <button class="btn-tab" onclick="changeSort('total')">Toàn bộ</button>
+  <!-- THANH LỌC VÀ CÁC NÚT THU GỌN TOÀN BỘ -->
+  <div class="controls-wrapper">
+    <div class="controls">
+      <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30P</button>
+      <button class="btn-tab" onclick="changeSort('60m')">⏱ 60P</button>
+      <button class="btn-tab" onclick="changeSort('24h')">24H</button>
+      <button class="btn-tab" onclick="changeSort('48h')">48H</button>
+      <button class="btn-tab" onclick="changeSort('d_7')">📅 7N</button>
+      <button class="btn-tab" onclick="changeSort('d_30')">📅 30N</button>
+      <button class="btn-tab" onclick="changeSort('d_90')">📅 90N</button>
+      <button class="btn-tab" onclick="changeSort('total')">Toàn bộ</button>
+    </div>
+    <div class="global-collapse-btns">
+      <button class="btn-collapse-global" onclick="collapseAll(true)">▲ Gọn</button>
+      <button class="btn-collapse-global" onclick="collapseAll(false)">▼ Mở</button>
+    </div>
   </div>
 
   <div id="appContainer">Đang tải dữ liệu...</div>
@@ -187,6 +199,26 @@
         card.classList.remove('is-collapsed');
         delete collapsedMap[chId];
       }
+      localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
+    }
+
+    // HÀM THU GỌN HOẶC BUNG RA TẤT CẢ CÁC KÊNH
+    function collapseAll(isCollapse) {
+      if (!db || !db.channels) return;
+      const collapsedMap = {};
+
+      Object.keys(db.channels).forEach(chId => {
+        const card = document.getElementById(`card-${chId}`);
+        if (card) {
+          if (isCollapse) {
+            card.classList.add('is-collapsed');
+            collapsedMap[chId] = true;
+          } else {
+            card.classList.remove('is-collapsed');
+          }
+        }
+      });
+
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
     }
 
@@ -321,13 +353,12 @@
         const res = await fetch('data.json?t=' + Date.now());
         const newData = await res.json();
 
-        // Kiểm tra xem dữ liệu có thực sự mới hơn không
         if (db && db.updated_at === newData.updated_at && !manual) {
-          return false; // Vẫn là file cũ, máy chủ Actions đang xếp hàng
+          return false;
         }
 
         db = newData;
-        calcNextCronTarget(); // Neo đúng mốc :00 hoặc :30 tiếp theo
+        calcNextCronTarget();
         render();
 
         if (db.updated_at) {
@@ -344,7 +375,6 @@
       }
     }
 
-    // NEO THẲNG VÀO MỐC CRON HỆ THỐNG (:00 VÀ :30)
     function calcNextCronTarget() {
       const now = new Date();
       const m = now.getMinutes();
@@ -358,7 +388,6 @@
       }
     }
 
-    // BỘ ĐẾM LÙI + TỰ ĐỘNG THĂM DÒ DỮ LIỆU MỖI 10S KHI ĐẾM VỀ 0
     setInterval(() => {
       if (!nextTarget) return;
       const now = new Date();
@@ -372,7 +401,6 @@
         timerEl.innerText = "--:--";
         if (progressBar) progressBar.style.width = "0%";
 
-        // Kích hoạt cơ chế thăm dò 10s một lần
         if (!pollInterval && !isFetching) {
           isFetching = true;
           loadData().then(success => {
@@ -393,10 +421,9 @@
               clearInterval(pollInterval);
               pollInterval = null;
             }
-          }, 10000); // 10 giây một lần
+          }, 10000);
         }
       } else {
-        // Đang trong chu kỳ đếm lùi bình thường
         if (pollInterval) {
           clearInterval(pollInterval);
           pollInterval = null;
