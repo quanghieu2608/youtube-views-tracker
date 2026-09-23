@@ -2,32 +2,30 @@ name: YouTube Views Auto Tracker
 
 on:
   schedule:
+    # Chạy mỗi 30 phút một lần (phút 0 và phút 30)
     - cron: '0,30 * * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: write
+  workflow_dispatch: # Cho phép bấm chạy tay hoặc trigger từ Web
 
 jobs:
-  run-tracker:
+  track:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repo
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
-      - name: Run script
+      - name: Run Tracker Script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python run.py
 
-      - name: Commit and push changes
+      - name: Commit & Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md data.json
+          git add data.json README.md
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update views [skip ci]" && git push)
