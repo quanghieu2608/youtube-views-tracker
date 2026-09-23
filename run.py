@@ -57,6 +57,15 @@ def batch_get_channel_details(channel_ids):
             }
     return details
 
+# LẤY CHUẨN XÁC 50 VIDEO MỚI NHẤT TRÊN ĐẦU
+def get_latest_50_video_ids(uploads_playlist_id):
+    res = youtube.playlistItems().list(
+        part="contentDetails",
+        playlistId=uploads_playlist_id,
+        maxResults=50
+    ).execute()
+    return [item["contentDetails"]["videoId"] for item in res.get("items", []) if item.get("contentDetails", {}).get("videoId")]
+
 def fetch_all_video_ids(uploads_playlist_id):
     video_ids = []
     next_page_token = None
@@ -68,7 +77,7 @@ def fetch_all_video_ids(uploads_playlist_id):
             pageToken=next_page_token
         ).execute()
         for item in res.get("items", []):
-            v_id = item["contentDetails"].get("videoId")
+            v_id = item.get("contentDetails", {}).get("videoId")
             if v_id:
                 video_ids.append(v_id)
         next_page_token = res.get("nextPageToken")
@@ -143,14 +152,16 @@ def main():
 
         uploads_pl = meta["uploads_playlist"]
 
-        # --- 12H DEEP SCAN ---
+        # LUÔN ĐẢM BẢO POOL 1 LÀ 50 VIDEO MỚI NHẤT HIỆN TẠI
+        latest_50 = get_latest_50_video_ids(uploads_pl)
+
         if need_deep_scan or not ch_data.get("tracked_video_ids"):
             print(f"Deep scanning: {meta['title']}")
             all_video_ids = fetch_all_video_ids(uploads_pl)
             all_stats = batch_get_video_stats(all_video_ids)
 
-            pool1_ids = all_video_ids[:50]
-            remaining_ids = all_video_ids[50:]
+            pool1_ids = latest_50
+            remaining_ids = [v for v in all_video_ids if v not in pool1_ids]
 
             catalog = ch_data.get("catalog_snapshots", {})
             has_past = bool(catalog)
@@ -167,31 +178,28 @@ def main():
 
             ch_data["catalog_snapshots"] = {vid: s["views"] for vid, s in all_stats.items()}
             ch_data["tracked_video_ids"] = list(dict.fromkeys(pool1_ids + pool2_ids))
+        else:
+            # Đảm bảo các video mới xuất bản luôn được gộp vào danh sách theo dõi
+            existing_tracked = ch_data.get("tracked_video_ids", [])
+            merged = list(dict.fromkeys(latest_50 + existing_tracked))[:100]
+            ch_data["tracked_video_ids"] = merged
 
-        # --- QUÉT 15 PHÚT TRÊN 100 VIDEO ---
         tracked_ids = ch_data.get("tracked_video_ids", [])
-        if not tracked_ids:
-            tracked_ids = fetch_all_video_ids(uploads_pl)[:100]
-            ch_data["tracked_video_ids"] = tracked_ids
-
         video_stats = batch_get_video_stats(tracked_ids)
         active_pool_views = sum(v["views"] for v in video_stats.values())
         ch_data["views"] = active_pool_views
 
-        # Quản lý lịch sử view của từng video lẻ
         v_hists = ch_data.setdefault("video_histories", {})
-
         video_list = []
+
         for vid, v in video_stats.items():
             curr_v = v["views"]
             vh = v_hists.setdefault(vid, [])
             vh.append([now_ts, curr_v])
-            # Giữ tối đa 200 điểm (~48-50 tiếng)
             if len(vh) > 200:
                 vh = vh[-200:]
                 v_hists[vid] = vh
 
-            # Tìm view 60m trước & 48h trước của video này
             def get_vid_view_ago(target_seconds):
                 target = now_ts - target_seconds
                 closest = None
@@ -218,10 +226,8 @@ def main():
                 "published_at": v["published_at"]
             })
 
-        # Lưu toàn bộ danh sách video (tối đa 100) để frontend tự do filter/sort
         ch_data["videos"] = video_list
 
-        # Quản lý lịch sử kênh chung
         history = ch_data.setdefault("history", [])
         history.append([now_iso, active_pool_views])
         if len(history) > 1500:
