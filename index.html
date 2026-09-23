@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Realtime Studio</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card-bg: #1f1f1f;
+      --card-hover: #282828;
+      --primary: #3ea6ff;
+      --accent: #2ba640;
+      --text: #f1f1f1;
+      --subtext: #aaaaaa;
+      --border: #333333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; padding-bottom: 60px; }
+    
+    header { margin-bottom: 20px; }
+    h1 { font-size: 1.3rem; display: flex; align-items: center; gap: 8px; }
+    .live-dot { width: 10px; height: 10px; background: #00e676; border-radius: 50%; box-shadow: 0 0 8px #00e676; }
+    .updated-time { font-size: 0.75rem; color: var(--subtext); margin-top: 4px; }
+
+    .controls { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+    .btn-filter { background: #272727; border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+    .btn-filter.active { background: #f1f1f1; color: #000; font-weight: bold; }
+
+    .card { background: var(--card-bg); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
+    .ch-title { font-weight: 600; font-size: 1rem; color: #fff; line-height: 1.3; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; background: #141414; padding: 10px; border-radius: 8px; }
+    .stat-box { display: flex; flex-direction: column; }
+    .stat-label { font-size: 0.7rem; color: var(--subtext); }
+    .stat-val { font-size: 1.15rem; font-weight: bold; color: var(--primary); margin-top: 2px; }
+
+    /* Thanh biểu đồ mô phỏng vạch sóng Studio */
+    .sparkline-text { font-family: monospace; font-size: 0.95rem; color: #3ea6ff; letter-spacing: 1px; margin-top: 6px; overflow: hidden; white-space: nowrap; }
+
+    /* Video con */
+    .video-list { margin-top: 14px; border-top: 1px solid #2d2d2d; padding-top: 10px; display: none; }
+    .video-item { padding: 8px 0; border-bottom: 1px solid #242424; display: flex; justify-content: space-between; gap: 10px; }
+    .video-item:last-child { border-bottom: none; }
+    .v-title { font-size: 0.8rem; color: #e0e0e0; text-decoration: none; flex: 1; line-height: 1.3; }
+    .v-stats { text-align: right; min-width: 90px; }
+    .v-48h { font-size: 0.8rem; font-weight: bold; color: var(--primary); }
+    .v-60m { font-size: 0.7rem; color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><span class="live-dot"></span> Hiệu Suất Thời Gian Thực</h1>
+    <div class="updated-time" id="lastUpdated">Đang tải dữ liệu...</div>
+  </header>
+
+  <div class="controls">
+    <button class="btn-filter active" onclick="setSort('48h')">Xếp theo 48 Giờ</button>
+    <button class="btn-filter" onclick="setSort('60m')">Xếp theo 60 Phút</button>
+    <button class="btn-filter" onclick="setSort('total')">Tổng Views</button>
+  </div>
+
+  <div id="channelsContainer"></div>
+
+  <script>
+    let currentData = null;
+    let currentSort = '48h';
+
+    async function loadData() {
+      try {
+        const res = await fetch('data.json?t=' + new Date().getTime());
+        currentData = await res.json();
+        render();
+      } catch (err) {
+        document.getElementById('lastUpdated').innerText = "Không thể tải file data.json";
+      }
+    }
+
+    function setSort(type) {
+      currentSort = type;
+      document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      render();
+    }
+
+    function render() {
+      if (!currentData || !currentData.channels) return;
+
+      const container = document.getElementById('channelsContainer');
+      container.innerHTML = '';
+
+      let list = Object.entries(currentData.channels).map(([id, info]) => ({ id, ...info }));
+
+      // Sắp xếp
+      list.sort((a, b) => {
+        if (currentSort === '60m') return (b.v_60m || 0) - (a.v_60m || 0);
+        if (currentSort === 'total') return (b.views || 0) - (a.views || 0);
+        return (b.v_48h || 0) - (a.v_48h || 0);
+      });
+
+      list.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-header" onclick="toggleVideos('${ch.id}')">
+            <div>
+              <div class="ch-title">${ch.title || ch.id}</div>
+              <div style="font-size:0.75rem; color:#888; margin-top:2px;">${(ch.subs || 0).toLocaleString()} người đăng ký • Bấm để xem video ▾</div>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <span class="stat-label">48 GIỜ QUA</span>
+              <span class="stat-val">+${(ch.v_48h || 0).toLocaleString()}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">60 PHÚT QUA</span>
+              <span class="stat-val" style="color:#00e676;">+${(ch.v_60m || 0).toLocaleString()}</span>
+            </div>
+          </div>
+          ${ch.sparkline ? `<div class="sparkline-text">${ch.sparkline}</div>` : ''}
+          <div class="video-list" id="vbox-${ch.id}">
+            <div style="font-size:0.75rem; color:#888; margin-bottom:6px; font-weight:bold;">VIDEO ĐANG CẮN VIEW NHẤT:</div>
+            ${renderVideos(ch.videos)}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('lastUpdated').innerText = "Đồng bộ tự động từ GitHub Actions • " + new Date().toLocaleTimeString();
+    }
+
+    function renderVideos(videos) {
+      if (!videos) return '<div style="font-size:0.75rem; color:#666;">Chưa có dữ liệu video</div>';
+      let vList = Array.isArray(videos) ? videos : Object.entries(videos).map(([id, v]) => ({ id, ...v }));
+      vList.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0));
+
+      return vList.slice(0, 15).map(v => `
+        <div class="video-item">
+          <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
+          <div class="v-stats">
+            <div class="v-48h">+${(v.v_48h || 0).toLocaleString()}</div>
+            <div class="v-60m">+${(v.v_60m || 0).toLocaleString()} (60p)</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleVideos(id) {
+      const el = document.getElementById('vbox-' + id);
+      if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    loadData();
+    // Tự động làm mới dữ liệu mỗi 2 phút
+    setInterval(loadData, 120000);
+  </script>
+</body>
+</html>
