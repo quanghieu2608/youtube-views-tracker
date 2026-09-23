@@ -21,21 +21,24 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 12px; padding-bottom: 70px; }
 
-    /* Header & Timer */
     header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
     .header-row { display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 1.15rem; color: var(--text-bright); display: flex; align-items: center; gap: 8px; font-weight: 700; }
     .live-dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
 
-    .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+    /* Thanh đếm ngược & trạng thái */
+    .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+    .countdown-box { display: flex; align-items: center; gap: 8px; }
     .countdown { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+    .status-badge { color: var(--warning); font-size: 0.75rem; animation: pulse 1s infinite alternate; }
+    @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
 
-    /* Bộ lọc */
+    .btn-refresh { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; }
+
     .controls { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
     .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
-    /* Card Kênh */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
     .ch-title { font-size: 1.05rem; font-weight: 700; color: var(--text-bright); line-height: 1.3; }
@@ -43,10 +46,8 @@
     .badges-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
     .badge-gray { background: #21262d; color: var(--subtext); }
-    .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
-    @keyframes blink { 50% { opacity: 0.6; } }
+    .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; }
 
-    /* Lưới thống kê 4 ô */
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
     .stat-box { background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .stat-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; font-weight: 600; }
@@ -57,7 +58,6 @@
     .sparkline-title { font-size: 0.65rem; color: var(--subtext); margin-bottom: 4px; font-weight: bold; }
     .sparkline-bars { font-family: monospace; font-size: 0.95rem; color: var(--primary); letter-spacing: 2px; overflow-x: auto; white-space: nowrap; }
 
-    /* Danh sách Video con */
     .video-drawer { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; display: none; }
     .v-item { padding: 10px 0; border-bottom: 1px solid #21262d; }
     .v-item:last-child { border-bottom: none; }
@@ -72,11 +72,14 @@
   <header>
     <div class="header-row">
       <h1><span class="live-dot"></span> YouTube Analytics Pro</h1>
-      <span class="badge badge-gray" id="channelSummary">...</span>
+      <span class="badge badge-gray" id="channelSummary">2 Kênh</span>
     </div>
     <div class="timer-pill">
-      <span>Lần quét tiếp theo:</span>
-      <span class="countdown" id="timer">--:--</span>
+      <div class="countdown-box">
+        <span id="timerLabel">Đợt quét mới sau:</span>
+        <span class="countdown" id="timer">--:--</span>
+      </div>
+      <button class="btn-refresh" onclick="loadData(true)">🔄 Cập nhật</button>
     </div>
   </header>
 
@@ -87,42 +90,68 @@
     <button class="btn-tab" onclick="changeSort('total')">Tổng Views</button>
   </div>
 
-  <div id="appContainer">Đang tải và tính toán dữ liệu...</div>
+  <div id="appContainer">Đang tải dữ liệu...</div>
 
   <script>
     let db = null;
     let sortMode = '48h';
-    let targetTime = null;
+    let nextTarget = null;
+    let isFetching = false;
 
-    async function loadData() {
+    async function loadData(manual = false) {
+      const timerLabel = document.getElementById('timerLabel');
+      if (manual) timerLabel.innerText = "Đang kiểm tra dữ liệu...";
+
       try {
-        const res = await fetch('data.json?v=' + Date.now());
+        const res = await fetch('data.json?t=' + Date.now());
         db = await res.json();
-        setupTimer(db.updated_at);
+        
+        calcNextScan(db.updated_at);
         render();
+        timerLabel.innerText = "Lần quét tiếp theo:";
       } catch (e) {
-        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được data.json mới từ GitHub Actions. Vui lòng chạy workflow trước!</div>';
+        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu. Hãy đợi lần quét tiếp theo!</div>';
       }
     }
 
-    function setupTimer(isoString) {
-      const last = isoString ? new Date(isoString) : new Date();
-      // Chu kỳ mỗi 30 phút ở phút 00 và phút 30
-      let next = new Date(last);
-      if (last.getMinutes() < 30) {
-        next.setMinutes(30, 0, 0);
-      } else {
-        next.setHours(last.getHours() + 1, 0, 0, 0);
+    function calcNextScan(isoTime) {
+      const last = isoTime ? new Date(isoTime) : new Date();
+      // Chu kỳ mỗi 30 phút sau lần cập nhật cuối
+      nextTarget = new Date(last.getTime() + 30 * 60 * 1000);
+      
+      // Nếu thời gian mục tiêu đã trôi qua, thiết lập mục tiêu là thời điểm tiếp theo theo mốc nửa tiếng
+      if (nextTarget <= new Date()) {
+        const now = new Date();
+        nextTarget = new Date(now.getTime() + 5 * 60 * 1000); // Đang trễ, chờ trong 5 phút
       }
-      targetTime = next;
     }
 
     setInterval(() => {
-      if (!targetTime) return;
-      const diff = Math.max(0, Math.floor((targetTime - new Date()) / 1000));
-      const m = String(Math.floor(diff / 60)).padStart(2, '0');
-      const s = String(diff % 60).padStart(2, '0');
-      document.getElementById('timer').innerText = `${m}m ${s}s`;
+      if (!nextTarget) return;
+      const now = new Date();
+      const diff = Math.floor((nextTarget - now) / 1000);
+
+      const timerEl = document.getElementById('timer');
+      const timerLabel = document.getElementById('timerLabel');
+
+      if (diff <= 0) {
+        timerLabel.innerText = "🔄 Đang chờ máy chủ quét...";
+        timerEl.innerText = "Vui lòng đợi";
+        
+        // Tự động kiểm tra file mới mỗi 15 giây khi hết giờ
+        if (!isFetching) {
+          isFetching = true;
+          setTimeout(async () => {
+            await loadData();
+            isFetching = false;
+          }, 15000);
+        }
+      } else {
+        const m = String(Math.floor(diff / 60)).padStart(2, '0');
+        const s = String(diff % 60).padStart(2, '0');
+        timerLabel.innerText = "Lần quét tiếp theo:";
+        timerEl.innerText = `${m}m ${s}s`;
+      }
     }, 1000);
 
     function changeSort(mode) {
@@ -137,7 +166,6 @@
       const chList = Object.values(db.channels);
       document.getElementById('channelSummary').innerText = `${chList.length} Kênh`;
 
-      // Sắp xếp thông minh
       chList.sort((a, b) => {
         if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views);
         if (sortMode === 'velocity') return (b.avg_views || 0) - (a.avg_views || 0);
