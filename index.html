@@ -26,15 +26,13 @@
     h1 { font-size: 1.15rem; color: var(--text-bright); display: flex; align-items: center; gap: 8px; font-weight: 700; }
     .live-dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
 
-    /* Thanh đếm ngược & trạng thái */
     .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
     .countdown-box { display: flex; align-items: center; gap: 8px; }
     .countdown { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--primary); }
-    .status-badge { color: var(--warning); font-size: 0.75rem; animation: pulse 1s infinite alternate; }
-    @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+    .btn-refresh { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; }
 
-    .btn-refresh { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; }
-
+    /* Bộ lọc đa mốc */
+    .section-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; margin-bottom: 6px; font-weight: bold; }
     .controls { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
     .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
@@ -46,13 +44,21 @@
     .badges-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
     .badge-gray { background: #21262d; color: var(--subtext); }
-    .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; }
+    .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
+    @keyframes blink { 50% { opacity: 0.6; } }
 
+    /* Lưới Realtime */
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
     .stat-box { background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .stat-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; font-weight: 600; }
     .stat-val { font-size: 1.18rem; font-weight: 800; color: var(--text-bright); margin-top: 2px; }
     .stat-note { font-size: 0.65rem; color: var(--subtext); margin-top: 2px; }
+
+    /* Lưới Dài Hạn (Lâu dài theo ngày) */
+    .longterm-strip { margin-top: 10px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+    .lt-item { display: flex; flex-direction: column; }
+    .lt-label { font-size: 0.62rem; color: var(--subtext); font-weight: 600; }
+    .lt-val { font-size: 0.85rem; font-weight: 700; color: var(--text-bright); margin-top: 2px; }
 
     .sparkline-container { margin-top: 10px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
     .sparkline-title { font-size: 0.65rem; color: var(--subtext); margin-bottom: 4px; font-weight: bold; }
@@ -72,11 +78,11 @@
   <header>
     <div class="header-row">
       <h1><span class="live-dot"></span> YouTube Analytics Pro</h1>
-      <span class="badge badge-gray" id="channelSummary">2 Kênh</span>
+      <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
     <div class="timer-pill">
       <div class="countdown-box">
-        <span id="timerLabel">Đợt quét mới sau:</span>
+        <span id="timerLabel">Lần quét tiếp theo:</span>
         <span class="countdown" id="timer">--:--</span>
       </div>
       <button class="btn-refresh" onclick="loadData(true)">🔄 Cập nhật</button>
@@ -84,17 +90,20 @@
   </header>
 
   <div class="controls">
-    <button class="btn-tab active" onclick="changeSort('48h')">48 Giờ Qua</button>
-    <button class="btn-tab" onclick="changeSort('60m')">60 Phút Qua</button>
-    <button class="btn-tab" onclick="changeSort('velocity')">Vận Tốc (v/ngày)</button>
-    <button class="btn-tab" onclick="changeSort('total')">Tổng Views</button>
+    <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30 Phút</button>
+    <button class="btn-tab" onclick="changeSort('60m')">60 Phút</button>
+    <button class="btn-tab" onclick="changeSort('24h')">24 Giờ</button>
+    <button class="btn-tab" onclick="changeSort('48h')">48 Giờ</button>
+    <button class="btn-tab" onclick="changeSort('d_7')">📅 7 Ngày</button>
+    <button class="btn-tab" onclick="changeSort('d_30')">📅 30 Ngày</button>
+    <button class="btn-tab" onclick="changeSort('total')">Toàn thời gian</button>
   </div>
 
   <div id="appContainer">Đang tải dữ liệu...</div>
 
   <script>
     let db = null;
-    let sortMode = '48h';
+    let sortMode = '30m';
     let nextTarget = null;
     let isFetching = false;
 
@@ -110,35 +119,27 @@
         render();
         timerLabel.innerText = "Lần quét tiếp theo:";
       } catch (e) {
-        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu. Hãy đợi lần quét tiếp theo!</div>';
+        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu mới. Hãy chạy workflow trước!</div>';
       }
     }
 
     function calcNextScan(isoTime) {
       const last = isoTime ? new Date(isoTime) : new Date();
-      // Chu kỳ mỗi 30 phút sau lần cập nhật cuối
       nextTarget = new Date(last.getTime() + 30 * 60 * 1000);
-      
-      // Nếu thời gian mục tiêu đã trôi qua, thiết lập mục tiêu là thời điểm tiếp theo theo mốc nửa tiếng
       if (nextTarget <= new Date()) {
-        const now = new Date();
-        nextTarget = new Date(now.getTime() + 5 * 60 * 1000); // Đang trễ, chờ trong 5 phút
+        nextTarget = new Date(Date.now() + 5 * 60 * 1000);
       }
     }
 
     setInterval(() => {
       if (!nextTarget) return;
-      const now = new Date();
-      const diff = Math.floor((nextTarget - now) / 1000);
-
+      const diff = Math.floor((nextTarget - new Date()) / 1000);
       const timerEl = document.getElementById('timer');
       const timerLabel = document.getElementById('timerLabel');
 
       if (diff <= 0) {
         timerLabel.innerText = "🔄 Đang chờ máy chủ quét...";
         timerEl.innerText = "Vui lòng đợi";
-        
-        // Tự động kiểm tra file mới mỗi 15 giây khi hết giờ
         if (!isFetching) {
           isFetching = true;
           setTimeout(async () => {
@@ -167,17 +168,20 @@
       document.getElementById('channelSummary').innerText = `${chList.length} Kênh`;
 
       chList.sort((a, b) => {
+        if (sortMode === '30m') return (b.v_30m || 0) - (a.v_30m || 0) || (b.views - a.views);
         if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views);
-        if (sortMode === 'velocity') return (b.avg_views || 0) - (a.avg_views || 0);
-        if (sortMode === 'total') return (b.views || 0) - (a.views || 0);
-        return (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views);
+        if (sortMode === '24h') return (b.v_24h || 0) - (a.v_24h || 0) || (b.views - a.views);
+        if (sortMode === '48h') return (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views);
+        if (sortMode === 'd_7') return (b.longterm?.d_7 || 0) - (a.longterm?.d_7 || 0);
+        if (sortMode === 'd_30') return (b.longterm?.d_30 || 0) - (a.longterm?.d_30 || 0);
+        return (b.views || 0) - (a.views || 0);
       });
 
       const container = document.getElementById('appContainer');
       container.innerHTML = '';
 
       chList.forEach((ch, idx) => {
-        const hasHistory = (ch.v_48h > 0 || ch.v_60m > 0);
+        const lt = ch.longterm || { d_1: 0, d_7: 0, d_30: 0, d_90: 0 };
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
@@ -188,35 +192,56 @@
                 <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
                 <span class="badge badge-gray">${ch.videos_count || 0} Video</span>
                 <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()} v/vid</span>
-                ${ch.is_spike ? `<span class="badge badge-spike">🔥 TĂNG ĐỘT BIẾN</span>` : ''}
+                ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
               </div>
             </div>
             <span style="font-size:0.75rem; color:var(--primary);">Chi tiết ▾</span>
           </div>
 
+          <!-- Lưới Realtime: 30p, 60p, 24h, 48h -->
           <div class="stats-grid">
             <div class="stat-box">
-              <div class="stat-label">48 Giờ Qua</div>
-              <div class="stat-val" style="color:var(--primary);">${ch.v_48h > 0 ? '+' + ch.v_48h.toLocaleString() : (hasHistory ? '0' : 'Đang đo...')}</div>
-              <div class="stat-note">${hasHistory ? 'Tăng thực tế' : 'Cần đủ 2 mốc quét'}</div>
+              <div class="stat-label">30 Phút Qua</div>
+              <div class="stat-val" style="color:var(--accent);">+${(ch.v_30m || 0).toLocaleString()}</div>
+              <div class="stat-note">Độ nhạy cao nhất</div>
             </div>
 
             <div class="stat-box">
               <div class="stat-label">60 Phút Qua</div>
-              <div class="stat-val" style="color:var(--accent);">${ch.v_60m > 0 ? '+' + ch.v_60m.toLocaleString() : (hasHistory ? '0' : 'Đang đo...')}</div>
-              <div class="stat-note">${hasHistory ? 'Tăng 1 giờ gần nhất' : 'Cần 2 lần quét'}</div>
+              <div class="stat-val" style="color:var(--accent);">+${(ch.v_60m || 0).toLocaleString()}</div>
+              <div class="stat-note">Tốc độ chuẩn 1 giờ</div>
             </div>
 
             <div class="stat-box">
-              <div class="stat-label">Tổng Lượt Xem</div>
-              <div class="stat-val">${(ch.views || 0).toLocaleString()}</div>
-              <div class="stat-note">Toàn thời gian</div>
+              <div class="stat-label">24 Giờ Qua</div>
+              <div class="stat-val" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
+              <div class="stat-note">Hiệu suất 1 ngày</div>
             </div>
 
             <div class="stat-box">
-              <div class="stat-label">Hiệu Quả Nội Dung</div>
-              <div class="stat-val" style="color:var(--warning);">${(ch.videos_count > 0 ? (ch.subs / ch.videos_count).toFixed(0) : 0)}</div>
-              <div class="stat-note">Subs / Video</div>
+              <div class="stat-label">48 Giờ Qua</div>
+              <div class="stat-val" style="color:var(--primary);">+${(ch.v_48h || 0).toLocaleString()}</div>
+              <div class="stat-note">Chu kỳ 2 ngày Studio</div>
+            </div>
+          </div>
+
+          <!-- Dải Lâu Dài Bền Vững: 1 ngày, 7 ngày, 30 ngày, All-time -->
+          <div class="longterm-strip">
+            <div class="lt-item">
+              <span class="lt-label">1 NGÀY</span>
+              <span class="lt-val">+${lt.d_1 > 0 ? lt.d_1.toLocaleString() : '-'}</span>
+            </div>
+            <div class="lt-item">
+              <span class="lt-label">7 NGÀY</span>
+              <span class="lt-val">+${lt.d_7 > 0 ? lt.d_7.toLocaleString() : '-'}</span>
+            </div>
+            <div class="lt-item">
+              <span class="lt-label">30 NGÀY</span>
+              <span class="lt-val">+${lt.d_30 > 0 ? lt.d_30.toLocaleString() : '-'}</span>
+            </div>
+            <div class="lt-item">
+              <span class="lt-label">TỔNG KÊNH</span>
+              <span class="lt-val">${(ch.views || 0).toLocaleString()}</span>
             </div>
           </div>
 
@@ -226,7 +251,7 @@
           </div>
 
           <div class="video-drawer" id="box-${ch.id}">
-            <div style="font-size:0.75rem; font-weight:700; color:var(--subtext); margin-bottom:8px;">DANH SÁCH VIDEO THEO HIỆU SUẤT:</div>
+            <div style="font-size:0.75rem; font-weight:700; color:var(--subtext); margin-bottom:8px;">TOP VIDEO ĐANG CẮN VIEW (SMART POOL 100):</div>
             ${renderVideos(ch.videos)}
           </div>
         `;
@@ -236,18 +261,18 @@
 
     function renderVideos(videos) {
       if (!videos || !videos.length) return '<div style="font-size:0.75rem; color:var(--subtext);">Chưa có video</div>';
-      return videos.slice(0, 15).map(v => `
+      return videos.slice(0, 20).map(v => `
         <div class="v-item">
           <div class="v-title-row">
             <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
             ${v.is_spike ? '<span class="badge badge-spike">Spike</span>' : ''}
           </div>
           <div class="v-metrics">
-            <span style="color:var(--subtext);">${v.days_old} ngày tuổi • <b>${(v.views_per_day || 0).toLocaleString()}</b> v/ngày</span>
+            <span style="color:var(--subtext);">${v.days_old} ngày • <b>${(v.views_per_day || 0).toLocaleString()}</b> v/ngày</span>
             <div class="v-growth">
+              <span style="color:var(--accent);">+${(v.v_30m || 0).toLocaleString()} (30p)</span>
               <span style="color:var(--accent);">+${(v.v_60m || 0).toLocaleString()} (60p)</span>
               <span style="color:var(--primary);">+${(v.v_48h || 0).toLocaleString()} (48h)</span>
-              <span style="color:var(--text);">${(v.views || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>
