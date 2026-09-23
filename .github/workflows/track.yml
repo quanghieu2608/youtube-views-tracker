@@ -35,4 +35,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update views 15m [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update views 15m (100 videos 2-Pool) [skip ci]" && git push)
