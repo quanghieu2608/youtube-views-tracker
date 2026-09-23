@@ -3,7 +3,7 @@ name: YouTube Views Auto Tracker
 on:
   schedule:
     # Tự động quét mỗi 30 phút một lần (ở phút thứ 0 và phút thứ 30 mỗi giờ)
-    - cron: '0,30 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch: # Cho phép kích hoạt chạy ngay từ giao diện Web App hoặc bấm tay
 
 # Cấp quyền Ghi (Write) cho bot GitHub Actions để lưu file data.json và README.md
