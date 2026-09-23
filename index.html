@@ -87,13 +87,13 @@
 
     /* Ô 60P: 4 CỘT BIỂU ĐỒ 15P MINI-STUDIO */
     .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 55px; }
+    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 52px; }
     .box-60p-title { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
     .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 2px; }
 
     /* 4 CỘT BAR 15 PHÚT */
     .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 44px; flex: 1; justify-content: flex-end; }
-    .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 38px; height: 100%; justify-content: flex-end; }
+    .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 40px; height: 100%; justify-content: flex-end; }
     .bar-track-4 { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
     .bar-fill-4 { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.3s ease; min-height: 2px; }
     .bar-val-4 { font-size: 0.52rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin-top: 2px; line-height: 1; white-space: nowrap; }
@@ -145,7 +145,7 @@
     </div>
     <div class="meta-sub">
       <span id="lastUpdatedLabel">Cập nhật: --:--:--</span>
-      <span>Chu kỳ cố định: :00, :15, :30, :45</span>
+      <span>Chu kỳ: :00, :15, :30, :45</span>
     </div>
   </header>
 
@@ -183,7 +183,7 @@
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
-    const TOTAL_CYCLE_SECONDS = 15 * 60; // Chu kỳ 15 phút
+    const TOTAL_CYCLE_SECONDS = 15 * 60; // 15 phút
 
     let db = null;
     let sortMode = '60m';
@@ -423,7 +423,7 @@
       }
     }
 
-    // ĐẾM LÙI THEO CÁC MỐC 15 PHÚT (:00, :15, :30, :45)
+    // Đếm lùi chuẩn các mốc 15 phút (:00, :15, :30, :45)
     function calcNextCronTarget() {
       const now = new Date();
       const m = now.getMinutes();
@@ -498,13 +498,12 @@
       render();
     }
 
-    // HÀM TÍNH TOÁN 4 CỘT 15 PHÚT TỪ SNAPSHOT LỊCH SỬ
+    // TÍNH TOÁN 4 CỘT 15P TỪ LỊCH SỬ THỜI GIAN THỰC
     function compute15mSlices(ch) {
       const history = ch.history || [];
       const currentViews = ch.views || 0;
       const total60 = ch.v_60m || 0;
 
-      // Nếu có mảng lịch sử snapshot chi tiết
       if (history.length >= 2) {
         const nowTs = new Date(db.updated_at || Date.now()).getTime();
 
@@ -537,7 +536,7 @@
         }
       }
 
-      // Fallback chia mịn từ 30P và 60P sẵn có
+      // Fallback nếu mới chạy chưa đủ điểm
       const v_curr_30 = ch.v_30m || 0;
       const v_prev_30 = Math.max(0, total60 - v_curr_30);
       const c4 = Math.round(v_curr_30 * 0.55);
@@ -571,7 +570,7 @@
         const lt = ch.longterm || { d_7: 0, d_30: 0, d_90: 0 };
         const isCollapsed = !!collapsedMap[ch.id];
 
-        // TÍNH TOÁN 4 CỘT 15 PHÚT
+        // 4 Cột 15P
         const [c1, c2, c3, c4] = compute15mSlices(ch);
         const v_total_60 = ch.v_60m || (c1 + c2 + c3 + c4);
 
@@ -581,7 +580,6 @@
         const h3 = Math.max(8, Math.round((c3 / maxVal) * 100));
         const h4 = Math.max(8, Math.round((c4 / maxVal) * 100));
 
-        // Màu cột mới nhất (c4): xanh lá sáng nếu tăng nhiệt so với c3, cam nếu giảm
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
 
         const card = document.createElement('div');
@@ -602,7 +600,7 @@
           <div class="badges-row">
             <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
             <span class="badge badge-gray">${ch.videos_count || 0} Vid</span>
-            <span class="badge badge-gray">TB: ${(ch.avg_views || 0).toLocaleString()}</span>
+            <span class="badge badge-gray">Pool: 100 Vid</span>
           </div>
 
           <div class="card-body">
@@ -618,14 +616,13 @@
                 <div class="stat-val-compact" style="color:var(--primary);">+${(ch.v_24h || 0).toLocaleString()}</div>
               </div>
 
-              <!-- Ô 60P: 4 CỘT MINI 15P -->
+              <!-- Ô 60P: 4 CỘT 15P VỚI SỐ VIEW CHÍNH XÁC Ở ĐÁY -->
               <div class="box-60p-wrapper">
                 <div class="box-60p-info">
                   <div class="box-60p-title">⏱ 60P</div>
                   <div class="box-60p-total">+${v_total_60.toLocaleString()}</div>
                 </div>
 
-                <!-- 4 Cột Biểu Đồ 15P Trôi Dần Sang Trái -->
                 <div class="bars-container-4">
                   <div class="bar-col-4">
                     <div class="bar-track-4">
@@ -673,8 +670,8 @@
                 <span class="lt-val">+${lt.d_90 > 0 ? lt.d_90.toLocaleString() : '-'}</span>
               </div>
               <div class="lt-item">
-                <span class="lt-label">TỔNG</span>
-                <span class="lt-val">${(ch.views || 0).toLocaleString()}</span>
+                <span class="lt-label">TỔNG TOÀN KÊNH</span>
+                <span class="lt-val">${(ch.total_channel_views || ch.views || 0).toLocaleString()}</span>
               </div>
             </div>
 
@@ -685,10 +682,10 @@
             </div>
           </div>
 
-          <!-- Drawer Chi Tiết Video -->
+          <!-- Drawer Top Video Chi Tiết -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
-              <span style="font-size:0.7rem; font-weight:700; color:var(--subtext);">TOP VIDEO (SMART POOL):</span>
+              <span style="font-size:0.7rem; font-weight:700; color:var(--subtext);">DANH SÁCH 50 VIDEO VIEW CAO NHẤT (POOL):</span>
               <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${ch.title ? ch.title.replace(/'/g, "\\'") : 'Kênh'}')">🗑 Xóa kênh này</button>
             </div>
             ${renderVideos(ch.videos)}
@@ -704,14 +701,11 @@
         <div class="v-item">
           <div class="v-title-row">
             <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">${v.title}</a>
-            ${v.is_spike ? '<span class="badge badge-spike">Spike</span>' : ''}
           </div>
           <div class="v-metrics">
-            <span style="color:var(--subtext);">${v.days_old}n • ${(v.views_per_day || 0).toLocaleString()} v/n</span>
+            <span style="color:var(--subtext);">Xuất bản: ${v.published_at ? v.published_at.slice(0,10) : ''}</span>
             <div class="v-growth">
-              <span style="color:var(--accent);">+${(v.v_30m || 0).toLocaleString()}</span>
-              <span style="color:var(--accent); margin-left:4px;">+${(v.v_60m || 0).toLocaleString()}</span>
-              <span style="color:var(--primary); margin-left:4px;">+${(v.v_48h || 0).toLocaleString()}</span>
+              <span style="color:var(--accent);">👁 ${(v.views || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>
