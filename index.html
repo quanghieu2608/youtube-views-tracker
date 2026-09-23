@@ -29,14 +29,24 @@
     .timer-pill { background: var(--card-sub); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
     .countdown-box { display: flex; align-items: center; gap: 8px; }
     .countdown { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--primary); }
-    .btn-refresh { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; }
+    .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; }
 
-    /* Bộ lọc đa mốc */
-    .section-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; margin-bottom: 6px; font-weight: bold; }
+    /* Khung Thêm Kênh */
+    .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; display: none; }
+    .add-channel-box.active { display: block; }
+    .input-group { display: flex; gap: 8px; margin-top: 8px; }
+    .input-box { background: var(--card-sub); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; flex: 1; outline: none; }
+    .input-box:focus { border-color: var(--primary); }
+    .btn-action { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+    .btn-action:disabled { background: #333; color: #777; }
+    .status-msg { font-size: 0.75rem; margin-top: 6px; min-height: 18px; }
+
+    /* Controls & Tabs */
     .controls { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
     .btn-tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--subtext); padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
 
+    /* Card Kênh */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
     .ch-title { font-size: 1.05rem; font-weight: 700; color: var(--text-bright); line-height: 1.3; }
@@ -47,14 +57,12 @@
     .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    /* Lưới Realtime */
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
     .stat-box { background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .stat-label { font-size: 0.68rem; color: var(--subtext); text-transform: uppercase; font-weight: 600; }
     .stat-val { font-size: 1.18rem; font-weight: 800; color: var(--text-bright); margin-top: 2px; }
     .stat-note { font-size: 0.65rem; color: var(--subtext); margin-top: 2px; }
 
-    /* Lưới Dài Hạn (Lâu dài theo ngày) */
     .longterm-strip { margin-top: 10px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.62rem; color: var(--subtext); font-weight: 600; }
@@ -78,16 +86,29 @@
   <header>
     <div class="header-row">
       <h1><span class="live-dot"></span> YouTube Analytics Pro</h1>
-      <span class="badge badge-gray" id="channelSummary">...</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-header" onclick="toggleAddBox()">➕ Thêm Kênh</button>
+        <button class="btn-header" onclick="loadData(true)">🔄 Cập nhật</button>
+      </div>
     </div>
     <div class="timer-pill">
       <div class="countdown-box">
         <span id="timerLabel">Lần quét tiếp theo:</span>
         <span class="countdown" id="timer">--:--</span>
       </div>
-      <button class="btn-refresh" onclick="loadData(true)">🔄 Cập nhật</button>
+      <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
   </header>
+
+  <!-- Form Thêm Kênh Nhanh -->
+  <div class="add-channel-box" id="addChannelBox">
+    <div style="font-size:0.8rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay</div>
+    <div class="input-group">
+      <input type="text" id="channelInput" class="input-box" placeholder="Dán Channel ID (ví dụ: UCxxxxxxxxxxxx)">
+      <button class="btn-action" id="btnAdd" onclick="submitNewChannel()">Thêm & Quét</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
 
   <div class="controls">
     <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30 Phút</button>
@@ -102,14 +123,119 @@
   <div id="appContainer">Đang tải dữ liệu...</div>
 
   <script>
+    const REPO_OWNER = 'quanghieu2608';
+    const REPO_NAME = 'youtube-views-tracker';
+    const WORKFLOW_ID = 'tracker.yml';
+
     let db = null;
     let sortMode = '30m';
     let nextTarget = null;
     let isFetching = false;
 
+    // Lấy Token đã lưu trong trình duyệt (hoặc hỏi nếu chưa có)
+    function getStoredToken() {
+      let token = localStorage.getItem('gh_token');
+      if (!token) {
+        token = prompt("Vui lòng dán GitHub Personal Access Token (ghp_...) để kích hoạt tính năng thêm kênh từ xa:");
+        if (token) localStorage.setItem('gh_token', token.trim());
+      }
+      return token;
+    }
+
+    function toggleAddBox() {
+      const box = document.getElementById('addChannelBox');
+      box.classList.toggle('active');
+    }
+
+    async function submitNewChannel() {
+      const input = document.getElementById('channelInput');
+      const msg = document.getElementById('statusMsg');
+      const btn = document.getElementById('btnAdd');
+      const rawVal = input.value.trim();
+
+      if (!rawVal) {
+        msg.innerHTML = '<span style="color:var(--danger)">Vui lòng nhập ID kênh!</span>';
+        return;
+      }
+
+      // Lấy channel ID nếu người dùng dán cả link
+      let chId = rawVal;
+      if (rawVal.includes('/channel/')) {
+        chId = rawVal.split('/channel/')[1].split('/')[0].split('?')[0];
+      }
+
+      const token = getStoredToken();
+      if (!token) return;
+
+      btn.disabled = true;
+      msg.innerHTML = '<span style="color:var(--primary)">1/2. Đang ghi kênh vào channels.txt...</span>';
+
+      try {
+        // 1. Lấy file channels.txt hiện tại
+        const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/channels.txt`;
+        const res = await fetch(getUrl, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Sai Token hoặc không có quyền truy cập repo!");
+        const data = await res.json();
+        const currentContent = decodeURIComponent(escape(atob(data.content)));
+
+        if (currentContent.includes(chId)) {
+          msg.innerHTML = '<span style="color:var(--warning)">Kênh này đã có trong danh sách! Đang kích hoạt quét lại...</span>';
+        } else {
+          // Ghi thêm ID mới
+          const updatedContent = currentContent.trim() + '\n' + chId + '\n';
+          const updateRes = await fetch(getUrl, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Add channel ${chId} via Web App`,
+              content: btoa(unescape(encodeURIComponent(updatedContent))),
+              sha: data.sha
+            })
+          });
+          if (!updateRes.ok) throw new Error("Không thể ghi file channels.txt");
+        }
+
+        // 2. Kích hoạt GitHub Action chạy ngay lập tức!
+        msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt máy chủ quét ngay lập tức...</span>';
+        const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
+        const trigRes = await fetch(triggerUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ref: 'main' })
+        });
+
+        if (!trigRes.ok) throw new Error("Không thể kích hoạt Action!");
+
+        msg.innerHTML = '<span style="color:var(--accent)">✅ Thành công! Hệ thống đang quét ngầm, trang sẽ tự làm mới sau 30 giây...</span>';
+        input.value = '';
+
+        // Tự động kiểm tra nạp dữ liệu mới sau 30 giây
+        setTimeout(() => {
+          loadData(true);
+          toggleAddBox();
+          msg.innerHTML = '';
+        }, 30000);
+
+      } catch (err) {
+        msg.innerHTML = `<span style="color:var(--danger)">Lỗi: ${err.message}</span>`;
+        if (err.message.includes("Token")) localStorage.removeItem('gh_token');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     async function loadData(manual = false) {
       const timerLabel = document.getElementById('timerLabel');
-      if (manual) timerLabel.innerText = "Đang kiểm tra dữ liệu...";
+      if (manual) timerLabel.innerText = "Đang tải dữ liệu...";
 
       try {
         const res = await fetch('data.json?t=' + Date.now());
@@ -119,7 +245,7 @@
         render();
         timerLabel.innerText = "Lần quét tiếp theo:";
       } catch (e) {
-        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu mới. Hãy chạy workflow trước!</div>';
+        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu.</div>';
       }
     }
 
@@ -198,7 +324,6 @@
             <span style="font-size:0.75rem; color:var(--primary);">Chi tiết ▾</span>
           </div>
 
-          <!-- Lưới Realtime: 30p, 60p, 24h, 48h -->
           <div class="stats-grid">
             <div class="stat-box">
               <div class="stat-label">30 Phút Qua</div>
@@ -225,7 +350,6 @@
             </div>
           </div>
 
-          <!-- Dải Lâu Dài Bền Vững: 1 ngày, 7 ngày, 30 ngày, All-time -->
           <div class="longterm-strip">
             <div class="lt-item">
               <span class="lt-label">1 NGÀY</span>
