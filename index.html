@@ -818,14 +818,14 @@
       const vCopy = [...videos];
 
       if (tab === 'latest') {
-        // Xếp theo ngày xuất bản mới nhất
+        // Xếp chuẩn theo thời gian xuất bản mới nhất (video 23/9 lên đầu)
         vCopy.sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0));
       } else if (tab === '60m') {
-        // Xếp theo view tăng trong 60P cao nhất
-        vCopy.sort((a, b) => (b.v_60m || 0) - (a.v_60m || 0) || (b.views - a.views));
+        // Xếp theo view 60m; nếu đang = 0 (do mới quét) thì ưu tiên xếp theo video mới nhất
+        vCopy.sort((a, b) => (b.v_60m || 0) - (a.v_60m || 0) || (new Date(b.published_at || 0) - new Date(a.published_at || 0)));
       } else if (tab === '48h') {
-        // Xếp theo view tăng trong 48H cao nhất
-        vCopy.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0) || (b.views - a.views));
+        // Xếp theo view 48h; nếu đang = 0 thì ưu tiên xếp theo video mới nhất
+        vCopy.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0) || (new Date(b.published_at || 0) - new Date(a.published_at || 0)));
       }
 
       return vCopy.slice(0, 15).map((v, i) => {
