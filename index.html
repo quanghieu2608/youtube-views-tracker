@@ -31,7 +31,7 @@
     .countdown { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
 
-    /* PROGRESS BAR ĐẾM LÙI */
+    /* THANH TIẾN TRÌNH PROGRESS BAR */
     .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
     .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
 
@@ -62,7 +62,7 @@
     .badge-spike { background: #ffebe9; color: #cf222e; border: 1px solid #ff8182; animation: blink 1.5s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    /* Khi card ở chế độ thu gọn (collapsed) */
+    /* Trạng thái thu gọn */
     .card.is-collapsed { padding: 8px 12px; }
     .card.is-collapsed .toggle-icon { transform: rotate(-90deg); }
     .card.is-collapsed .card-body,
@@ -117,7 +117,6 @@
       </div>
       <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
-    <!-- THANH TIẾN TRÌNH PROGRESS BAR -->
     <div class="progress-wrap">
       <div class="progress-fill" id="progressBar"></div>
     </div>
@@ -150,14 +149,14 @@
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
-    const TOTAL_CYCLE_SECONDS = 30 * 60; // 30 phút = 1800s
+    const TOTAL_CYCLE_SECONDS = 30 * 60; // Chu kỳ 30 phút
 
     let db = null;
     let sortMode = '30m';
     let nextTarget = null;
     let isFetching = false;
+    let pollInterval = null; // Quản lý vòng lặp thăm dò 10 giây
 
-    // Quản lý trạng thái thu gọn kênh (lưu trong localStorage)
     function getCollapsedChannels() {
       try {
         return JSON.parse(localStorage.getItem('collapsed_channels') || '{}');
@@ -259,7 +258,6 @@
       }
     }
 
-    // XÓA KÊNH
     async function deleteChannel(chId, chTitle) {
       const confirmDel = confirm(`Bạn có chắc chắn muốn XÓA kênh "${chTitle}" (${chId}) khỏi danh sách theo dõi?`);
       if (!confirmDel) return;
@@ -314,47 +312,86 @@
 
       try {
         const res = await fetch('data.json?t=' + Date.now());
-        db = await res.json();
+        const newData = await res.json();
+
+        // Kiểm tra xem dữ liệu có thực sự mới hơn không
+        if (db && db.updated_at === newData.updated_at && !manual) {
+          return false; // Vẫn là file cũ, máy chủ Actions chưa ghi xong
+        }
+
+        db = newData;
         calcNextScan(db.updated_at);
         render();
         timerLabel.innerText = "Kế tiếp:";
+        return true; // Đã cập nhật thành công dữ liệu mới
       } catch (e) {
-        document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu.</div>';
+        if (!db) {
+          document.getElementById('appContainer').innerHTML = '<div style="color:var(--danger); padding:20px; text-align:center;">Chưa tải được dữ liệu.</div>';
+        }
+        return false;
       }
     }
 
     function calcNextScan(isoTime) {
       const last = isoTime ? new Date(isoTime) : new Date();
       nextTarget = new Date(last.getTime() + 30 * 60 * 1000);
+      // Nếu thời gian đã quá 30 phút mà chưa có dữ liệu mới, đặt mốc tạm thời để chạy thăm dò
       if (nextTarget <= new Date()) {
-        nextTarget = new Date(Date.now() + 5 * 60 * 1000);
+        nextTarget = new Date(Date.now() - 1000);
       }
     }
 
-    // ĐỒNG HỒ ĐẾM LÙI + THANH TIẾN TRÌNH (PROGRESS BAR)
+    // ĐỒNG HỒ ĐẾM LÙI + TỰ ĐỘNG THĂM DÒ DỮ LIỆU MỖI 10 GIÂY KHI QUÁ GIỜ
     setInterval(() => {
       if (!nextTarget) return;
-      const diff = Math.floor((nextTarget - new Date()) / 1000);
+      const now = new Date();
+      const diff = Math.floor((nextTarget - now) / 1000);
       const timerEl = document.getElementById('timer');
       const timerLabel = document.getElementById('timerLabel');
       const progressBar = document.getElementById('progressBar');
 
       if (diff <= 0) {
-        timerLabel.innerText = "Đang quét...";
+        timerLabel.innerText = "⏳ Đang quét dữ liệu mới...";
         timerEl.innerText = "--:--";
         if (progressBar) progressBar.style.width = "0%";
 
-        if (!isFetching) {
+        // Kích hoạt thăm dò mỗi 10 giây một lần
+        if (!pollInterval && !isFetching) {
+          // Thử lấy ngay lập tức một lần
           isFetching = true;
-          setTimeout(async () => { await loadData(); isFetching = false; }, 15000);
+          loadData().then(success => {
+            isFetching = false;
+            if (success && pollInterval) {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          });
+
+          // Tiếp tục thăm dò đều đặn mỗi 10s cho đến khi nhận được dữ liệu mới
+          pollInterval = setInterval(async () => {
+            if (isFetching) return;
+            isFetching = true;
+            const hasNewData = await loadData();
+            isFetching = false;
+
+            if (hasNewData) {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          }, 10000); // 10 giây/lần
         }
       } else {
+        // Đang trong chu kỳ đếm lùi bình thường
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+
         const m = String(Math.floor(diff / 60)).padStart(2, '0');
         const s = String(diff % 60).padStart(2, '0');
         timerLabel.innerText = "Kế tiếp:";
         timerEl.innerText = `${m}m ${s}s`;
 
-        // Tính % hiển thị trên progress bar
         if (progressBar) {
           const pct = Math.max(0, Math.min(100, (diff / TOTAL_CYCLE_SECONDS) * 100));
           progressBar.style.width = pct + "%";
