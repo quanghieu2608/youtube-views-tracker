@@ -2,11 +2,9 @@ name: YouTube Views Auto Tracker
 
 on:
   schedule:
-    # Tự động quét mỗi 30 phút một lần (ở phút thứ 0 và phút thứ 30 mỗi giờ)
     - cron: '*/30 * * * *'
-  workflow_dispatch: # Cho phép kích hoạt chạy ngay từ giao diện Web App hoặc bấm tay
+  workflow_dispatch:
 
-# Cấp quyền Ghi (Write) cho bot GitHub Actions để lưu file data.json và README.md
 permissions:
   contents: write
 
@@ -17,34 +15,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Run Tracker Engine
+      - name: Install dependencies
+        run: |
+          pip install requests google-api-python-client
+
+      - name: Run tracking script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python run.py
 
-      - name: Commit & Push updated data
+      - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Kéo các thay đổi mới nhất (nếu bạn vừa bấm thêm kênh trên web)
-          git pull origin main --rebase || true
-          
-          # Thêm các file dữ liệu mới tạo ra
-          git add data.json README.md
-          
-          # Nếu có dữ liệu mới thì mới commit & push, tránh tạo commit rác
-          if git diff --staged --quiet; then
-            echo "Khong co du lieu moi can commit."
-          else
-            git commit -m "Auto update views [skip ci]"
-            git push origin main
-          fi
+          git add data.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update views [skip ci]" && git push)
