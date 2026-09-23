@@ -30,6 +30,7 @@
     .countdown-box { display: flex; align-items: center; gap: 6px; }
     .countdown { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
+    .btn-header:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* THANH TIẾN TRÌNH PROGRESS BAR */
     .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; }
@@ -56,7 +57,7 @@
     .btn-collapse-global { background: #21262d; border: 1px solid var(--border); color: var(--text-bright); padding: 5px 9px; border-radius: 16px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
     .btn-collapse-global:hover { border-color: var(--primary); color: var(--primary); }
 
-    /* Card Kênh & Cơ Chế Thu Gọn */
+    /* Card Kênh & Thu Gọn */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all 0.2s ease; }
     .card-top { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
     .ch-title-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
@@ -76,7 +77,7 @@
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* 4 Ô REALTIME GỌN TRÊN 1 HÀNG */
+    /* 4 Ô Realtime */
     .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 8px; }
     .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; }
     .stat-label-compact { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -88,12 +89,12 @@
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
     .lt-val { font-size: 0.78rem; font-weight: 700; color: var(--text-bright); margin-top: 1px; }
 
-    /* Sparkline thu nhỏ */
+    /* Sparkline */
     .sparkline-container { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; display: flex; justify-content: space-between; align-items: center; }
     .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
     .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
-    /* Drawer & Nút Xóa Kênh */
+    /* Drawer & Nút Xóa */
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
     .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .btn-delete-channel { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
@@ -114,7 +115,8 @@
       <h1><span class="live-dot"></span> YouTube Realtime Pro</h1>
       <div style="display:flex; gap:5px;">
         <button class="btn-header" onclick="toggleAddBox()">➕ Thêm</button>
-        <button class="btn-header" onclick="loadData(true)">🔄 Quét</button>
+        <!-- NÚT GỌI TRỰC TIẾP RUN WORKFLOW -->
+        <button class="btn-header" id="btnTriggerScan" onclick="triggerRunWorkflow()">⚡ Quét Ngay</button>
       </div>
     </div>
     <div class="timer-pill">
@@ -124,7 +126,6 @@
       </div>
       <span class="badge badge-gray" id="channelSummary">...</span>
     </div>
-    <!-- THANH TIẾN TRÌNH PROGRESS BAR -->
     <div class="progress-wrap">
       <div class="progress-fill" id="progressBar"></div>
     </div>
@@ -144,7 +145,7 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
-  <!-- THANH LỌC VÀ CÁC NÚT THU GỌN TOÀN BỘ -->
+  <!-- Thanh Lọc & Thu Gọn Toàn Bộ -->
   <div class="controls-wrapper">
     <div class="controls">
       <button class="btn-tab active" onclick="changeSort('30m')">⚡ 30P</button>
@@ -168,13 +169,63 @@
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
-    const TOTAL_CYCLE_SECONDS = 30 * 60; // 30 phút = 1800 giây
+    const TOTAL_CYCLE_SECONDS = 30 * 60;
 
     let db = null;
     let sortMode = '30m';
     let nextTarget = null;
     let isFetching = false;
     let pollInterval = null;
+
+    function getStoredToken() {
+      let token = localStorage.getItem('gh_token');
+      if (!token) {
+        token = prompt("Vui lòng dán GitHub Personal Access Token (ghp_...):");
+        if (token) localStorage.setItem('gh_token', token.trim());
+      }
+      return token;
+    }
+
+    // HÀM GỌI CHẠY RUN WORKFLOW TRỰC TIẾP TỪ NÚT BẤM TRÊN WEB
+    async function triggerRunWorkflow() {
+      const btn = document.getElementById('btnTriggerScan');
+      const timerLabel = document.getElementById('timerLabel');
+      const token = getStoredToken();
+      if (!token) return;
+
+      btn.disabled = true;
+      btn.innerText = "⏳ Đang chạy...";
+      timerLabel.innerText = "⏳ Đang quét Actions...";
+
+      try {
+        const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
+        const res = await fetch(triggerUrl, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ref: 'main' })
+        });
+
+        if (!res.ok) throw new Error("Lỗi xác thực Token hoặc không có quyền Workflow!");
+
+        // Khởi động thăm dò mỗi 5s để đón ngay khi máy ảo hoàn thành
+        let tries = 0;
+        const scanPoll = setInterval(async () => {
+          tries++;
+          const hasNew = await loadData();
+          if (hasNew || tries > 12) { // Dừng sau tối đa 60 giây
+            clearInterval(scanPoll);
+            btn.disabled = false;
+            btn.innerText = "⚡ Quét Ngay";
+          }
+        }, 5000);
+
+      } catch (err) {
+        alert("Lỗi kích hoạt: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "⚡ Quét Ngay";
+        timerLabel.innerText = "Kế tiếp:";
+      }
+    }
 
     function getCollapsedChannels() {
       try {
@@ -202,7 +253,6 @@
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
     }
 
-    // HÀM THU GỌN HOẶC BUNG RA TẤT CẢ CÁC KÊNH
     function collapseAll(isCollapse) {
       if (!db || !db.channels) return;
       const collapsedMap = {};
@@ -220,15 +270,6 @@
       });
 
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
-    }
-
-    function getStoredToken() {
-      let token = localStorage.getItem('gh_token');
-      if (!token) {
-        token = prompt("Vui lòng dán GitHub Personal Access Token (ghp_...):");
-        if (token) localStorage.setItem('gh_token', token.trim());
-      }
-      return token;
     }
 
     function toggleAddBox() {
@@ -280,16 +321,15 @@
 
         msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt Action track.yml...</span>';
         const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
-        const trigRes = await fetch(triggerUrl, {
+        await fetch(triggerUrl, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ ref: 'main' })
         });
-        if (!trigRes.ok) throw new Error("Không thể kích hoạt Action!");
 
-        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã thêm! Đang quét ngầm, trang sẽ tự làm mới sau 25s...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã thêm! Đang quét ngầm, trang sẽ tự làm mới sau 20s...</span>';
         input.value = '';
-        setTimeout(() => { loadData(true); toggleAddBox(); msg.innerHTML = ''; }, 25000);
+        setTimeout(() => { loadData(true); toggleAddBox(); msg.innerHTML = ''; }, 20000);
       } catch (err) {
         msg.innerHTML = `<span style="color:var(--danger)">Lỗi: ${err.message}</span>`;
       } finally {
@@ -347,7 +387,6 @@
 
     async function loadData(manual = false) {
       const timerLabel = document.getElementById('timerLabel');
-      if (manual) timerLabel.innerText = "Đang tải...";
 
       try {
         const res = await fetch('data.json?t=' + Date.now());
@@ -494,7 +533,6 @@
           </div>
 
           <div class="card-body">
-            <!-- 4 Ô REALTIME GỌN TRÊN 1 HÀNG -->
             <div class="stats-grid-4">
               <div class="stat-box-compact">
                 <div class="stat-label-compact">⚡ 30P</div>
@@ -514,7 +552,6 @@
               </div>
             </div>
 
-            <!-- Dải Dài Hạn 1 Hàng: 7N - 30N - 90N - TỔNG -->
             <div class="longterm-strip">
               <div class="lt-item">
                 <span class="lt-label">7N</span>
@@ -534,14 +571,12 @@
               </div>
             </div>
 
-            <!-- Sparkline Tối Giản -->
             <div class="sparkline-container">
               <span class="sparkline-title">48H:</span>
               <span class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█'}</span>
             </div>
           </div>
 
-          <!-- Video Drawer kèm Nút Xóa Kênh -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
               <span style="font-size:0.7rem; font-weight:700; color:var(--subtext);">TOP VIDEO (SMART POOL):</span>
