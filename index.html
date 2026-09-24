@@ -23,7 +23,14 @@
       --border: #30363d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 8px; padding-bottom: 60px; }
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      padding: 10px 12px; 
+      padding-bottom: 60px; 
+      max-width: 1600px;
+      margin: 0 auto;
+    }
 
     header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
     .header-row { display: flex; justify-content: space-between; align-items: center; }
@@ -73,9 +80,9 @@
       background: #21262d;
       border: 1px solid var(--border);
       color: var(--text-bright);
-      min-width: 42px;
+      width: 36px;
       height: 32px;
-      padding: 0 8px;
+      padding: 0;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -86,13 +93,41 @@
       transition: all 0.15s ease;
     }
     .btn-icon-toggle:active { transform: scale(0.92); }
-    .btn-icon-toggle.active-danger {
-      background: rgba(248, 81, 73, 0.2);
-      border-color: var(--danger);
-      color: #ff7b72;
+    
+    /* Nút mắt: Giữ nguyên kích thước và màu nền, chỉ đổi opacity dịu mắt khi bật */
+    .btn-icon-toggle.eye-active {
+      color: var(--primary);
+      background: #1c2128;
+      border-color: #388bfd66;
     }
 
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all 0.2s ease; }
+    /* BỐ CỤC ĐA CỘT (RESPONSIVE GRID): 1 CỘT TRÊN MOBILE, 2-3 CỘT TRÊN MÁY TÍNH */
+    #appContainer {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    @media (min-width: 820px) {
+      #appContainer {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 1260px) {
+      #appContainer {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .card { 
+      background: var(--card-bg); 
+      border: 1px solid var(--border); 
+      border-radius: 10px; 
+      padding: 10px 12px; 
+      margin-bottom: 0; 
+      transition: all 0.2s ease; 
+      width: 100%;
+    }
     .card-top { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
     .ch-title-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
     .toggle-icon { font-size: 0.7rem; color: var(--subtext); transition: transform 0.2s ease; }
@@ -114,7 +149,7 @@
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* NHÓM LUỒNG 1: 48H & 60P (Top 100 Video Mới) */
+    /* NHÓM LUỒNG 1: 48H & 60P */
     .stream-header { font-size: 0.58rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; margin-top: 8px; margin-bottom: 4px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
     .stream1-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     
@@ -123,26 +158,26 @@
     .metric-label { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
     .metric-val-main { font-size: 1.05rem; font-weight: 800; line-height: 1.1; }
 
-    /* Biểu đồ 48 cột (mỗi cột 1 giờ) */
+    /* Biểu đồ 48 cột */
     .bars-container-48 { display: flex; align-items: flex-end; gap: 1.5px; height: 38px; width: 100%; margin-top: 6px; background: rgba(255,255,255,0.02); border-radius: 3px; padding: 2px 1px; }
     .bar-col-48 { flex: 1; height: 100%; display: flex; align-items: flex-end; }
     .bar-fill-48 { width: 100%; background: #265999; border-radius: 1px 1px 0 0; min-height: 2px; transition: height 0.3s ease; }
     .bar-col-48:hover .bar-fill-48 { background: var(--primary); }
 
-    /* Biểu đồ 4 cột (mỗi cột 15 phút) */
+    /* Biểu đồ 4 cột 15P */
     .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 38px; width: 100%; margin-top: 6px; }
     .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
     .bar-track-4 { width: 100%; height: 26px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
     .bar-fill-4 { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
     .bar-val-4 { font-size: 0.52rem; font-weight: 700; margin-top: 2px; line-height: 1; white-space: nowrap; }
 
-    /* NHÓM LUỒNG 2: 24H & 48H (Quét Toàn Bộ Catalog Đối Soát) */
+    /* NHÓM LUỒNG 2: 24H & 48H Full Catalog */
     .stream2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
     .stat-box-catalog { background: var(--card-sub); border: 1px dashed var(--border); border-radius: 6px; padding: 5px 8px; text-align: center; }
     .stat-label-catalog { font-size: 0.58rem; color: var(--orange); font-weight: 700; text-transform: uppercase; }
     .stat-val-catalog { font-size: 0.92rem; font-weight: 800; margin-top: 2px; color: var(--text-bright); }
 
-    /* NHÓM LUỒNG 3: Dài hạn (7N, 30N, 90N, Tổng) */
+    /* NHÓM LUỒNG 3: Dài hạn */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
@@ -277,16 +312,15 @@
       window.requestAnimationFrame(step);
     }
 
+    /* ĐÃ SỬA: Giữ nguyên duy nhất icon mắt 👁, không thêm dấu chéo hay đổi màu đỏ */
     function togglePrivacyMode() {
       const isPrivacy = document.body.classList.toggle('privacy-mode');
       const btn = document.getElementById('btnEyeToggle');
       if (isPrivacy) {
-        btn.innerHTML = '🚫👁';
-        btn.classList.add('active-danger');
+        btn.classList.add('eye-active');
         localStorage.setItem('privacy_mode', 'true');
       } else {
-        btn.innerHTML = '👁';
-        btn.classList.remove('active-danger');
+        btn.classList.remove('eye-active');
         localStorage.removeItem('privacy_mode');
       }
     }
@@ -295,10 +329,7 @@
       if (localStorage.getItem('privacy_mode') === 'true') {
         document.body.classList.add('privacy-mode');
         const btn = document.getElementById('btnEyeToggle');
-        if (btn) {
-          btn.innerHTML = '🚫👁';
-          btn.classList.add('active-danger');
-        }
+        if (btn) btn.classList.add('eye-active');
       }
     }
 
@@ -667,7 +698,7 @@
         const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
 
-        // Tạo 4 cột mini 15P
+        // 4 cột mini 15P
         const maxVal4 = Math.max(c1, c2, c3, c4, 1);
         const h1 = Math.max(8, Math.round((c1 / maxVal4) * 100));
         const h2 = Math.max(8, Math.round((c2 / maxVal4) * 100));
@@ -675,7 +706,7 @@
         const h4 = Math.max(8, Math.round((c4 / maxVal4) * 100));
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
 
-        // Tạo 48 cột mini 1 giờ (trải dài ô 48H)
+        // 48 cột 1 giờ (trải dài ô 48H)
         let s48 = ch.slices_48h || [];
         if (!s48.length) s48 = new Array(48).fill(0);
         const maxVal48 = Math.max(...s48, 1);
@@ -724,12 +755,11 @@
           </div>
 
           <div class="card-body">
-            <!-- LUỒNG 1: 100 VIDEO MỚI (48H có 48 cột | 60P có 4 cột kèm số) -->
+            <!-- LUỒNG 1: 100 VIDEO MỚI -->
             <div class="stream-header">
               <span>⚡ Luồng 1 (Top 100 Vid Mới - Realtime)</span>
             </div>
             <div class="stream1-grid">
-              <!-- Ô 48H: 48 CỘT BIỂU ĐỒ TRẢI DÀI -->
               <div class="box-stream1">
                 <div class="box-header-metric">
                   <span class="metric-label">🔥 48H</span>
@@ -740,7 +770,6 @@
                 </div>
               </div>
 
-              <!-- Ô 60P: 4 CỘT 15P KÈM SỐ VIEW DƯỚI CHÂN -->
               <div class="box-stream1">
                 <div class="box-header-metric">
                   <span class="metric-label">⏱ 60P</span>
@@ -775,7 +804,7 @@
               </div>
             </div>
 
-            <!-- LUỒNG 2: QUÉT TOÀN BỘ CATALOG (24H VÀ 48H ĐỐI SOÁT RIÊNG) -->
+            <!-- LUỒNG 2: FULL CATALOG SCAN -->
             <div class="stream-header" style="margin-top:10px;">
               <span>📦 Luồng 2 (Full Catalog Scan - Định Kỳ 24H)</span>
             </div>
@@ -831,7 +860,6 @@
         `;
         container.appendChild(card);
 
-        // Hiệu ứng số chạy (Rolling Ticker)
         const old48hPool = previousValues[`48h-pool-${ch.id}`] || 0;
         const old60p = previousValues[`60p-${ch.id}`] || 0;
         const oldC1 = previousValues[`c1-${ch.id}`] || 0;
