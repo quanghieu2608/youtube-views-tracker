@@ -71,13 +71,13 @@
     .btn-action:disabled { background: #333; color: #777; }
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
-    /* DẢI TAB NHÓM (HỖ TRỢ DRAG & DROP) */
+    /* DẢI TAB NHÓM (HỖ TRỢ DRAG TRÊN CẢ DESKTOP & MOBILE) */
     .group-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; overflow: hidden; }
     .group-tabs { 
       display: flex; 
       gap: 5px; 
       overflow-x: auto; 
-      padding: 3px 0; 
+      padding: 4px 0; 
       scrollbar-width: none; 
       flex: 1; 
       user-select: none;
@@ -85,7 +85,7 @@
     }
     .group-tabs::-webkit-scrollbar { display: none; }
     
-.btn-group-pill { 
+    .btn-group-pill { 
       background: var(--card-bg); 
       border: 1px solid var(--border); 
       color: var(--subtext); 
@@ -114,12 +114,12 @@
       opacity: 0.4;
       transform: scale(0.92);
     }
-.btn-group-pill.touch-active {
+    .btn-group-pill.touch-active {
       touch-action: none !important;
-      opacity: 0.6;
+      opacity: 0.7;
       transform: scale(1.08);
       border-color: var(--primary) !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
       z-index: 100;
     }
     .btn-group-pill.drag-over {
@@ -132,7 +132,7 @@
       background: #21262d;
       border: 1px dashed var(--border);
       color: var(--subtext);
-      padding: 5px 9px;
+      padding: 6px 10px;
       border-radius: 12px;
       font-size: 0.7rem;
       cursor: pointer;
@@ -322,7 +322,7 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
-  <!-- DẢI TAB NHÓM (CÓ THỂ NHẤN GIỮ KÉO THẢ ĐỔI VỊ TRÍ) -->
+  <!-- DẢI TAB NHÓM (HỖ TRỢ NHẤN GIỮ KÉO THẢ TRÊN CẢ MOBILE & DESKTOP) -->
   <div class="group-bar-wrap">
     <div class="group-tabs" id="groupTabsContainer"></div>
     <button class="btn-add-group-tiny" onclick="promptCreateNewGroup()" title="Thêm nhóm mới">➕ Nhóm</button>
@@ -384,7 +384,6 @@
       try {
         const order = JSON.parse(localStorage.getItem('app_group_order'));
         if (Array.isArray(order) && order.length > 0) {
-          // Bổ sung các nhóm bị thiếu nếu có
           const rawGroups = getStoredGroups();
           rawGroups.forEach(g => { if (!order.includes(g)) order.push(g); });
           if (!order.includes('ALL')) order.unshift('ALL');
@@ -392,7 +391,6 @@
           return order;
         }
       } catch (e) {}
-      // Mặc định
       return ['ALL', '__NONE__', ...getStoredGroups()];
     }
 
@@ -454,7 +452,7 @@
       }
     }
 
-    // LẤY NHÓM ĐẦU TIÊN LÀM MẶC ĐỊNH KHI VÀO WEB
+    // NHÓM ĐẦU TIÊN TRONG MẢNG LÀM MẶC ĐỊNH
     let groupOrderList = getStoredGroupOrder();
     let selectedGroup = groupOrderList[0] || 'ALL';
 
@@ -464,7 +462,7 @@
       render();
     }
 
-    /* --- VẼ DẢI TABS NHÓM VÀ TÍCH HỢP DRAG & DROP --- */
+    /* --- VẼ DẢI TABS NHÓM VÀ TÍCH HỢP DRAG & DROP ĐA NỀN TẢNG --- */
     let draggedItemKey = null;
 
     function renderGroupTabs() {
@@ -476,7 +474,6 @@
       const groupMap = getChannelGroupMap();
       const chList = db && db.channels ? Object.values(db.channels) : [];
 
-      // Đếm số kênh trong từng nhóm
       const counts = { ALL: chList.length, NONE: 0 };
       const rawGroups = getStoredGroups();
       rawGroups.forEach(g => counts[g] = 0);
@@ -495,7 +492,6 @@
       groupOrderList.forEach(key => {
         const btn = document.createElement('button');
         btn.className = `btn-group-pill ${selectedGroup === key ? 'active' : ''}`;
-        btn.draggable = true;
         btn.dataset.groupKey = key;
 
         let labelText = '';
@@ -508,13 +504,8 @@
         }
         btn.innerHTML = labelText;
 
-        // Click để chuyển tab
-        btn.addEventListener('click', (e) => {
-          if (btn.dataset.isDragging === "true") return;
-          changeGroupFilter(key);
-        });
-
-        // 1. KÉO THẢ BẰNG CHUỘT (DESKTOP)
+        // --- XỬ LÝ CHUỘT (DESKTOP) ---
+        btn.draggable = true;
         btn.addEventListener('dragstart', (e) => {
           draggedItemKey = key;
           btn.classList.add('dragging');
@@ -544,58 +535,65 @@
           }
         });
 
-        // 2. CHẠM GIỮ KÉO THẢ BẰNG CẢM ỨNG (MOBILE)
-        let touchTimer = null;
-        let isTouchDragging = false;
+        // --- XỬ LÝ CẢM ỨNG CHẠM GIỮ (MOBILE TOUCH ENGINE) ---
+        let pressTimer = null;
+        let isDraggingMobile = false;
 
         btn.addEventListener('touchstart', (e) => {
-          btn.dataset.isDragging = "false";
-          touchTimer = setTimeout(() => {
-            isTouchDragging = true;
+          pressTimer = setTimeout(() => {
+            isDraggingMobile = true;
             draggedItemKey = key;
-            btn.classList.add('dragging');
-            btn.dataset.isDragging = "true";
-            if (navigator.vibrate) navigator.vibrate(30); // Rung nhẹ báo hiệu sẵn sàng kéo
-          }, 180);
+            btn.classList.add('touch-active');
+            if (navigator.vibrate) navigator.vibrate(40);
+          }, 200);
         }, { passive: true });
 
         btn.addEventListener('touchmove', (e) => {
-          if (!isTouchDragging) {
-            clearTimeout(touchTimer);
+          if (!isDraggingMobile) {
+            clearTimeout(pressTimer);
             return;
           }
+          if (e.cancelable) e.preventDefault();
+
           const touch = e.touches[0];
-          const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-          const targetBtn = elem ? elem.closest('.btn-group-pill') : null;
+          const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+          const targetPill = targetEl ? targetEl.closest('.btn-group-pill') : null;
 
           document.querySelectorAll('.btn-group-pill').forEach(el => el.classList.remove('drag-over'));
-          if (targetBtn && targetBtn !== btn) {
-            targetBtn.classList.add('drag-over');
+          if (targetPill && targetPill !== btn) {
+            targetPill.classList.add('drag-over');
           }
-        }, { passive: true });
+        }, { passive: false });
 
         btn.addEventListener('touchend', (e) => {
-          clearTimeout(touchTimer);
-          if (isTouchDragging) {
-            isTouchDragging = false;
-            btn.classList.remove('dragging');
-            
+          clearTimeout(pressTimer);
+          if (isDraggingMobile) {
+            isDraggingMobile = false;
+            btn.classList.remove('touch-active');
+
             const changedTouch = e.changedTouches[0];
-            const elem = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
-            const targetBtn = elem ? elem.closest('.btn-group-pill') : null;
+            const targetEl = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+            const targetPill = targetEl ? targetEl.closest('.btn-group-pill') : null;
 
             document.querySelectorAll('.btn-group-pill').forEach(el => el.classList.remove('drag-over'));
 
-            if (targetBtn && targetBtn.dataset.groupKey && targetBtn.dataset.groupKey !== draggedItemKey) {
-              reorderGroups(draggedItemKey, targetBtn.dataset.groupKey);
+            if (targetPill && targetPill.dataset.groupKey && targetPill.dataset.groupKey !== draggedItemKey) {
+              reorderGroups(draggedItemKey, targetPill.dataset.groupKey);
             }
+          } else {
+            changeGroupFilter(key);
+          }
+        });
+
+        btn.addEventListener('click', (e) => {
+          if (e.pointerType === 'mouse') {
+            changeGroupFilter(key);
           }
         });
 
         container.appendChild(btn);
       });
 
-      // Cập nhật select box trong form thêm kênh
       if (selectBox) {
         let selectHtml = '<option value="">-- Chưa có nhóm --</option>';
         rawGroups.forEach(g => {
