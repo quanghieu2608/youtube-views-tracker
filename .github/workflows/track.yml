@@ -1,9 +1,10 @@
-name: YouTube Views Auto Tracker
+name: YouTube Views Tracker
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
+    # Chạy tự động định kỳ mỗi 15 phút (:00, :15, :30, :45)
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # Cho phép kích hoạt chạy thủ công từ App/GitHub
 
 permissions:
   contents: write
@@ -13,26 +14,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
-          pip install requests google-api-python-client
+          python -m pip install --upgrade pip
+          pip install google-api-python-client
 
-      - name: Run tracking script
+      - name: Run Tracker Script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python run.py
+        run: |
+          python run.py
 
-      - name: Commit and push changes
+      - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update views 15m (100 videos 2-Pool) [skip ci]" && git push)
+          
+          # Kiểm tra nếu có thay đổi trong data.json thì mới commit và push
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto update views 15m [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "Khong co thay doi nao trong data.json de commit."
+          fi
