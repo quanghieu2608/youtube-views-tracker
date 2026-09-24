@@ -379,82 +379,106 @@
     const channelVideoTabState = {};
     const previousValues = {};
 
-    /* --- QUẢN LÝ DỮ LIỆU NHÓM & THỨ TỰ KÉO THẢ --- */
-    function getStoredGroupOrder() {
+    /* --- CƠ CHẾ ĐỒNG BỘ NHÓM QUA FILE GROUPS.JSON TRÊN GITHUB --- */
+    let groupData = {
+      order: ["ALL", "__NONE__", "Podcast", "Kênh Chính"],
+      groups: ["Podcast", "Kênh Chính"],
+      channel_map: {}
+    };
+
+    let selectedGroup = "ALL";
+
+    async function loadRemoteGroups() {
       try {
-        const order = JSON.parse(localStorage.getItem('app_group_order'));
-        if (Array.isArray(order) && order.length > 0) {
-          const rawGroups = getStoredGroups();
-          rawGroups.forEach(g => { if (!order.includes(g)) order.push(g); });
-          if (!order.includes('ALL')) order.unshift('ALL');
-          if (!order.includes('__NONE__')) order.splice(1, 0, '__NONE__');
-          return order;
+        const res = await fetch('groups.json?t=' + Date.now());
+        if (res.ok) {
+          const remoteData = await res.json();
+          if (remoteData && remoteData.groups) {
+            groupData = remoteData;
+            localStorage.setItem('cached_groups', JSON.stringify(groupData));
+            if (groupData.order && groupData.order.length > 0) {
+              selectedGroup = groupData.order[0];
+            }
+            renderGroupTabs();
+            render();
+            return;
+          }
         }
       } catch (e) {}
-      return ['ALL', '__NONE__', ...getStoredGroups()];
-    }
 
-    function saveGroupOrder(order) {
-      localStorage.setItem('app_group_order', JSON.stringify(order));
-    }
-
-    function getStoredGroups() {
+      // Fallback nếu chưa tải được groups.json từ mạng
       try {
-        const g = JSON.parse(localStorage.getItem('app_groups'));
-        return Array.isArray(g) ? g : ["Podcast", "Kênh Chính"];
-      } catch (e) {
-        return ["Podcast", "Kênh Chính"];
-      }
+        const cached = JSON.parse(localStorage.getItem('cached_groups'));
+        if (cached) {
+          groupData = cached;
+          if (groupData.order && groupData.order.length > 0) {
+            selectedGroup = groupData.order[0];
+          }
+        }
+      } catch (e) {}
+
+      renderGroupTabs();
+      render();
     }
 
-    function saveStoredGroups(groups) {
-      localStorage.setItem('app_groups', JSON.stringify(groups));
-    }
+    async function saveGroupsToGitHub() {
+      // Lưu tức thì vào bộ nhớ đệm
+      localStorage.setItem('cached_groups', JSON.stringify(groupData));
 
-    function getChannelGroupMap() {
+      const token = localStorage.getItem('gh_token');
+      if (!token) return;
+
       try {
-        return JSON.parse(localStorage.getItem('channel_group_map') || '{}');
-      } catch (e) {
-        return {};
+        const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/groups.json`;
+        const res = await fetch(getUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+        let sha = null;
+        if (res.ok) {
+          const currentFile = await res.json();
+          sha = currentFile.sha;
+        }
+
+        const updatedContent = JSON.stringify(groupData, null, 2);
+        await fetch(getUrl, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Update groups sync via App`,
+            content: btoa(unescape(encodeURIComponent(updatedContent))),
+            sha: sha
+          })
+        });
+      } catch (err) {
+        console.error("Lỗi đồng bộ nhóm lên GitHub:", err);
       }
     }
 
     function setChannelGroup(chId, groupName) {
-      const map = getChannelGroupMap();
       if (!groupName) {
-        delete map[chId];
+        delete groupData.channel_map[chId];
       } else {
-        map[chId] = groupName;
+        groupData.channel_map[chId] = groupName;
       }
-      localStorage.setItem('channel_group_map', JSON.stringify(map));
       renderGroupTabs();
       render();
+      saveGroupsToGitHub();
     }
 
     function promptCreateNewGroup() {
       const gName = prompt("Nhập tên nhóm mới cần tạo:");
       if (!gName || !gName.trim()) return;
       const cleanName = gName.trim();
-      const groups = getStoredGroups();
-      if (!groups.includes(cleanName)) {
-        groups.push(cleanName);
-        saveStoredGroups(groups);
 
-        const order = getStoredGroupOrder();
-        order.push(cleanName);
-        saveGroupOrder(order);
-
+      if (!groupData.groups.includes(cleanName)) {
+        groupData.groups.push(cleanName);
+        groupData.order.push(cleanName);
         selectedGroup = cleanName;
         renderGroupTabs();
         render();
+        saveGroupsToGitHub();
       } else {
         alert("Nhóm này đã tồn tại!");
       }
     }
-
-    // NHÓM ĐẦU TIÊN TRONG MẢNG LÀM MẶC ĐỊNH
-    let groupOrderList = getStoredGroupOrder();
-    let selectedGroup = groupOrderList[0] || 'ALL';
 
     function changeGroupFilter(groupKey) {
       selectedGroup = groupKey;
@@ -470,13 +494,11 @@
       const selectBox = document.getElementById('newChannelGroup');
       if (!container) return;
 
-      groupOrderList = getStoredGroupOrder();
-      const groupMap = getChannelGroupMap();
+      const groupMap = groupData.channel_map || {};
       const chList = db && db.channels ? Object.values(db.channels) : [];
 
       const counts = { ALL: chList.length, NONE: 0 };
-      const rawGroups = getStoredGroups();
-      rawGroups.forEach(g => counts[g] = 0);
+      (groupData.groups || []).forEach(g => counts[g] = 0);
 
       chList.forEach(ch => {
         const g = groupMap[ch.id];
@@ -489,7 +511,7 @@
 
       container.innerHTML = '';
 
-      groupOrderList.forEach(key => {
+      (groupData.order || []).forEach(key => {
         const btn = document.createElement('button');
         btn.className = `btn-group-pill ${selectedGroup === key ? 'active' : ''}`;
         btn.dataset.groupKey = key;
@@ -596,7 +618,7 @@
 
       if (selectBox) {
         let selectHtml = '<option value="">-- Chưa có nhóm --</option>';
-        rawGroups.forEach(g => {
+        (groupData.groups || []).forEach(g => {
           selectHtml += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`;
         });
         selectBox.innerHTML = selectHtml;
@@ -604,15 +626,15 @@
     }
 
     function reorderGroups(draggedKey, targetKey) {
-      const order = getStoredGroupOrder();
+      const order = groupData.order;
       const fromIndex = order.indexOf(draggedKey);
       const toIndex = order.indexOf(targetKey);
 
       if (fromIndex !== -1 && toIndex !== -1) {
         order.splice(fromIndex, 1);
         order.splice(toIndex, 0, draggedKey);
-        saveGroupOrder(order);
         renderGroupTabs();
+        saveGroupsToGitHub();
       }
     }
 
@@ -860,6 +882,8 @@
 
         if (db && db.channels && db.channels[chId]) {
           delete db.channels[chId];
+          delete groupData.channel_map[chId];
+          saveGroupsToGitHub();
           renderGroupTabs();
           render();
         }
@@ -1022,8 +1046,8 @@
     function render() {
       if (!db || !db.channels) return;
       const allChannels = Object.values(db.channels);
-      const groupMap = getChannelGroupMap();
-      const existingGroups = getStoredGroups();
+      const groupMap = groupData.channel_map || {};
+      const existingGroups = groupData.groups || [];
 
       // LỌC KÊNH THEO NHÓM
       const chList = allChannels.filter(ch => {
@@ -1364,7 +1388,7 @@
     }
 
     initPrivacyMode();
-    renderGroupTabs();
+    loadRemoteGroups();
     checkAndApplyNewData();
   </script>
 </body>
