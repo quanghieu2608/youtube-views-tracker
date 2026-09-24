@@ -85,21 +85,24 @@
     }
     .group-tabs::-webkit-scrollbar { display: none; }
     
-    .btn-group-pill { 
+.btn-group-pill { 
       background: var(--card-bg); 
       border: 1px solid var(--border); 
       color: var(--subtext); 
-      padding: 5px 11px; 
+      padding: 6px 12px; 
       border-radius: 12px; 
-      font-size: 0.7rem; 
+      font-size: 0.72rem; 
       font-weight: 600; 
       cursor: grab; 
       white-space: nowrap; 
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
-      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
       touch-action: pan-x;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
     }
     .btn-group-pill:active { cursor: grabbing; }
     .btn-group-pill.active { 
@@ -111,9 +114,18 @@
       opacity: 0.4;
       transform: scale(0.92);
     }
+.btn-group-pill.touch-active {
+      touch-action: none !important;
+      opacity: 0.6;
+      transform: scale(1.08);
+      border-color: var(--primary) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 100;
+    }
     .btn-group-pill.drag-over {
-      border-color: var(--accent);
-      background: rgba(63, 185, 80, 0.15);
+      border-color: var(--accent) !important;
+      background: rgba(63, 185, 80, 0.2) !important;
+      transform: scale(0.95);
     }
 
     .btn-add-group-tiny {
