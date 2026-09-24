@@ -61,7 +61,7 @@
 
     .meta-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--subtext); margin-top: 5px; padding: 0 2px; }
 
-    /* FORM THÊM KÊNH & CHỌN NHÓM */
+    /* FORM THÊM KÊNH */
     .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
     .add-channel-box.active { display: block; }
     .input-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
@@ -71,42 +71,63 @@
     .btn-action:disabled { background: #333; color: #777; }
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
-    /* THANH CUỘN NHÓM (GROUP TABS BAR) */
+    /* DẢI TAB NHÓM (HỖ TRỢ DRAG & DROP) */
     .group-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; overflow: hidden; }
-    .group-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 2px 0; scrollbar-width: none; flex: 1; }
+    .group-tabs { 
+      display: flex; 
+      gap: 5px; 
+      overflow-x: auto; 
+      padding: 3px 0; 
+      scrollbar-width: none; 
+      flex: 1; 
+      user-select: none;
+      -webkit-user-select: none;
+    }
     .group-tabs::-webkit-scrollbar { display: none; }
+    
     .btn-group-pill { 
       background: var(--card-bg); 
       border: 1px solid var(--border); 
       color: var(--subtext); 
-      padding: 4px 10px; 
+      padding: 5px 11px; 
       border-radius: 12px; 
       font-size: 0.7rem; 
       font-weight: 600; 
-      cursor: pointer; 
+      cursor: grab; 
       white-space: nowrap; 
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: all 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      touch-action: pan-x;
     }
+    .btn-group-pill:active { cursor: grabbing; }
     .btn-group-pill.active { 
       background: rgba(88, 166, 255, 0.15); 
       color: var(--primary); 
       border-color: var(--primary); 
     }
+    .btn-group-pill.dragging {
+      opacity: 0.4;
+      transform: scale(0.92);
+    }
+    .btn-group-pill.drag-over {
+      border-color: var(--accent);
+      background: rgba(63, 185, 80, 0.15);
+    }
+
     .btn-add-group-tiny {
       background: #21262d;
       border: 1px dashed var(--border);
       color: var(--subtext);
-      padding: 4px 8px;
+      padding: 5px 9px;
       border-radius: 12px;
       font-size: 0.7rem;
       cursor: pointer;
       white-space: nowrap;
     }
 
-    /* THANH CÔNG CỤ THỜI GIAN & TÙY CHỌN */
+    /* BỘ LỌC THỜI GIAN */
     .controls-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
     .controls { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex: 1; scrollbar-width: none; }
     .controls::-webkit-scrollbar { display: none; }
@@ -168,7 +189,6 @@
     .toggle-icon { font-size: 0.7rem; color: var(--subtext); transition: transform 0.2s ease; }
     .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* MENU CHỌN NHÓM TRÊN THẺ KÊNH */
     .channel-group-selector {
       background: #21262d;
       border: 1px solid var(--border);
@@ -290,11 +310,9 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
-  <!-- DẢI TAB NHÓM (TRƯỢT NGANG NẾU DÀI) -->
+  <!-- DẢI TAB NHÓM (CÓ THỂ NHẤN GIỮ KÉO THẢ ĐỔI VỊ TRÍ) -->
   <div class="group-bar-wrap">
-    <div class="group-tabs" id="groupTabsContainer">
-      <!-- Sẽ được sinh tự động bằng hàm renderGroupTabs() -->
-    </div>
+    <div class="group-tabs" id="groupTabsContainer"></div>
     <button class="btn-add-group-tiny" onclick="promptCreateNewGroup()" title="Thêm nhóm mới">➕ Nhóm</button>
   </div>
 
@@ -339,7 +357,6 @@
 
     let db = null;
     let sortMode = '60m';
-    let selectedGroup = 'ALL'; // 'ALL' | '__NONE__' | Tên nhóm cụ thể
     let isFetching = false;
     let pollInterval = null;
     let isAllFolded = false;
@@ -350,7 +367,27 @@
     const channelVideoTabState = {};
     const previousValues = {};
 
-    /* --- QUẢN LÝ DỮ LIỆU NHÓM BẰNG LOCALSTORAGE --- */
+    /* --- QUẢN LÝ DỮ LIỆU NHÓM & THỨ TỰ KÉO THẢ --- */
+    function getStoredGroupOrder() {
+      try {
+        const order = JSON.parse(localStorage.getItem('app_group_order'));
+        if (Array.isArray(order) && order.length > 0) {
+          // Bổ sung các nhóm bị thiếu nếu có
+          const rawGroups = getStoredGroups();
+          rawGroups.forEach(g => { if (!order.includes(g)) order.push(g); });
+          if (!order.includes('ALL')) order.unshift('ALL');
+          if (!order.includes('__NONE__')) order.splice(1, 0, '__NONE__');
+          return order;
+        }
+      } catch (e) {}
+      // Mặc định
+      return ['ALL', '__NONE__', ...getStoredGroups()];
+    }
+
+    function saveGroupOrder(order) {
+      localStorage.setItem('app_group_order', JSON.stringify(order));
+    }
+
     function getStoredGroups() {
       try {
         const g = JSON.parse(localStorage.getItem('app_groups'));
@@ -380,6 +417,7 @@
         map[chId] = groupName;
       }
       localStorage.setItem('channel_group_map', JSON.stringify(map));
+      renderGroupTabs();
       render();
     }
 
@@ -391,6 +429,11 @@
       if (!groups.includes(cleanName)) {
         groups.push(cleanName);
         saveStoredGroups(groups);
+
+        const order = getStoredGroupOrder();
+        order.push(cleanName);
+        saveGroupOrder(order);
+
         selectedGroup = cleanName;
         renderGroupTabs();
         render();
@@ -399,18 +442,32 @@
       }
     }
 
+    // LẤY NHÓM ĐẦU TIÊN LÀM MẶC ĐỊNH KHI VÀO WEB
+    let groupOrderList = getStoredGroupOrder();
+    let selectedGroup = groupOrderList[0] || 'ALL';
+
+    function changeGroupFilter(groupKey) {
+      selectedGroup = groupKey;
+      renderGroupTabs();
+      render();
+    }
+
+    /* --- VẼ DẢI TABS NHÓM VÀ TÍCH HỢP DRAG & DROP --- */
+    let draggedItemKey = null;
+
     function renderGroupTabs() {
       const container = document.getElementById('groupTabsContainer');
       const selectBox = document.getElementById('newChannelGroup');
       if (!container) return;
 
-      const groups = getStoredGroups();
+      groupOrderList = getStoredGroupOrder();
       const groupMap = getChannelGroupMap();
       const chList = db && db.channels ? Object.values(db.channels) : [];
 
-      // Đếm số lượng kênh mỗi nhóm
+      // Đếm số kênh trong từng nhóm
       const counts = { ALL: chList.length, NONE: 0 };
-      groups.forEach(g => counts[g] = 0);
+      const rawGroups = getStoredGroups();
+      rawGroups.forEach(g => counts[g] = 0);
 
       chList.forEach(ch => {
         const g = groupMap[ch.id];
@@ -421,41 +478,132 @@
         }
       });
 
-      // Tạo các nút Tabs
-      let html = `
-        <button class="btn-group-pill ${selectedGroup === 'ALL' ? 'active' : ''}" onclick="changeGroupFilter('ALL')">
-          Tất cả (${counts.ALL})
-        </button>
-        <button class="btn-group-pill ${selectedGroup === '__NONE__' ? 'active' : ''}" onclick="changeGroupFilter('__NONE__')">
-          Chưa nhóm (${counts.NONE})
-        </button>
-      `;
+      container.innerHTML = '';
 
-      groups.forEach(g => {
-        const safeG = escapeHTML(g);
-        html += `
-          <button class="btn-group-pill ${selectedGroup === g ? 'active' : ''}" onclick="changeGroupFilter('${safeG}')">
-            📁 ${safeG} (${counts[g] || 0})
-          </button>
-        `;
+      groupOrderList.forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = `btn-group-pill ${selectedGroup === key ? 'active' : ''}`;
+        btn.draggable = true;
+        btn.dataset.groupKey = key;
+
+        let labelText = '';
+        if (key === 'ALL') {
+          labelText = `Tất cả (${counts.ALL})`;
+        } else if (key === '__NONE__') {
+          labelText = `Chưa nhóm (${counts.NONE})`;
+        } else {
+          labelText = `📁 ${escapeHTML(key)} (${counts[key] || 0})`;
+        }
+        btn.innerHTML = labelText;
+
+        // Click để chuyển tab
+        btn.addEventListener('click', (e) => {
+          if (btn.dataset.isDragging === "true") return;
+          changeGroupFilter(key);
+        });
+
+        // 1. KÉO THẢ BẰNG CHUỘT (DESKTOP)
+        btn.addEventListener('dragstart', (e) => {
+          draggedItemKey = key;
+          btn.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        btn.addEventListener('dragend', () => {
+          btn.classList.remove('dragging');
+          document.querySelectorAll('.btn-group-pill').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        btn.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          btn.classList.add('drag-over');
+        });
+
+        btn.addEventListener('dragleave', () => {
+          btn.classList.remove('drag-over');
+        });
+
+        btn.addEventListener('drop', (e) => {
+          e.preventDefault();
+          btn.classList.remove('drag-over');
+          if (draggedItemKey && draggedItemKey !== key) {
+            reorderGroups(draggedItemKey, key);
+          }
+        });
+
+        // 2. CHẠM GIỮ KÉO THẢ BẰNG CẢM ỨNG (MOBILE)
+        let touchTimer = null;
+        let isTouchDragging = false;
+
+        btn.addEventListener('touchstart', (e) => {
+          btn.dataset.isDragging = "false";
+          touchTimer = setTimeout(() => {
+            isTouchDragging = true;
+            draggedItemKey = key;
+            btn.classList.add('dragging');
+            btn.dataset.isDragging = "true";
+            if (navigator.vibrate) navigator.vibrate(30); // Rung nhẹ báo hiệu sẵn sàng kéo
+          }, 180);
+        }, { passive: true });
+
+        btn.addEventListener('touchmove', (e) => {
+          if (!isTouchDragging) {
+            clearTimeout(touchTimer);
+            return;
+          }
+          const touch = e.touches[0];
+          const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+          const targetBtn = elem ? elem.closest('.btn-group-pill') : null;
+
+          document.querySelectorAll('.btn-group-pill').forEach(el => el.classList.remove('drag-over'));
+          if (targetBtn && targetBtn !== btn) {
+            targetBtn.classList.add('drag-over');
+          }
+        }, { passive: true });
+
+        btn.addEventListener('touchend', (e) => {
+          clearTimeout(touchTimer);
+          if (isTouchDragging) {
+            isTouchDragging = false;
+            btn.classList.remove('dragging');
+            
+            const changedTouch = e.changedTouches[0];
+            const elem = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+            const targetBtn = elem ? elem.closest('.btn-group-pill') : null;
+
+            document.querySelectorAll('.btn-group-pill').forEach(el => el.classList.remove('drag-over'));
+
+            if (targetBtn && targetBtn.dataset.groupKey && targetBtn.dataset.groupKey !== draggedItemKey) {
+              reorderGroups(draggedItemKey, targetBtn.dataset.groupKey);
+            }
+          }
+        });
+
+        container.appendChild(btn);
       });
 
-      container.innerHTML = html;
-
-      // Cập nhật select box trong form Thêm kênh
+      // Cập nhật select box trong form thêm kênh
       if (selectBox) {
         let selectHtml = '<option value="">-- Chưa có nhóm --</option>';
-        groups.forEach(g => {
+        rawGroups.forEach(g => {
           selectHtml += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`;
         });
         selectBox.innerHTML = selectHtml;
       }
     }
 
-    function changeGroupFilter(groupKey) {
-      selectedGroup = groupKey;
-      renderGroupTabs();
-      render();
+    function reorderGroups(draggedKey, targetKey) {
+      const order = getStoredGroupOrder();
+      const fromIndex = order.indexOf(draggedKey);
+      const toIndex = order.indexOf(targetKey);
+
+      if (fromIndex !== -1 && toIndex !== -1) {
+        order.splice(fromIndex, 1);
+        order.splice(toIndex, 0, draggedKey);
+        saveGroupOrder(order);
+        renderGroupTabs();
+      }
     }
 
     function getStoredToken() {
@@ -641,7 +789,6 @@
           });
         }
 
-        // Lưu gán nhóm cho kênh mới vào LocalStorage
         if (targetGroup) {
           setChannelGroup(chId, targetGroup);
         }
@@ -703,6 +850,7 @@
 
         if (db && db.channels && db.channels[chId]) {
           delete db.channels[chId];
+          renderGroupTabs();
           render();
         }
         alert(`Đã xóa thành công kênh "${chTitle}"!`);
@@ -867,9 +1015,7 @@
       const groupMap = getChannelGroupMap();
       const existingGroups = getStoredGroups();
 
-      // =================================================================
-      // BƯỚC 1: LỌC KÊNH THEO NHÓM ĐANG CHỌN
-      // =================================================================
+      // LỌC KÊNH THEO NHÓM
       const chList = allChannels.filter(ch => {
         const assignedGroup = groupMap[ch.id];
         if (selectedGroup === 'ALL') return true;
@@ -894,9 +1040,7 @@
       container.innerHTML = '';
       const collapsedMap = getCollapsedChannels();
 
-      // =================================================================
-      // BƯỚC 2: TÌM MẪU SỐ CHUNG CỦA CHIỀU CAO (Trong số kênh ĐANG MỞ & ĐANG HIỂN THỊ)
-      // =================================================================
+      // TÍNH MẪU SỐ CHUNG CHO CÁC KÊNH ĐANG HIỆN & ĐANG MỞ
       let globalMax15m = 1; 
       let globalMax48h = 1;
 
@@ -914,7 +1058,6 @@
         }
       });
 
-      // Nếu không có kênh nào trong nhóm
       if (chList.length === 0) {
         container.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 40px 10px; color: var(--subtext); font-size: 0.85rem;">
@@ -924,9 +1067,6 @@
         return;
       }
 
-      // =================================================================
-      // BƯỚC 3: VẼ GIAO DIỆN
-      // =================================================================
       chList.forEach((ch, idx) => {
         const isCollapsed = !!collapsedMap[ch.id];
 
@@ -963,7 +1103,6 @@
         const safeChTitle = escapeHTML(ch.title || 'Kênh');
         const currentAssignedGroup = groupMap[ch.id] || "";
 
-        // Tạo menu select nhóm cho riêng thẻ kênh này
         let groupSelectOptions = `<option value="">📁 Chưa nhóm</option>`;
         existingGroups.forEach(g => {
           const isSel = g === currentAssignedGroup ? 'selected' : '';
@@ -985,7 +1124,6 @@
               ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
               ${ch.has_revived_anomaly ? `<span class="badge badge-revived" title="Lệch view 24h: +${(ch.anomaly_diff_24h || 0).toLocaleString()}">⚡ CÓ VIDEO CŨ NỔ</span>` : ''}
               
-              <!-- MENU CHỌN NHÓM TRỰC TIẾP -->
               <select class="channel-group-selector" onchange="setChannelGroup('${ch.id}', this.value)" title="Gán nhóm cho kênh">
                 ${groupSelectOptions}
               </select>
