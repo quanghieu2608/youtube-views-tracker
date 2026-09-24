@@ -93,15 +93,12 @@
       transition: all 0.15s ease;
     }
     .btn-icon-toggle:active { transform: scale(0.92); }
-    
-    /* Nút mắt: Giữ nguyên kích thước và màu nền, chỉ đổi opacity dịu mắt khi bật */
     .btn-icon-toggle.eye-active {
       color: var(--primary);
       background: #1c2128;
       border-color: #388bfd66;
     }
 
-    /* BỐ CỤC ĐA CỘT (RESPONSIVE GRID): 1 CỘT TRÊN MOBILE, 2-3 CỘT TRÊN MÁY TÍNH */
     #appContainer {
       display: grid;
       grid-template-columns: 1fr;
@@ -149,7 +146,6 @@
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    /* NHÓM LUỒNG 1: 48H & 60P */
     .stream-header { font-size: 0.58rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; margin-top: 8px; margin-bottom: 4px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
     .stream1-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     
@@ -158,26 +154,22 @@
     .metric-label { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
     .metric-val-main { font-size: 1.05rem; font-weight: 800; line-height: 1.1; }
 
-    /* Biểu đồ 48 cột */
     .bars-container-48 { display: flex; align-items: flex-end; gap: 1.5px; height: 38px; width: 100%; margin-top: 6px; background: rgba(255,255,255,0.02); border-radius: 3px; padding: 2px 1px; }
     .bar-col-48 { flex: 1; height: 100%; display: flex; align-items: flex-end; }
     .bar-fill-48 { width: 100%; background: #265999; border-radius: 1px 1px 0 0; min-height: 2px; transition: height 0.3s ease; }
     .bar-col-48:hover .bar-fill-48 { background: var(--primary); }
 
-    /* Biểu đồ 4 cột 15P */
     .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 38px; width: 100%; margin-top: 6px; }
     .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
     .bar-track-4 { width: 100%; height: 26px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
     .bar-fill-4 { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
     .bar-val-4 { font-size: 0.52rem; font-weight: 700; margin-top: 2px; line-height: 1; white-space: nowrap; }
 
-    /* NHÓM LUỒNG 2: 24H & 48H Full Catalog */
     .stream2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
     .stat-box-catalog { background: var(--card-sub); border: 1px dashed var(--border); border-radius: 6px; padding: 5px 8px; text-align: center; }
     .stat-label-catalog { font-size: 0.58rem; color: var(--orange); font-weight: 700; text-transform: uppercase; }
     .stat-val-catalog { font-size: 0.92rem; font-weight: 800; margin-top: 2px; color: var(--text-bright); }
 
-    /* NHÓM LUỒNG 3: Dài hạn */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
@@ -235,7 +227,7 @@
   <div class="add-channel-box" id="addChannelBox">
     <div style="font-size:0.75rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay:</div>
     <div class="input-group">
-      <input type="text" id="channelInput" class="input-box" placeholder="Dán Channel ID (UC...)">
+      <input type="text" id="channelInput" class="input-box" placeholder="Dán link Channel hoặc ID (UC...)">
       <button class="btn-action" id="btnAdd" onclick="submitNewChannel()">Thêm & Quét</button>
     </div>
     <div class="status-msg" id="statusMsg"></div>
@@ -261,6 +253,20 @@
   <div id="appContainer">Đang tải dữ liệu...</div>
 
   <script>
+    // FIX XSS: Chặn mã độc hiển thị qua HTML
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.toString().replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag])
+      );
+    }
+
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
     const WORKFLOW_ID = 'track.yml';
@@ -312,7 +318,6 @@
       window.requestAnimationFrame(step);
     }
 
-    /* ĐÃ SỬA: Giữ nguyên duy nhất icon mắt 👁, không thêm dấu chéo hay đổi màu đỏ */
     function togglePrivacyMode() {
       const isPrivacy = document.body.classList.toggle('privacy-mode');
       const btn = document.getElementById('btnEyeToggle');
@@ -437,6 +442,12 @@
       let chId = rawVal;
       if (rawVal.includes('/channel/')) {
         chId = rawVal.split('/channel/')[1].split('/')[0].split('?')[0];
+      }
+
+      // FIX: Chặn Frontend gửi link handle hoặc ID lỗi
+      if (!chId.startsWith('UC') || chId.length !== 24) {
+        msg.innerHTML = '<span style="color:var(--warning)">Lỗi: ID kênh phải bắt đầu bằng "UC" và dài 24 ký tự. Hãy lấy ID chuẩn từ link /channel/...</span>';
+        return;
       }
 
       const token = getStoredToken();
@@ -585,13 +596,19 @@
       }
     }
 
+    // FIX TIMER DRIFT: Canh theo đúng giờ đồng hồ máy thực tế
     setInterval(() => {
       if (!db || !db.updated_at || isFinishingAnimation) return;
 
-      const lastUpdatedMs = new Date(db.updated_at).getTime();
-      const nextCronMs = lastUpdatedMs + (TOTAL_CYCLE_SECONDS * 1000);
-      const nowMs = Date.now();
-      const diffSecs = Math.floor((nextCronMs - nowMs) / 1000);
+      const lastUpdated = new Date(db.updated_at);
+      // Tìm mốc cronjob tiếp theo dựa trên db.updated_at (ví dụ 12:02 sẽ nhảy lên mốc 12:15)
+      let nextExpectedMinutes = Math.floor(lastUpdated.getMinutes() / 15) * 15 + 15;
+      
+      const nextCronTime = new Date(lastUpdated);
+      nextCronTime.setMinutes(nextExpectedMinutes, 0, 0);
+
+      const now = new Date();
+      const diffSecs = Math.floor((nextCronTime.getTime() - now.getTime()) / 1000);
 
       const timerEl = document.getElementById('timer');
       const timerLabel = document.getElementById('timerLabel');
@@ -693,12 +710,10 @@
       chList.forEach((ch, idx) => {
         const isCollapsed = !!collapsedMap[ch.id];
 
-        // Dữ liệu luồng 1
         const v_48h_pool = ch.v_48h_recent !== undefined ? ch.v_48h_recent : (ch.v_48h || 0);
         const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
 
-        // 4 cột mini 15P
         const maxVal4 = Math.max(c1, c2, c3, c4, 1);
         const h1 = Math.max(8, Math.round((c1 / maxVal4) * 100));
         const h2 = Math.max(8, Math.round((c2 / maxVal4) * 100));
@@ -706,7 +721,6 @@
         const h4 = Math.max(8, Math.round((c4 / maxVal4) * 100));
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
 
-        // 48 cột 1 giờ (trải dài ô 48H)
         let s48 = ch.slices_48h || [];
         if (!s48.length) s48 = new Array(48).fill(0);
         const maxVal48 = Math.max(...s48, 1);
@@ -719,16 +733,17 @@
           `;
         }).join('');
 
-        // Dữ liệu luồng 2 (Full Catalog)
         const v_24h_catalog = ch.v_24h || 0;
         const v_48h_catalog = ch.v_48h || 0;
 
-        // Dữ liệu luồng 3 (Tổng kênh)
         const d7 = ch.v_7d;
         const d30 = ch.v_30d;
         const d90 = ch.v_90d;
 
         const activeVTab = channelVideoTabState[ch.id] || 'latest';
+        
+        // FIX: XSS - Bọc ch.title
+        const safeChTitle = escapeHTML(ch.title || 'Kênh');
 
         const card = document.createElement('div');
         card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
@@ -738,7 +753,7 @@
             <div class="ch-title-wrap">
               <span class="toggle-icon">▼</span>
               <div class="ch-title">
-                #${idx + 1}. <span class="ch-title-text">${ch.title || 'Kênh'}</span>
+                #${idx + 1}. <span class="ch-title-text">${safeChTitle}</span>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:6px;">
@@ -755,7 +770,6 @@
           </div>
 
           <div class="card-body">
-            <!-- LUỒNG 1: 100 VIDEO MỚI -->
             <div class="stream-header">
               <span>⚡ Luồng 1 (Top 100 Vid Mới - Realtime)</span>
             </div>
@@ -804,7 +818,6 @@
               </div>
             </div>
 
-            <!-- LUỒNG 2: FULL CATALOG SCAN -->
             <div class="stream-header" style="margin-top:10px;">
               <span>📦 Luồng 2 (Full Catalog Scan - Định Kỳ 24H)</span>
             </div>
@@ -819,7 +832,6 @@
               </div>
             </div>
 
-            <!-- LUỒNG 3: DÀI HẠN & TỔNG TOÀN KÊNH -->
             <div class="longterm-strip">
               <div class="lt-item">
                 <span class="lt-label">7N</span>
@@ -840,7 +852,6 @@
             </div>
           </div>
 
-          <!-- Drawer Chi Tiết Video -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
               <div class="v-tabs-group">
@@ -851,7 +862,7 @@
                   ⚡ Nổi lại (${(ch.revived_videos || []).length})
                 </button>
               </div>
-              <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${ch.title ? ch.title.replace(/'/g, "\\'") : 'Kênh'}')">🗑 Xóa kênh này</button>
+              <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${safeChTitle}')">🗑 Xóa kênh</button>
             </div>
             <div class="v-scroll-area" id="v-list-${ch.id}">
               ${renderVideos(ch, activeVTab)}
@@ -913,7 +924,7 @@
         return revList.slice(0, 20).map((v, i) => `
           <div class="v-item">
             <div class="v-title-row">
-              <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">#${i+1}. ${v.title}</a>
+              <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">#${i+1}. ${escapeHTML(v.title)}</a>
             </div>
             <div class="v-metrics">
               <span style="color:var(--subtext);">Tổng: ${(v.views || 0).toLocaleString()}</span>
@@ -958,7 +969,7 @@
         return `
           <div class="v-item">
             <div class="v-title-row">
-              <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">#${i+1}. ${v.title}</a>
+              <a class="v-title" href="https://youtu.be/${v.id}" target="_blank">#${i+1}. ${escapeHTML(v.title)}</a>
             </div>
             <div class="v-metrics">
               ${badgeInfo}
