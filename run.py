@@ -30,10 +30,16 @@ def get_channel_ids():
         lines = [line.strip() for line in f if line.strip() and not line.startswith("#")]
     clean_ids = []
     for l in lines:
+        ch_id = l
         if "/channel/" in l:
-            clean_ids.append(l.split("/channel/")[1].split("/")[0].split("?")[0])
+            ch_id = l.split("/channel/")[1].split("/")[0].split("?")[0]
+            
+        # Kiểm tra chuẩn Channel ID của YouTube
+        if ch_id.startswith("UC") and len(ch_id) == 24:
+            clean_ids.append(ch_id)
         else:
-            clean_ids.append(l)
+            print(f"Bỏ qua ID không hợp lệ: {l}")
+            
     return list(dict.fromkeys(clean_ids))
 
 def batch_get_channel_details(channel_ids):
@@ -60,7 +66,7 @@ def batch_get_channel_details(channel_ids):
 def get_latest_100_video_ids(uploads_playlist_id):
     video_ids = []
     next_page_token = None
-    for _ in range(2):  # 2 trang x 50 = 100 video mới nhất
+    for _ in range(2):
         res = youtube.playlistItems().list(
             part="contentDetails",
             playlistId=uploads_playlist_id,
@@ -79,7 +85,10 @@ def get_latest_100_video_ids(uploads_playlist_id):
 def fetch_all_channel_video_ids(uploads_playlist_id):
     video_ids = []
     next_page_token = None
-    while True:
+    max_pages = 25  # Giới hạn lấy 1250 video gần nhất để tránh cạn Quota API
+    pages_fetched = 0
+    
+    while pages_fetched < max_pages:
         res = youtube.playlistItems().list(
             part="contentDetails",
             playlistId=uploads_playlist_id,
@@ -91,6 +100,7 @@ def fetch_all_channel_video_ids(uploads_playlist_id):
             if v_id:
                 video_ids.append(v_id)
         next_page_token = res.get("nextPageToken")
+        pages_fetched += 1
         if not next_page_token:
             break
     return video_ids
@@ -128,7 +138,6 @@ def main():
     now_iso = now_dt.isoformat()
     now_ts = now_dt.timestamp()
 
-    # Chu kỳ Full Scan ngày lúc 00:00 UTC (07:00 AM VN)
     today_str_utc = now_dt.strftime("%Y-%m-%d")
     last_full_scan_date = db.get("last_full_scan_date", "")
     need_full_scan = (last_full_scan_date != today_str_utc)
@@ -148,12 +157,12 @@ def main():
                 "subs": meta["subs"],
                 "videos_count": meta["video_count"],
                 "total_channel_views": meta["total_views"],
-                "history_channel": [],      # Luồng 3: Tổng view kênh (7N, 30N, 90N)
-                "history_recent_pool": [],  # Luồng 1: 100 video mới (15P, 60P, 48H)
-                "history_full_catalog": [], # Luồng 2: Tổng view khi quét toàn kênh (24H, 48H)
+                "history_channel": [],
+                "history_recent_pool": [],
+                "history_full_catalog": [],
                 "video_histories": {},
-                "catalog_snapshots": {},    # Snapshot view từng video cũ
-                "revived_videos": [],       # Danh sách video cũ nổ view
+                "catalog_snapshots": {},
+                "revived_videos": [],
                 "videos": [],
                 "slices_15m": [0, 0, 0, 0],
                 "slices_48h": [0] * 48
@@ -167,7 +176,7 @@ def main():
         uploads_pl = meta["uploads_playlist"]
 
         # ====================================================================
-        # LUỒNG 1: QUÉT 100 VIDEO MỚI NHẤT (REALTIME: 15P, 60P, 48H POOL)
+        # LUỒNG 1: QUÉT 100 VIDEO MỚI NHẤT
         # ====================================================================
         latest_100_ids = get_latest_100_video_ids(uploads_pl)
         recent_stats = batch_get_video_stats(latest_100_ids)
@@ -179,6 +188,13 @@ def main():
             ch_data["history_recent_pool"] = h_recent[-3000:]
 
         v_hists = ch_data.setdefault("video_histories", {})
+        
+        # Dọn dẹp rác: Xóa lịch sử video đã rớt khỏi Top 100 để giảm dung lượng file JSON
+        current_100_set = set(latest_100_ids)
+        keys_to_remove = [k for k in v_hists.keys() if k not in current_100_set]
+        for k in keys_to_remove:
+            del v_hists[k]
+
         video_list = []
         for vid, v in recent_stats.items():
             curr_v = v["views"]
@@ -216,28 +232,48 @@ def main():
             target = now_ts - (minutes_ago * 60)
             c_val = None
             m_diff = float("inf")
+            target_ts = None
             for item in h_recent:
                 item_ts = datetime.fromisoformat(item[0]).timestamp()
                 diff = abs(item_ts - target)
                 if diff < m_diff:
                     m_diff = diff
                     c_val = item[1]
+                    target_ts = item_ts
+            if target_ts and (now_ts - target_ts) < (minutes_ago * 0.4 * 60):
+                return None
             return c_val
 
         rv_0 = recent_total_views
-        rv_15 = get_recent_views_ago(15) or rv_0
-        rv_30 = get_recent_views_ago(30) or rv_15
-        rv_45 = get_recent_views_ago(45) or rv_30
-        rv_60 = get_recent_views_ago(60) or rv_45
+        rv_15 = get_recent_views_ago(15)
+        rv_30 = get_recent_views_ago(30)
+        rv_45 = get_recent_views_ago(45)
+        rv_60 = get_recent_views_ago(60)
         rv_24h = get_recent_views_ago(24 * 60)
         rv_48h = get_recent_views_ago(48 * 60)
 
-        # Tính 4 cột 15 phút (slices_15m)
-        c4 = max(0, rv_0 - rv_15)
-        c3 = max(0, rv_15 - rv_30)
-        c2 = max(0, rv_30 - rv_45)
-        c1 = max(0, rv_45 - rv_60)
-        total_60 = max(0, rv_0 - rv_60)
+        if rv_24h is not None:
+            v_24h_recent = max(0, rv_0 - rv_24h)
+        elif len(h_recent) > 1:
+            v_24h_recent = max(0, rv_0 - h_recent[0][1])
+        else:
+            v_24h_recent = 0
+
+        if rv_48h is not None:
+            v_48h_recent = max(0, rv_0 - rv_48h)
+        elif len(h_recent) > 1:
+            v_48h_recent = max(0, rv_0 - h_recent[0][1])
+        else:
+            v_48h_recent = 0
+
+        ch_data["v_24h_recent"] = v_24h_recent
+        ch_data["v_48h_recent"] = v_48h_recent
+
+        c4 = max(0, rv_0 - rv_15) if rv_15 is not None else 0
+        c3 = max(0, rv_15 - rv_30) if (rv_15 is not None and rv_30 is not None) else 0
+        c2 = max(0, rv_30 - rv_45) if (rv_30 is not None and rv_45 is not None) else 0
+        c1 = max(0, rv_45 - rv_60) if (rv_45 is not None and rv_60 is not None) else 0
+        total_60 = max(0, rv_0 - rv_60) if rv_60 is not None else (c1 + c2 + c3 + c4)
 
         sum_c = c1 + c2 + c3 + c4
         if sum_c > 0 and sum_c != total_60:
@@ -250,29 +286,22 @@ def main():
             c1, c2, c3, c4 = 0, 0, 0, 0
 
         ch_data["v_15m"] = c4
-        ch_data["v_30m"] = max(0, rv_0 - rv_30)
+        ch_data["v_30m"] = max(0, rv_0 - rv_30) if rv_30 is not None else 0
         ch_data["v_60m"] = total_60
         ch_data["slices_15m"] = [c1, c2, c3, c4]
 
-        # Tính 48 cột cho ô 48H (mỗi cột là tăng trưởng view trong 1 giờ)
         slices_48h = []
         for h in range(48, 0, -1):
             v_start = get_recent_views_ago(h * 60)
-            v_end = get_recent_views_ago((h - 1) * 60)
+            v_end = get_recent_views_ago((h - 1) * 60) or rv_0
             if v_start is not None and v_end is not None:
                 slices_48h.append(max(0, v_end - v_start))
             else:
                 slices_48h.append(0)
         ch_data["slices_48h"] = slices_48h
 
-        # Lưu đối chứng 24H & 48H của top 100 video mới
-        v_24h_recent = max(0, rv_0 - rv_24h) if rv_24h is not None else 0
-        v_48h_recent = max(0, rv_0 - rv_48h) if rv_48h is not None else 0
-        ch_data["v_24h_recent"] = v_24h_recent
-        ch_data["v_48h_recent"] = v_48h_recent
-
         # ====================================================================
-        # LUỒNG 2: QUÉT TOÀN BỘ CATALOG (ĐỊNH KỲ 24H ĐỐI SOÁT & TÌM VIDEO CŨ NỔ)
+        # LUỒNG 2: QUÉT CATALOG ĐỊNH KỲ 24H
         # ====================================================================
         h_catalog = ch_data.setdefault("history_full_catalog", [])
 
@@ -282,12 +311,10 @@ def main():
             all_stats = batch_get_video_stats(all_video_ids)
             catalog_total_views = sum(s["views"] for s in all_stats.values())
 
-            # Lưu snapshot catalog
             h_catalog.append([now_iso, catalog_total_views])
             if len(h_catalog) > 300:
                 ch_data["history_full_catalog"] = h_catalog[-300:]
 
-            # Tìm video cũ tăng view ngoài top 100
             catalog = ch_data.get("catalog_snapshots", {})
             revived = []
             if catalog:
@@ -320,7 +347,6 @@ def main():
                     m_diff = diff
                     c_val = item[1]
                     target_ts_found = item_ts
-            # Chỉ coi là hợp lệ nếu bản ghi tìm được cách điểm hiện tại ít nhất 60% thời gian yêu cầu
             if target_ts_found and (now_ts - target_ts_found) >= (hours_ago * 0.6 * 3600):
                 return c_val
             return None
@@ -329,13 +355,12 @@ def main():
         cat_24h = get_catalog_views_ago(24)
         cat_48h = get_catalog_views_ago(48)
 
-        # Tính View 24H và 48H Catalog (Fallback về Luồng 1 nếu chưa đủ 24 tiếng lịch sử)
-        if cat_now is not None and cat_24h is not None and cat_now >= cat_24h:
+        if cat_now is not None and cat_24h is not None and cat_now > cat_24h:
             ch_data["v_24h"] = cat_now - cat_24h
         else:
             ch_data["v_24h"] = v_24h_recent
 
-        if cat_now is not None and cat_48h is not None and cat_now >= cat_48h:
+        if cat_now is not None and cat_48h is not None and cat_now > cat_48h:
             ch_data["v_48h"] = cat_now - cat_48h
         else:
             ch_data["v_48h"] = v_48h_recent
@@ -345,7 +370,7 @@ def main():
         ch_data["has_revived_anomaly"] = (diff_24h >= 500) or (len(ch_data.get("revived_videos", [])) > 0)
 
         # ====================================================================
-        # LUỒNG 3: VIEW DÀI HẠN (7N, 30N, 90N) TỪ TỔNG VIEW TOÀN KÊNH
+        # LUỒNG 3: VIEW DÀI HẠN
         # ====================================================================
         channel_real_total = meta["total_views"]
         h_channel = ch_data.setdefault("history_channel", [])
@@ -379,16 +404,6 @@ def main():
 
         avg_15m = ch_data["v_60m"] / 4 if ch_data["v_60m"] > 0 else 0
         ch_data["is_spike"] = ch_data["v_15m"] > max(50, avg_15m * 2)
-
-        # Tạo chuỗi sparkline động
-        chars = [" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
-        pts = [x[1] for x in h_recent[-12:]] if len(h_recent) >= 2 else []
-        if len(pts) >= 2:
-            deltas = [max(0, pts[i] - pts[i-1]) for i in range(1, len(pts))]
-            max_d = max(deltas) if max(deltas) > 0 else 1
-            ch_data["sparkline"] = "".join(chars[min(7, int((d / max_d) * 7))] for d in deltas)
-        else:
-            ch_data["sparkline"] = " ▂▃▅▆▇█"
 
     if need_full_scan:
         db["last_full_scan_date"] = today_str_utc
