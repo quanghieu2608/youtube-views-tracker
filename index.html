@@ -2,22 +2,22 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>YouTube Realtime Pro</title>
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: #111827;
-      --card-border: #1f2937;
-      --hover-bg: #172033;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --text-dim: #6b7280;
-      --blue: #38bdf8;
-      --green: #22c55e;
-      --orange: #f97316;
-      --red: #ef4444;
-      --accent: #3b82f6;
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --card-border: #30363d;
+      --hover-bg: #21262d;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      --blue: #58a6ff;
+      --blue-subtle: rgba(56, 189, 248, 0.15);
+      --green: #3fb950;
+      --orange: #f0883e;
+      --red: #f85149;
     }
 
     * {
@@ -25,28 +25,27 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 16px;
-      font-size: 14px;
+      padding: 12px;
+      font-size: 13px;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
-    /* Top Bar */
+    /* Header */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 10px;
+      margin-bottom: 12px;
     }
 
     .title-row {
@@ -56,122 +55,130 @@
     }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background-color: var(--green);
       box-shadow: 0 0 8px var(--green);
     }
 
     h1 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
+      color: #fff;
     }
 
-    .actions {
+    .header-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn {
-      background: #1f2937;
-      border: 1px solid #374151;
-      color: #e5e7eb;
-      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 5px 10px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      transition: all 0.2s;
     }
 
     .btn:hover {
-      background: #374151;
+      background: #30363d;
     }
 
-    .btn-primary {
-      background: #1e3a8a;
-      border-color: #3b82f6;
-      color: #93c5fd;
-    }
-
-    .btn-primary:hover {
-      background: #2563eb;
-      color: #fff;
-    }
-
-    /* Stats tracker line */
+    /* Sub Info & Countdown */
     .status-bar {
       display: flex;
       justify-content: space-between;
-      color: var(--text-dim);
       font-size: 11px;
-      margin-bottom: 8px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
     }
 
     .progress-bar-container {
       width: 100%;
-      height: 3px;
-      background: #1f2937;
+      height: 2px;
+      background: #21262d;
       border-radius: 2px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       overflow: hidden;
+      position: relative;
     }
 
     .progress-bar {
-      width: 100%;
+      width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #10b981);
-      animation: progressAnim 900s linear infinite;
+      background: linear-gradient(90deg, #1f6feb, #2ea043);
+      transition: width 1s linear;
     }
 
-    @keyframes progressAnim {
-      0% { width: 0%; }
-      100% { width: 100%; }
-    }
-
-    /* Filters Bar */
+    /* Filter Controls */
     .filter-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 4px;
+      margin-bottom: 12px;
+      gap: 6px;
     }
 
     .filter-group {
       display: flex;
       gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
+    .filter-group::-webkit-scrollbar { display: none; }
 
     .filter-btn {
-      background: #111827;
-      border: 1px solid #1f2937;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       color: var(--text-muted);
-      padding: 5px 12px;
+      padding: 4px 9px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
       white-space: nowrap;
     }
 
     .filter-btn.active {
-      background: #2563eb;
+      background: #1f6feb;
       color: #fff;
-      border-color: #3b82f6;
+      border-color: #388bfd;
+    }
+
+    .view-toggles {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      width: 28px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
     }
 
     /* Channel Cards */
     .channels-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .channel-card {
@@ -179,33 +186,27 @@
       border: 1px solid var(--card-border);
       border-radius: 8px;
       overflow: hidden;
-      transition: border-color 0.2s;
-    }
-
-    .channel-card:hover {
-      border-color: #374151;
     }
 
     .channel-header {
-      padding: 12px 16px;
+      padding: 10px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.01);
       user-select: none;
     }
 
     .ch-title-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 6px;
+      overflow: hidden;
     }
 
     .ch-arrow {
       color: var(--text-dim);
-      font-size: 11px;
+      font-size: 10px;
       transition: transform 0.2s;
     }
 
@@ -215,161 +216,170 @@
 
     .ch-name {
       font-weight: 600;
-      font-size: 14px;
-      color: #f9fafb;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .badges {
       display: flex;
-      gap: 6px;
+      gap: 4px;
+      flex-shrink: 0;
     }
 
     .badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
     }
 
     .badge-viral {
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: rgba(248, 81, 73, 0.15);
+      color: #ff7b72;
+      border: 1px solid rgba(248, 81, 73, 0.4);
     }
 
     .badge-revived {
-      background: rgba(249, 115, 22, 0.15);
-      color: #fb923c;
-      border: 1px solid rgba(249, 115, 22, 0.3);
+      background: rgba(240, 136, 62, 0.15);
+      color: #ffa657;
+      border: 1px solid rgba(240, 136, 62, 0.4);
     }
 
-    .ch-detail-btn {
+    .ch-detail-link {
       color: var(--blue);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Channel Sub Bar */
-    .ch-stats-overview {
-      padding: 0 16px 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      color: var(--text-dim);
       font-size: 11px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      white-space: nowrap;
     }
 
-    /* Metric Grid */
-    .metric-grid {
+    /* Sub overview bar */
+    .ch-sub-bar {
+      padding: 0 12px 6px 12px;
+      display: flex;
+      gap: 8px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* Row 1 Hàng Ngang: 48H - 24H - 60P - 15P Slices */
+    .realtime-row {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1.5fr;
-      padding: 12px 16px;
-      gap: 12px;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      padding: 8px 12px;
       align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
 
-    @media (max-width: 768px) {
-      .metric-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .metric-box {
+    .rt-box {
       display: flex;
       flex-direction: column;
-      gap: 2px;
     }
 
-    .metric-label {
-      font-size: 11px;
+    .rt-label {
+      font-size: 9px;
       color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    .metric-val {
-      font-size: 16px;
+    .rt-val {
+      font-size: 13px;
       font-weight: 700;
       color: var(--blue);
+      white-space: nowrap;
     }
 
-    .metric-val.green {
+    .rt-val.green {
       color: var(--green);
     }
 
-    .metric-val.orange {
-      color: var(--orange);
-    }
-
-    /* 15m Bars Container */
-    .slice-bars-wrap {
+    /* Mini Slices 15M */
+    .slices-container {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 4px;
+      gap: 2px;
     }
 
     .slice-bars {
       display: flex;
       align-items: flex-end;
-      gap: 3px;
-      height: 24px;
+      gap: 2px;
+      height: 18px;
     }
 
-    .bar {
-      width: 14px;
-      background: #1f2937;
+    .slice-bar {
+      width: 8px;
+      background: #21262d;
       border-radius: 2px 2px 0 0;
       min-height: 2px;
-      transition: height 0.3s;
     }
 
-    .bar.has-view {
+    .slice-bar.active {
       background: var(--blue);
     }
 
-    .bar.latest {
+    .slice-bar.current {
       background: var(--green);
     }
 
-    .slice-labels {
+    .slice-values {
       display: flex;
-      gap: 4px;
-      font-size: 9px;
+      gap: 2px;
+      font-size: 8px;
       color: var(--text-dim);
     }
 
-    /* Long-term stats row */
-    .long-term-row {
+    /* Long-term Metrics */
+    .longterm-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      padding: 10px 16px;
-      background: rgba(0, 0, 0, 0.2);
-      font-size: 11px;
-      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 6px 12px;
+      font-size: 10px;
     }
 
-    .lt-col {
+    .lt-cell {
       display: flex;
       flex-direction: column;
-      gap: 2px;
     }
 
-    .lt-val {
+    .lt-lbl {
+      color: var(--text-dim);
+      font-size: 9px;
+    }
+
+    .lt-num {
       font-weight: 600;
-      color: #e5e7eb;
+      color: #c9d1d9;
     }
 
-    /* Expanded Drawer */
+    /* Chế độ Thu Gọn (Compact Mode) */
+    body.compact-mode .ch-sub-bar,
+    body.compact-mode .realtime-row,
+    body.compact-mode .longterm-grid,
+    body.compact-mode .drawer-content {
+      display: none !important;
+    }
+
+    body.compact-mode .channel-card {
+      margin-bottom: 0px;
+    }
+
+    body.compact-mode .channel-header {
+      padding: 8px 12px;
+    }
+
+    /* Drawer Chi Tiết */
     .drawer-content {
       display: none;
-      background: #0d131f;
+      background: #0d1117;
+      padding: 10px 12px;
       border-top: 1px solid var(--card-border);
-      padding: 16px;
     }
 
     .channel-card.open .drawer-content {
@@ -378,143 +388,178 @@
 
     .drawer-tabs {
       display: flex;
-      gap: 6px;
-      border-bottom: 1px solid #1f2937;
-      padding-bottom: 8px;
-      margin-bottom: 12px;
+      gap: 4px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 6px;
+      margin-bottom: 8px;
       overflow-x: auto;
+      scrollbar-width: none;
     }
+    .drawer-tabs::-webkit-scrollbar { display: none; }
 
     .tab-btn {
       background: transparent;
       border: 1px solid transparent;
       color: var(--text-muted);
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 4px;
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      font-weight: 500;
       white-space: nowrap;
     }
 
     .tab-btn.active {
-      background: #1f2937;
+      background: #21262d;
       color: #fff;
-      border-color: #374151;
+      border-color: #30363d;
     }
 
-    .tab-btn.tab-revived {
+    .tab-btn.tab-orange.active {
+      background: rgba(240, 136, 62, 0.15);
+      border-color: var(--orange);
       color: var(--orange);
     }
 
-    .tab-btn.tab-revived.active {
-      background: rgba(249, 115, 22, 0.15);
-      border-color: var(--orange);
+    /* Video List Scroll */
+    .video-scroll-box {
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 4px;
     }
 
-    /* Video Row */
-    .video-item {
+    .video-scroll-box::-webkit-scrollbar {
+      width: 4px;
+    }
+    .video-scroll-box::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 4px;
+    }
+
+    .video-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 6px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      gap: 8px;
     }
 
-    .video-item:last-child {
+    .video-row:last-child {
       border-bottom: none;
     }
 
-    .video-left {
+    .vid-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       overflow: hidden;
     }
 
-    .vid-rank {
+    .vid-idx {
+      font-size: 10px;
       color: var(--text-dim);
-      font-size: 11px;
-      width: 24px;
+      width: 18px;
       flex-shrink: 0;
     }
 
-    .vid-title {
-      color: #e5e7eb;
+    .vid-link {
+      color: #c9d1d9;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 11px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 550px;
+      max-width: 460px;
     }
 
-    .vid-title:hover {
+    .vid-link:hover {
       color: var(--blue);
       text-decoration: underline;
     }
 
-    .video-right {
+    .vid-right {
       text-align: right;
       flex-shrink: 0;
     }
 
-    .vid-delta {
+    .vid-plus {
       font-weight: 700;
-      font-size: 13px;
-    }
-
-    .vid-total {
       font-size: 11px;
+    }
+
+    .vid-sum {
+      font-size: 9px;
       color: var(--text-dim);
     }
 
-    .empty-state {
-      text-align: center;
-      padding: 24px;
-      color: var(--text-dim);
-      font-size: 12px;
+    /* Modal Thêm Kênh */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
     }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px;
+      max-width: 420px;
+      width: 100%;
+    }
+    .modal-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- Header -->
-    <header class="header">
+    <div class="header">
       <div class="title-row">
         <div class="status-dot"></div>
         <h1>YouTube Realtime Pro</h1>
       </div>
-      <div class="actions">
-        <button class="btn" onclick="fetchData()">🔄 Làm mới</button>
+      <div class="header-actions">
+        <button class="btn" onclick="openAddModal()">＋ Thêm</button>
+        <button class="btn" onclick="fetchData(true)">⚡ Quét Ngay</button>
       </div>
-    </header>
+    </div>
 
-    <!-- Cycle Countdown & Updated Status -->
+    <!-- Sub Info Bar -->
     <div class="status-bar">
-      <div>Kế tiếp: <span id="countdown" style="color: var(--blue); font-weight: 600;">--:--</span></div>
-      <div id="updated-at">Cập nhật: --:--:--</div>
-      <div>Chu kỳ cố định: :00, :15, :30, :45</div>
-    </div>
-    <div class="progress-bar-container">
-      <div class="progress-bar"></div>
+      <div>Kế tiếp: <span id="countdown" style="color: var(--blue); font-weight: 700;">--:--</span></div>
+      <div id="channel-count-text">0 Kênh</div>
+      <div>Chu kỳ: :00, :15, :30, :45</div>
     </div>
 
-    <!-- Metric Filter Bar -->
+    <!-- Dynamic Progress Bar -->
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="sub-progress"></div>
+    </div>
+
+    <!-- Filter & Toggles Bar -->
     <div class="filter-bar">
       <div class="filter-group">
-        <button class="filter-btn active" data-sort="v_60m" onclick="setSortMode('v_60m')">⏱ 60P</button>
-        <button class="filter-btn" data-sort="v_30m" onclick="setSortMode('v_30m')">⚡ 30P</button>
-        <button class="filter-btn" data-sort="v_24h" onclick="setSortMode('v_24h')">24H</button>
-        <button class="filter-btn" data-sort="v_48h" onclick="setSortMode('v_48h')">48H</button>
-        <button class="filter-btn" data-sort="v_7d" onclick="setSortMode('v_7d')">📅 7N</button>
-        <button class="filter-btn" data-sort="v_30d" onclick="setSortMode('v_30d')">📅 30N</button>
-        <button class="filter-btn" data-sort="v_90d" onclick="setSortMode('v_90d')">📅 90N</button>
-        <button class="filter-btn" data-sort="total" onclick="setSortMode('total')">Toàn bộ</button>
+        <button class="filter-btn active" data-sort="v_60m" onclick="setSort('v_60m')">⏱ 60P</button>
+        <button class="filter-btn" data-sort="v_30m" onclick="setSort('v_30m')">⚡ 30P</button>
+        <button class="filter-btn" data-sort="v_24h" onclick="setSort('v_24h')">24H</button>
+        <button class="filter-btn" data-sort="v_48h" onclick="setSort('v_48h')">48H</button>
+        <button class="filter-btn" data-sort="v_7d" onclick="setSort('v_7d')">📅 7N</button>
+        <button class="filter-btn" data-sort="v_30d" onclick="setSort('v_30d')">📅 30N</button>
+        <button class="filter-btn" data-sort="v_90d" onclick="setSort('v_90d')">📅 90N</button>
+        <button class="filter-btn" data-sort="total" onclick="setSort('total')">Toàn bộ</button>
       </div>
-      <div style="font-size: 12px; color: var(--text-dim);">
-        <span id="channel-count">0</span> Kênh
+      <div class="view-toggles">
+        <button class="icon-btn" id="btn-toggle-eye" onclick="toggleCompactMode()" title="Ẩn/Hiện Chi Tiết (Chỉ Hiện Tên)">👁</button>
+        <button class="icon-btn" onclick="expandAll(false)" title="Thu Gọn Toàn Bộ">▲</button>
+        <button class="icon-btn" onclick="expandAll(true)" title="Mở Rộng Toàn Bộ">▼</button>
       </div>
     </div>
 
@@ -522,261 +567,299 @@
     <div class="channels-list" id="channels-container"></div>
   </div>
 
+  <!-- Popup Hướng Dẫn Thêm Kênh -->
+  <div class="modal" id="add-modal">
+    <div class="modal-content">
+      <div class="modal-title">Thêm Kênh Theo Dõi</div>
+      <div class="modal-desc">
+        Để thêm kênh mới, bạn hãy mở file <b><code>channels.txt</code></b> trên GitHub Repo của bạn, dán link hoặc Channel ID (ví dụ: <code>UC...</code>) vào một dòng mới rồi bấm Commit. Hệ thống sẽ tự động quét kênh ở nhịp kế tiếp.
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeAddModal()">Đã Hiểu</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let globalData = null;
+    let previousViews = {};
     let currentSort = 'v_60m';
     let openedDrawers = new Set();
-    let channelActiveTabs = {};
+    let channelTabs = {};
+    let isCompact = false;
 
-    function formatNumber(num) {
-      if (num === null || num === undefined) return "+ -";
-      return (num >= 0 ? "+" : "") + Number(num).toLocaleString();
-    }
-
-    function formatPlainNumber(num) {
-      if (!num) return "0";
-      return Number(num).toLocaleString();
-    }
-
-    function setSortMode(mode) {
-      currentSort = mode;
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.sort === mode);
-      });
-      renderList();
-    }
-
-    function toggleDrawer(chId) {
-      if (openedDrawers.has(chId)) {
-        openedDrawers.delete(chId);
-      } else {
-        openedDrawers.add(chId);
+    // Hiệu ứng nhảy số mượt mà (Number Animation)
+    function animateValue(elem, start, end, duration) {
+      if (start === end) {
+        elem.innerText = (end >= 0 ? "+" : "") + Number(end).toLocaleString();
+        return;
       }
-      renderList();
+      const range = end - start;
+      const startTime = performance.now();
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(start + range * progress);
+        elem.innerText = (current >= 0 ? "+" : "") + Number(current).toLocaleString();
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          elem.innerText = (end >= 0 ? "+" : "") + Number(end).toLocaleString();
+        }
+      }
+      requestAnimationFrame(update);
     }
 
-    function switchDetailTab(chId, tabName, event) {
-      if (event) event.stopPropagation();
-      channelActiveTabs[chId] = tabName;
-      renderList();
+    function fmtNum(n) {
+      if (n === null || n === undefined) return "+ -";
+      return (n >= 0 ? "+" : "") + Number(n).toLocaleString();
     }
 
-    async function fetchData() {
+    function fmtPlain(n) {
+      if (!n) return "0";
+      return Number(n).toLocaleString();
+    }
+
+    function toggleCompactMode() {
+      isCompact = !isCompact;
+      document.body.classList.toggle('compact-mode', isCompact);
+      document.getElementById('btn-toggle-eye').style.borderColor = isCompact ? 'var(--blue)' : 'var(--card-border)';
+    }
+
+    function expandAll(expand) {
+      if (!globalData) return;
+      Object.keys(globalData.channels || {}).forEach(id => {
+        if (expand) openedDrawers.add(id);
+        else openedDrawers.delete(id);
+      });
+      render();
+    }
+
+    function setSort(mode) {
+      currentSort = mode;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.sort === mode);
+      });
+      render();
+    }
+
+    function toggleCard(id) {
+      if (openedDrawers.has(id)) openedDrawers.delete(id);
+      else openedDrawers.add(id);
+      render();
+    }
+
+    function setDetailTab(id, tab, e) {
+      if (e) e.stopPropagation();
+      channelTabs[id] = tab;
+      render();
+    }
+
+    function openAddModal() { document.getElementById('add-modal').classList.add('active'); }
+    function closeAddModal() { document.getElementById('add-modal').classList.remove('active'); }
+
+    async function fetchData(manual = false) {
       try {
         const res = await fetch(`data.json?t=${Date.now()}`);
-        if (!res.ok) throw new Error("Chưa tìm thấy data.json");
+        if (!res.ok) throw new Error();
         globalData = await res.json();
-        updateHeaderStatus();
-        renderList();
-      } catch (err) {
-        console.error(err);
+        render();
+      } catch (e) {
+        console.error("Không thể tải data.json", e);
       }
     }
 
-    function updateHeaderStatus() {
-      if (!globalData) return;
-      if (globalData.updated_at) {
-        const dt = new Date(globalData.updated_at);
-        document.getElementById('updated-at').innerText = `Cập nhật: ${dt.toLocaleTimeString()}`;
-      }
-      const channels = Object.values(globalData.channels || {});
-      document.getElementById('channel-count').innerText = channels.length;
-    }
-
-    function renderList() {
+    function render() {
       if (!globalData || !globalData.channels) return;
-      const container = document.getElementById('channels-container');
       const list = Object.values(globalData.channels);
+      document.getElementById('channel-count-text').innerText = `${list.length} Kênh`;
 
-      // Sắp xếp danh sách kênh
+      // Sắp xếp
       list.sort((a, b) => {
-        if (currentSort === 'total') {
-          return (b.total_channel_views || 0) - (a.total_channel_views || 0);
-        }
+        if (currentSort === 'total') return (b.total_channel_views || 0) - (a.total_channel_views || 0);
         return (b[currentSort] || 0) - (a[currentSort] || 0);
       });
 
-      container.innerHTML = list.map((ch, index) => {
+      const container = document.getElementById('channels-container');
+      container.innerHTML = list.map((ch, idx) => {
         const isOpen = openedDrawers.has(ch.id);
-        const currentTab = channelActiveTabs[ch.id] || 'v_48h';
+        const activeTab = channelTabs[ch.id] || 'latest';
         const slices = ch.slices_15m || [0, 0, 0, 0];
         const maxSlice = Math.max(...slices, 1);
 
-        // Render 4 thanh mini bar
-        const barsHtml = slices.map((s, idx) => {
-          const heightPercent = Math.max(8, Math.min(100, Math.round((s / maxSlice) * 100)));
-          const isLatest = idx === 3;
-          const hasView = s > 0;
-          return `<div class="bar ${hasView ? 'has-view' : ''} ${isLatest ? 'latest' : ''}" 
-                       style="height: ${heightPercent}%;" 
-                       title="${idx === 3 ? '15p gần nhất' : (45 - idx * 15) + 'p trước'}: +${s}"></div>`;
+        // 4 thanh mini bar
+        const barsHtml = slices.map((s, i) => {
+          const h = Math.max(10, Math.min(100, Math.round((s / maxSlice) * 100)));
+          return `<div class="slice-bar ${s > 0 ? 'active' : ''} ${i === 3 ? 'current' : ''}" 
+                       style="height:${h}%;" title="+${s}"></div>`;
         }).join('');
 
-        // Badge cắn đề xuất & video cũ nổ
-        const spikeBadge = ch.is_spike 
+        // Badges
+        const viralBadge = ch.is_spike 
           ? `<span class="badge badge-viral">🔥 CẮN ĐỀ XUẤT</span>` : '';
         const revivedBadge = ch.has_revived_anomaly 
-          ? `<span class="badge badge-revived" title="Lệch view 24h: +${formatPlainNumber(ch.anomaly_diff_24h)}">⚡ VIDEO CŨ NỔ</span>` : '';
+          ? `<span class="badge badge-revived" title="Lệch view 24h: +${fmtPlain(ch.anomaly_diff_24h)}">⚡ CÓ VIDEO CŨ NỔ</span>` : '';
 
-        // Dữ liệu video trong drawer
-        let drawerVideoListHtml = '';
-        if (currentTab === 'revived') {
+        // Xử lý danh sách video trong drawer (Mặc định cuộn xem 20+)
+        let videosHtml = '';
+        if (activeTab === 'revived') {
           const revList = ch.revived_videos || [];
           if (revList.length === 0) {
-            drawerVideoListHtml = `<div class="empty-state">Chưa phát hiện video cũ nào tăng đột biến (≥ 100 view/ngày). Dữ liệu đối soát lúc 07:00 sáng.</div>`;
+            videosHtml = `<div style="text-align:center; padding:18px; color:var(--text-dim); font-size:11px;">Không có video cũ nào tăng đột biến. Dữ liệu đối soát lúc 07:00 sáng.</div>`;
           } else {
-            drawerVideoListHtml = revList.map((v, idx) => `
-              <div class="video-item">
-                <div class="video-left">
-                  <span class="vid-rank">#${idx + 1}</span>
-                  <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="vid-title" title="${v.title}">
-                    ${v.title}
-                  </a>
+            videosHtml = revList.map((v, i) => `
+              <div class="video-row">
+                <div class="vid-left">
+                  <span class="vid-idx">#${i + 1}</span>
+                  <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="vid-link" title="${v.title}">${v.title}</a>
                 </div>
-                <div class="video-right">
-                  <div class="vid-delta" style="color: var(--orange);">+${formatPlainNumber(v.v_delta_24h)}</div>
-                  <div class="vid-total">Tổng: ${formatPlainNumber(v.views)}</div>
+                <div class="vid-right">
+                  <div class="vid-plus" style="color:var(--orange);">+${fmtPlain(v.v_delta_24h)}</div>
+                  <div class="vid-sum">Tổng: ${fmtPlain(v.views)}</div>
                 </div>
               </div>
             `).join('');
           }
         } else {
-          // Tab 100 video mới
-          let sortedVideos = [...(ch.videos || [])];
-          if (currentTab === 'v_48h') sortedVideos.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0));
-          if (currentTab === 'v_60m') sortedVideos.sort((a, b) => (b.v_60m || 0) - (a.v_60m || 0));
-          if (currentTab === 'latest') sortedVideos.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+          let vids = [...(ch.videos || [])];
+          if (activeTab === 'latest') vids.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+          if (activeTab === 'v_60m') vids.sort((a, b) => (b.v_60m || 0) - (a.v_60m || 0));
+          if (activeTab === 'v_48h') vids.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0));
 
-          if (sortedVideos.length === 0) {
-            drawerVideoListHtml = `<div class="empty-state">Đang tải danh sách video...</div>`;
-          } else {
-            drawerVideoListHtml = sortedVideos.slice(0, 50).map((v, idx) => {
-              const deltaVal = currentTab === 'v_60m' ? v.v_60m : v.v_48h;
-              return `
-                <div class="video-item">
-                  <div class="video-left">
-                    <span class="vid-rank">#${idx + 1}</span>
-                    <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="vid-title" title="${v.title}">
-                      ${v.title}
-                    </a>
-                  </div>
-                  <div class="video-right">
-                    <div class="vid-delta" style="color: ${currentTab === 'v_60m' ? 'var(--green)' : 'var(--blue)'};">
-                      +${formatPlainNumber(deltaVal)}
-                    </div>
-                    <div class="vid-total">Tổng: ${formatPlainNumber(v.views)}</div>
-                  </div>
+          videosHtml = vids.map((v, i) => {
+            let dVal = activeTab === 'v_60m' ? v.v_60m : (activeTab === 'v_48h' ? v.v_48h : v.v_60m);
+            return `
+              <div class="video-row">
+                <div class="vid-left">
+                  <span class="vid-idx">#${i + 1}</span>
+                  <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="vid-link" title="${v.title}">${v.title}</a>
                 </div>
-              `;
-            }).join('');
-          }
+                <div class="vid-right">
+                  <div class="vid-plus" style="color:${activeTab === 'v_60m' ? 'var(--green)' : 'var(--blue)'};">+${fmtPlain(dVal)}</div>
+                  <div class="vid-sum">Tổng: ${fmtPlain(v.views)}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
         }
 
         return `
           <div class="channel-card ${isOpen ? 'open' : ''}">
-            <div class="channel-header" onclick="toggleDrawer('${ch.id}')">
+            <div class="channel-header" onclick="toggleCard('${ch.id}')">
               <div class="ch-title-wrap">
                 <span class="ch-arrow">▶</span>
-                <span class="ch-name">#${index + 1}. ${ch.title}</span>
+                <span class="ch-name">#${idx + 1}. ${ch.title}</span>
                 <div class="badges">
-                  ${spikeBadge}
+                  ${viralBadge}
                   ${revivedBadge}
                 </div>
               </div>
-              <div class="ch-detail-btn">
-                Chi tiết ▾
-              </div>
+              <span class="ch-detail-link">Chi tiết ▾</span>
             </div>
 
-            <div class="ch-stats-overview">
-              <span>${formatPlainNumber(ch.subs)} Subs</span>
+            <div class="ch-sub-bar">
+              <span>${fmtPlain(ch.subs)} Subs</span>
               <span>•</span>
-              <span>${formatPlainNumber(ch.videos_count)} Vid</span>
+              <span>${fmtPlain(ch.videos_count)} Vid</span>
               <span>•</span>
-              <span>Đang đo: 100 Vid mới</span>
+              <span>Theo dõi: 100 Vid mới</span>
             </div>
 
-            <div class="metric-grid">
-              <div class="metric-box">
-                <span class="metric-label">48H (Toàn kênh)</span>
-                <span class="metric-val">${formatNumber(ch.v_48h)}</span>
+            <!-- 1 HÀNG DUY NHẤT TRÊN ĐIỆN THOẠI: 48H | 24H | 60P | 15P SLICES -->
+            <div class="realtime-row">
+              <div class="rt-box">
+                <span class="rt-label">48H</span>
+                <span class="rt-val" id="val-48h-${ch.id}">${fmtNum(ch.v_48h)}</span>
               </div>
-              <div class="metric-box">
-                <span class="metric-label">24H (Toàn kênh)</span>
-                <span class="metric-val">${formatNumber(ch.v_24h)}</span>
+              <div class="rt-box">
+                <span class="rt-label">24H</span>
+                <span class="rt-val" id="val-24h-${ch.id}">${fmtNum(ch.v_24h)}</span>
               </div>
-              <div class="metric-box">
-                <span class="metric-label">⏱ 60P (100 vid)</span>
-                <span class="metric-val green">${formatNumber(ch.v_60m)}</span>
+              <div class="rt-box">
+                <span class="rt-label">⏱ 60P</span>
+                <span class="rt-val green" id="val-60p-${ch.id}">${fmtNum(ch.v_60m)}</span>
               </div>
-              <div class="slice-bars-wrap">
-                <div class="slice-bars">
-                  ${barsHtml}
-                </div>
-                <div class="slice-labels">
+              <div class="slices-container">
+                <div class="slice-bars">${barsHtml}</div>
+                <div class="slice-values">
                   ${slices.map(s => `<span>+${s}</span>`).join('')}
                 </div>
               </div>
             </div>
 
-            <div class="long-term-row">
-              <div class="lt-col">
-                <span class="metric-label">7N</span>
-                <span class="lt-val">${formatNumber(ch.v_7d)}</span>
+            <div class="longterm-grid">
+              <div class="lt-cell">
+                <span class="lt-lbl">7N</span>
+                <span class="lt-num">${fmtNum(ch.v_7d)}</span>
               </div>
-              <div class="lt-col">
-                <span class="metric-label">30N</span>
-                <span class="lt-val">${formatNumber(ch.v_30d)}</span>
+              <div class="lt-cell">
+                <span class="lt-lbl">30N</span>
+                <span class="lt-num">${fmtNum(ch.v_30d)}</span>
               </div>
-              <div class="lt-col">
-                <span class="metric-label">90N (3T)</span>
-                <span class="lt-val">${formatNumber(ch.v_90d)}</span>
+              <div class="lt-cell">
+                <span class="lt-lbl">90N (3T)</span>
+                <span class="lt-num">${fmtNum(ch.v_90d)}</span>
               </div>
-              <div class="lt-col">
-                <span class="metric-label">TỔNG TOÀN KÊNH</span>
-                <span class="lt-val">${formatPlainNumber(ch.total_channel_views)}</span>
+              <div class="lt-cell">
+                <span class="lt-lbl">TỔNG TOÀN KÊNH</span>
+                <span class="lt-num">${fmtPlain(ch.total_channel_views)}</span>
               </div>
             </div>
 
-            <!-- Drawer Chi Tiết Video -->
+            <!-- Drawer Chi Tiết Video (Thứ tự: Mới Nhất -> Top 60P -> Top 48H -> Nổi Lại) -->
             <div class="drawer-content">
               <div class="drawer-tabs">
-                <button class="tab-btn ${currentTab === 'v_48h' ? 'active' : ''}" 
-                        onclick="switchDetailTab('${ch.id}', 'v_48h', event)">🔥 Top 48H</button>
-                <button class="tab-btn ${currentTab === 'v_60m' ? 'active' : ''}" 
-                        onclick="switchDetailTab('${ch.id}', 'v_60m', event)">⏱ Top 60P</button>
-                <button class="tab-btn ${currentTab === 'latest' ? 'active' : ''}" 
-                        onclick="switchDetailTab('${ch.id}', 'latest', event)">🕒 Mới nhất</button>
-                <button class="tab-btn tab-revived ${currentTab === 'revived' ? 'active' : ''}" 
-                        onclick="switchDetailTab('${ch.id}', 'revived', event)">
-                  ⚡ Video Cũ Nổi Lên (${(ch.revived_videos || []).length})
+                <button class="tab-btn ${activeTab === 'latest' ? 'active' : ''}" 
+                        onclick="setDetailTab('${ch.id}', 'latest', event)">🕒 Mới Nhất</button>
+                <button class="tab-btn ${activeTab === 'v_60m' ? 'active' : ''}" 
+                        onclick="setDetailTab('${ch.id}', 'v_60m', event)">⏱ Top 60P</button>
+                <button class="tab-btn ${activeTab === 'v_48h' ? 'active' : ''}" 
+                        onclick="setDetailTab('${ch.id}', 'v_48h', event)">🔥 Top 48H</button>
+                <button class="tab-btn tab-orange ${activeTab === 'revived' ? 'active' : ''}" 
+                        onclick="setDetailTab('${ch.id}', 'revived', event)">
+                  ⚡ Nổi Lại (${(ch.revived_videos || []).length})
                 </button>
               </div>
 
-              <div class="video-list-wrap">
-                ${drawerVideoListHtml}
+              <div class="video-scroll-box">
+                ${videosHtml}
               </div>
             </div>
           </div>
         `;
       }).join('');
+
+      // Kích hoạt hiệu ứng đếm số nếu có view thay đổi
+      list.forEach(ch => {
+        const old = previousViews[ch.id] || {};
+        if (old.v_60m !== undefined && old.v_60m !== ch.v_60m) {
+          const el = document.getElementById(`val-60p-${ch.id}`);
+          if (el) animateValue(el, old.v_60m, ch.v_60m, 800);
+        }
+        previousViews[ch.id] = { v_60m: ch.v_60m, v_24h: ch.v_24h, v_48h: ch.v_48h };
+      });
     }
 
-    // Đếm ngược chu kỳ 15 phút (:00, :15, :30, :45)
+    // Đếm ngược 15 phút & cập nhật Progress Bar
     function updateCountdown() {
       const now = new Date();
       const mins = now.getMinutes();
       const secs = now.getSeconds();
-      const nextTargetMin = (Math.floor(mins / 15) + 1) * 15;
-      const totalSecsRemaining = (nextTargetMin - mins) * 60 - secs;
+      const nextMin = (Math.floor(mins / 15) + 1) * 15;
+      const totalSecsRemaining = (nextMin - mins) * 60 - secs;
 
       const m = Math.floor(totalSecsRemaining / 60);
       const s = totalSecsRemaining % 60;
       document.getElementById('countdown').innerText = 
         `${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
 
+      // Thanh progress bar trôi dần từ 0% đến 100% trong 15 phút
+      const elapsedSecs = (mins % 15) * 60 + secs;
+      const percent = Math.min(100, (elapsedSecs / (15 * 60)) * 100);
+      document.getElementById('sub-progress').style.width = `${percent}%`;
+
       if (totalSecsRemaining <= 1) {
-        setTimeout(fetchData, 4000);
+        setTimeout(() => fetchData(), 4000);
       }
     }
 
