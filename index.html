@@ -347,17 +347,14 @@
       const collapsedMap = {};
 
       Object.keys(db.channels).forEach(chId => {
-        const card = document.getElementById(`card-${chId}`);
-        if (card) {
-          if (isAllFolded) {
-            card.classList.add('is-collapsed');
-            collapsedMap[chId] = true;
-          } else {
-            card.classList.remove('is-collapsed');
-          }
+        if (isAllFolded) {
+          collapsedMap[chId] = true;
         }
       });
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
+      
+      // Vẽ lại giao diện để tự động tính Mẫu số chung cho các kênh còn mở
+      render(); 
     }
 
     async function triggerRunWorkflow() {
@@ -408,20 +405,17 @@
 
     function toggleCollapse(chId, event) {
       if (event) event.stopPropagation();
-      const card = document.getElementById(`card-${chId}`);
-      if (!card) return;
-
+      
       const collapsedMap = getCollapsedChannels();
-      const isNowCollapsed = !card.classList.contains('is-collapsed');
-
-      if (isNowCollapsed) {
-        card.classList.add('is-collapsed');
-        collapsedMap[chId] = true;
+      if (collapsedMap[chId]) {
+        delete collapsedMap[chId]; 
       } else {
-        card.classList.remove('is-collapsed');
-        delete collapsedMap[chId];
+        collapsedMap[chId] = true; 
       }
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
+      
+      // Vẽ lại giao diện để tự động tính Mẫu số chung
+      render(); 
     }
 
     function toggleAddBox() {
@@ -444,7 +438,6 @@
         chId = rawVal.split('/channel/')[1].split('/')[0].split('?')[0];
       }
 
-      // FIX: Chặn Frontend gửi link handle hoặc ID lỗi
       if (!chId.startsWith('UC') || chId.length !== 24) {
         msg.innerHTML = '<span style="color:var(--warning)">Lỗi: ID kênh phải bắt đầu bằng "UC" và dài 24 ký tự. Hãy lấy ID chuẩn từ link /channel/...</span>';
         return;
@@ -596,18 +589,21 @@
       }
     }
 
-    // FIX TIMER DRIFT: Canh theo đúng giờ đồng hồ máy thực tế
+    // FIX TIMER DRIFT: Canh theo đúng giờ đồng hồ máy thực tế (chu kỳ :00, :15, :30, :45)
     setInterval(() => {
       if (!db || !db.updated_at || isFinishingAnimation) return;
 
-      const lastUpdated = new Date(db.updated_at);
-      // Tìm mốc cronjob tiếp theo dựa trên db.updated_at (ví dụ 12:02 sẽ nhảy lên mốc 12:15)
-      let nextExpectedMinutes = Math.floor(lastUpdated.getMinutes() / 15) * 15 + 15;
-      
-      const nextCronTime = new Date(lastUpdated);
-      nextCronTime.setMinutes(nextExpectedMinutes, 0, 0);
-
       const now = new Date();
+      const currentMinutes = now.getMinutes();
+      let nextMinutes = 0;
+      if (currentMinutes < 15) nextMinutes = 15;
+      else if (currentMinutes < 30) nextMinutes = 30;
+      else if (currentMinutes < 45) nextMinutes = 45;
+      else nextMinutes = 60; 
+
+      const nextCronTime = new Date(now);
+      nextCronTime.setMinutes(nextMinutes, 0, 0);
+
       const diffSecs = Math.floor((nextCronTime.getTime() - now.getTime()) / 1000);
 
       const timerEl = document.getElementById('timer');
@@ -707,6 +703,30 @@
       container.innerHTML = '';
       const collapsedMap = getCollapsedChannels();
 
+      // =================================================================
+      // TÌM MẪU SỐ CHUNG CỦA CHIỀU CAO (Global Y-Axis Scaling)
+      // Chỉ soi vào các kênh đang mở mắt (chưa bị gập)
+      // =================================================================
+      let globalMax15m = 1; 
+      let globalMax48h = 1;
+
+      chList.forEach(ch => {
+        const isCollapsed = !!collapsedMap[ch.id];
+        if (!isCollapsed) {
+          const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
+          const localMax15 = Math.max(c1, c2, c3, c4);
+          if (localMax15 > globalMax15m) globalMax15m = localMax15;
+
+          let s48 = ch.slices_48h || [];
+          if (!s48.length) s48 = new Array(48).fill(0);
+          const localMax48 = Math.max(...s48);
+          if (localMax48 > globalMax48h) globalMax48h = localMax48;
+        }
+      });
+
+      // =================================================================
+      // VẼ GIAO DIỆN CÁC KÊNH
+      // =================================================================
       chList.forEach((ch, idx) => {
         const isCollapsed = !!collapsedMap[ch.id];
 
@@ -714,18 +734,18 @@
         const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
 
-        const maxVal4 = Math.max(c1, c2, c3, c4, 1);
-        const h1 = Math.max(8, Math.round((c1 / maxVal4) * 100));
-        const h2 = Math.max(8, Math.round((c2 / maxVal4) * 100));
-        const h3 = Math.max(8, Math.round((c3 / maxVal4) * 100));
-        const h4 = Math.max(8, Math.round((c4 / maxVal4) * 100));
+        // Áp dụng Mẫu Số Chung & Hạ mức sàn xuống thấp (2%) để thấy rõ độ chênh lệch
+        const h1 = Math.max(2, (c1 / globalMax15m) * 100);
+        const h2 = Math.max(2, (c2 / globalMax15m) * 100);
+        const h3 = Math.max(2, (c3 / globalMax15m) * 100);
+        const h4 = Math.max(2, (c4 / globalMax15m) * 100);
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
 
         let s48 = ch.slices_48h || [];
         if (!s48.length) s48 = new Array(48).fill(0);
-        const maxVal48 = Math.max(...s48, 1);
+        
         const bars48Html = s48.map((val, i) => {
-          const barH = Math.max(6, Math.round((val / maxVal48) * 100));
+          const barH = Math.max(1.5, (val / globalMax48h) * 100);
           return `
             <div class="bar-col-48" title="${48 - i} giờ trước: +${val.toLocaleString()} views">
               <div class="bar-fill-48" style="height: ${barH}%;"></div>
@@ -741,8 +761,6 @@
         const d90 = ch.v_90d;
 
         const activeVTab = channelVideoTabState[ch.id] || 'latest';
-        
-        // FIX: XSS - Bọc ch.title
         const safeChTitle = escapeHTML(ch.title || 'Kênh');
 
         const card = document.createElement('div');
