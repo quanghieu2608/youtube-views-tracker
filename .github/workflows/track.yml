@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Giới hạn chỉ cho phép đúng 1 job chạy tại 1 thời điểm trên nhánh main (chống đè commit)
+concurrency:
+  group: tracker-sync
+  cancel-in-progress: false
+
 jobs:
   track:
     runs-on: ubuntu-latest
@@ -39,13 +44,33 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.json
-          
-          # Chỉ commit nếu có thay đổi
-          if ! git diff --staged --quiet; then
+
+          # Kiểm tra nếu data.json có thay đổi
+          if ! git diff --quiet data.json; then
+            git add data.json
             git commit -m "Auto update views 15m [skip ci]"
-            git pull --rebase origin main
-            git push origin main
+
+            # Vòng lặp thử lại tối đa 5 lần nếu gặp xung đột lock ref
+            success=false
+            for i in {1..5}; do
+              echo "Dang dong bo va push commit (lan $i/5)..."
+              git fetch origin main
+              if git rebase origin/main; then
+                if git push origin main; then
+                  echo "Push thanh cong!"
+                  success=true
+                  break
+                fi
+              else
+                git rebase --abort
+              fi
+              sleep 2
+            done
+
+            if [ "$success" = false ]; then
+              echo "Khong the push sau 5 lan thu."
+              exit 1
+            fi
           else
-            echo "Khong co thay doi nao de commit."
+            echo "Khong co thay doi nao trong data.json."
           fi
