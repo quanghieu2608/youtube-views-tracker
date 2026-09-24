@@ -61,14 +61,52 @@
 
     .meta-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--subtext); margin-top: 5px; padding: 0 2px; }
 
+    /* FORM THÊM KÊNH & CHỌN NHÓM */
     .add-channel-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: none; }
     .add-channel-box.active { display: block; }
-    .input-group { display: flex; gap: 6px; margin-top: 6px; }
-    .input-box { background: var(--card-sub); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.78rem; flex: 1; outline: none; }
+    .input-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .input-box { background: var(--card-sub); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.78rem; flex: 2; min-width: 180px; outline: none; }
+    .select-group-box { background: var(--card-sub); border: 1px solid var(--border); color: var(--text-bright); padding: 6px 8px; border-radius: 6px; font-size: 0.75rem; flex: 1; min-width: 130px; outline: none; }
     .btn-action { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
     .btn-action:disabled { background: #333; color: #777; }
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
+    /* THANH CUỘN NHÓM (GROUP TABS BAR) */
+    .group-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; overflow: hidden; }
+    .group-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 2px 0; scrollbar-width: none; flex: 1; }
+    .group-tabs::-webkit-scrollbar { display: none; }
+    .btn-group-pill { 
+      background: var(--card-bg); 
+      border: 1px solid var(--border); 
+      color: var(--subtext); 
+      padding: 4px 10px; 
+      border-radius: 12px; 
+      font-size: 0.7rem; 
+      font-weight: 600; 
+      cursor: pointer; 
+      white-space: nowrap; 
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .btn-group-pill.active { 
+      background: rgba(88, 166, 255, 0.15); 
+      color: var(--primary); 
+      border-color: var(--primary); 
+    }
+    .btn-add-group-tiny {
+      background: #21262d;
+      border: 1px dashed var(--border);
+      color: var(--subtext);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* THANH CÔNG CỤ THỜI GIAN & TÙY CHỌN */
     .controls-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
     .controls { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex: 1; scrollbar-width: none; }
     .controls::-webkit-scrollbar { display: none; }
@@ -129,6 +167,21 @@
     .ch-title-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
     .toggle-icon { font-size: 0.7rem; color: var(--subtext); transition: transform 0.2s ease; }
     .ch-title { font-size: 0.95rem; font-weight: 700; color: var(--text-bright); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* MENU CHỌN NHÓM TRÊN THẺ KÊNH */
+    .channel-group-selector {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--subtext);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 4px;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      max-width: 85px;
+    }
+    .channel-group-selector:focus { border-color: var(--primary); color: var(--text-bright); }
 
     body.privacy-mode .ch-title-text { filter: blur(7px); user-select: none; pointer-events: none; }
     body.privacy-mode .v-title { filter: blur(6px); user-select: none; pointer-events: none; }
@@ -224,15 +277,28 @@
     </div>
   </header>
 
+  <!-- FORM THÊM KÊNH & GÁN NHÓM MẶC ĐỊNH -->
   <div class="add-channel-box" id="addChannelBox">
     <div style="font-size:0.75rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay:</div>
     <div class="input-group">
       <input type="text" id="channelInput" class="input-box" placeholder="Dán link Channel hoặc ID (UC...)">
+      <select id="newChannelGroup" class="select-group-box">
+        <option value="">-- Chưa có nhóm --</option>
+      </select>
       <button class="btn-action" id="btnAdd" onclick="submitNewChannel()">Thêm & Quét</button>
     </div>
     <div class="status-msg" id="statusMsg"></div>
   </div>
 
+  <!-- DẢI TAB NHÓM (TRƯỢT NGANG NẾU DÀI) -->
+  <div class="group-bar-wrap">
+    <div class="group-tabs" id="groupTabsContainer">
+      <!-- Sẽ được sinh tự động bằng hàm renderGroupTabs() -->
+    </div>
+    <button class="btn-add-group-tiny" onclick="promptCreateNewGroup()" title="Thêm nhóm mới">➕ Nhóm</button>
+  </div>
+
+  <!-- BỘ LỌC THỜI GIAN & CÔNG CỤ -->
   <div class="controls-wrapper">
     <div class="controls">
       <button class="btn-tab active" onclick="changeSort('60m')">⏱ 60P</button>
@@ -253,7 +319,6 @@
   <div id="appContainer">Đang tải dữ liệu...</div>
 
   <script>
-    // FIX XSS: Chặn mã độc hiển thị qua HTML
     function escapeHTML(str) {
       if (!str) return '';
       return str.toString().replace(/[&<>'"]/g, 
@@ -274,6 +339,7 @@
 
     let db = null;
     let sortMode = '60m';
+    let selectedGroup = 'ALL'; // 'ALL' | '__NONE__' | Tên nhóm cụ thể
     let isFetching = false;
     let pollInterval = null;
     let isAllFolded = false;
@@ -283,6 +349,114 @@
 
     const channelVideoTabState = {};
     const previousValues = {};
+
+    /* --- QUẢN LÝ DỮ LIỆU NHÓM BẰNG LOCALSTORAGE --- */
+    function getStoredGroups() {
+      try {
+        const g = JSON.parse(localStorage.getItem('app_groups'));
+        return Array.isArray(g) ? g : ["Podcast", "Kênh Chính"];
+      } catch (e) {
+        return ["Podcast", "Kênh Chính"];
+      }
+    }
+
+    function saveStoredGroups(groups) {
+      localStorage.setItem('app_groups', JSON.stringify(groups));
+    }
+
+    function getChannelGroupMap() {
+      try {
+        return JSON.parse(localStorage.getItem('channel_group_map') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function setChannelGroup(chId, groupName) {
+      const map = getChannelGroupMap();
+      if (!groupName) {
+        delete map[chId];
+      } else {
+        map[chId] = groupName;
+      }
+      localStorage.setItem('channel_group_map', JSON.stringify(map));
+      render();
+    }
+
+    function promptCreateNewGroup() {
+      const gName = prompt("Nhập tên nhóm mới cần tạo:");
+      if (!gName || !gName.trim()) return;
+      const cleanName = gName.trim();
+      const groups = getStoredGroups();
+      if (!groups.includes(cleanName)) {
+        groups.push(cleanName);
+        saveStoredGroups(groups);
+        selectedGroup = cleanName;
+        renderGroupTabs();
+        render();
+      } else {
+        alert("Nhóm này đã tồn tại!");
+      }
+    }
+
+    function renderGroupTabs() {
+      const container = document.getElementById('groupTabsContainer');
+      const selectBox = document.getElementById('newChannelGroup');
+      if (!container) return;
+
+      const groups = getStoredGroups();
+      const groupMap = getChannelGroupMap();
+      const chList = db && db.channels ? Object.values(db.channels) : [];
+
+      // Đếm số lượng kênh mỗi nhóm
+      const counts = { ALL: chList.length, NONE: 0 };
+      groups.forEach(g => counts[g] = 0);
+
+      chList.forEach(ch => {
+        const g = groupMap[ch.id];
+        if (g && counts[g] !== undefined) {
+          counts[g]++;
+        } else {
+          counts.NONE++;
+        }
+      });
+
+      // Tạo các nút Tabs
+      let html = `
+        <button class="btn-group-pill ${selectedGroup === 'ALL' ? 'active' : ''}" onclick="changeGroupFilter('ALL')">
+          Tất cả (${counts.ALL})
+        </button>
+        <button class="btn-group-pill ${selectedGroup === '__NONE__' ? 'active' : ''}" onclick="changeGroupFilter('__NONE__')">
+          Chưa nhóm (${counts.NONE})
+        </button>
+      `;
+
+      groups.forEach(g => {
+        const safeG = escapeHTML(g);
+        html += `
+          <button class="btn-group-pill ${selectedGroup === g ? 'active' : ''}" onclick="changeGroupFilter('${safeG}')">
+            📁 ${safeG} (${counts[g] || 0})
+          </button>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // Cập nhật select box trong form Thêm kênh
+      if (selectBox) {
+        let selectHtml = '<option value="">-- Chưa có nhóm --</option>';
+        groups.forEach(g => {
+          selectHtml += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`;
+        });
+        selectBox.innerHTML = selectHtml;
+      }
+    }
+
+    function changeGroupFilter(groupKey) {
+      selectedGroup = groupKey;
+      renderGroupTabs();
+      render();
+    }
 
     function getStoredToken() {
       let token = localStorage.getItem('gh_token');
@@ -352,8 +526,6 @@
         }
       });
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
-      
-      // Vẽ lại giao diện để tự động tính Mẫu số chung cho các kênh còn mở
       render(); 
     }
 
@@ -413,8 +585,6 @@
         collapsedMap[chId] = true; 
       }
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
-      
-      // Vẽ lại giao diện để tự động tính Mẫu số chung
       render(); 
     }
 
@@ -424,9 +594,11 @@
 
     async function submitNewChannel() {
       const input = document.getElementById('channelInput');
+      const groupSelect = document.getElementById('newChannelGroup');
       const msg = document.getElementById('statusMsg');
       const btn = document.getElementById('btnAdd');
       const rawVal = input.value.trim();
+      const targetGroup = groupSelect ? groupSelect.value : "";
 
       if (!rawVal) {
         msg.innerHTML = '<span style="color:var(--danger)">Vui lòng nhập ID kênh!</span>';
@@ -467,6 +639,11 @@
               sha: data.sha
             })
           });
+        }
+
+        // Lưu gán nhóm cho kênh mới vào LocalStorage
+        if (targetGroup) {
+          setChannelGroup(chId, targetGroup);
         }
 
         msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt Action track.yml...</span>';
@@ -542,6 +719,7 @@
 
         if (!db) {
           db = newData;
+          renderGroupTabs();
           render();
           if (db.updated_at) {
             document.getElementById('lastUpdatedLabel').innerText = `Cập nhật: ${new Date(db.updated_at).toLocaleTimeString()}`;
@@ -562,6 +740,7 @@
 
           setTimeout(() => {
             db = newData;
+            renderGroupTabs();
             render();
 
             if (db.updated_at) {
@@ -589,7 +768,6 @@
       }
     }
 
-    // FIX TIMER DRIFT: Canh theo đúng giờ đồng hồ máy thực tế (chu kỳ :00, :15, :30, :45)
     setInterval(() => {
       if (!db || !db.updated_at || isFinishingAnimation) return;
 
@@ -685,8 +863,21 @@
 
     function render() {
       if (!db || !db.channels) return;
-      const chList = Object.values(db.channels);
-      document.getElementById('channelSummary').innerText = `${chList.length} Kênh`;
+      const allChannels = Object.values(db.channels);
+      const groupMap = getChannelGroupMap();
+      const existingGroups = getStoredGroups();
+
+      // =================================================================
+      // BƯỚC 1: LỌC KÊNH THEO NHÓM ĐANG CHỌN
+      // =================================================================
+      const chList = allChannels.filter(ch => {
+        const assignedGroup = groupMap[ch.id];
+        if (selectedGroup === 'ALL') return true;
+        if (selectedGroup === '__NONE__') return !assignedGroup;
+        return assignedGroup === selectedGroup;
+      });
+
+      document.getElementById('channelSummary').innerText = `${chList.length} / ${allChannels.length} Kênh`;
 
       chList.sort((a, b) => {
         if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0);
@@ -704,8 +895,7 @@
       const collapsedMap = getCollapsedChannels();
 
       // =================================================================
-      // TÌM MẪU SỐ CHUNG CỦA CHIỀU CAO (Global Y-Axis Scaling)
-      // Chỉ soi vào các kênh đang mở mắt (chưa bị gập)
+      // BƯỚC 2: TÌM MẪU SỐ CHUNG CỦA CHIỀU CAO (Trong số kênh ĐANG MỞ & ĐANG HIỂN THỊ)
       // =================================================================
       let globalMax15m = 1; 
       let globalMax48h = 1;
@@ -724,8 +914,18 @@
         }
       });
 
+      // Nếu không có kênh nào trong nhóm
+      if (chList.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 10px; color: var(--subtext); font-size: 0.85rem;">
+            Chưa có kênh nào trong nhóm này. Hãy bấm chọn nhóm trực tiếp trên thẻ kênh để thêm vào đây.
+          </div>
+        `;
+        return;
+      }
+
       // =================================================================
-      // VẼ GIAO DIỆN CÁC KÊNH
+      // BƯỚC 3: VẼ GIAO DIỆN
       // =================================================================
       chList.forEach((ch, idx) => {
         const isCollapsed = !!collapsedMap[ch.id];
@@ -734,7 +934,6 @@
         const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
 
-        // Áp dụng Mẫu Số Chung & Hạ mức sàn xuống thấp (2%) để thấy rõ độ chênh lệch
         const h1 = Math.max(2, (c1 / globalMax15m) * 100);
         const h2 = Math.max(2, (c2 / globalMax15m) * 100);
         const h3 = Math.max(2, (c3 / globalMax15m) * 100);
@@ -762,6 +961,14 @@
 
         const activeVTab = channelVideoTabState[ch.id] || 'latest';
         const safeChTitle = escapeHTML(ch.title || 'Kênh');
+        const currentAssignedGroup = groupMap[ch.id] || "";
+
+        // Tạo menu select nhóm cho riêng thẻ kênh này
+        let groupSelectOptions = `<option value="">📁 Chưa nhóm</option>`;
+        existingGroups.forEach(g => {
+          const isSel = g === currentAssignedGroup ? 'selected' : '';
+          groupSelectOptions += `<option value="${escapeHTML(g)}" ${isSel}>📁 ${escapeHTML(g)}</option>`;
+        });
 
         const card = document.createElement('div');
         card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
@@ -774,10 +981,16 @@
                 #${idx + 1}. <span class="ch-title-text">${safeChTitle}</span>
               </div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:5px;" onclick="event.stopPropagation();">
               ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
               ${ch.has_revived_anomaly ? `<span class="badge badge-revived" title="Lệch view 24h: +${(ch.anomaly_diff_24h || 0).toLocaleString()}">⚡ CÓ VIDEO CŨ NỔ</span>` : ''}
-              <span style="font-size:0.68rem; color:var(--primary);" onclick="event.stopPropagation(); toggleDrawer('${ch.id}')">Chi tiết ▾</span>
+              
+              <!-- MENU CHỌN NHÓM TRỰC TIẾP -->
+              <select class="channel-group-selector" onchange="setChannelGroup('${ch.id}', this.value)" title="Gán nhóm cho kênh">
+                ${groupSelectOptions}
+              </select>
+
+              <span style="font-size:0.68rem; color:var(--primary); cursor:pointer; padding:2px 4px;" onclick="toggleDrawer('${ch.id}')">Chi tiết ▾</span>
             </div>
           </div>
 
@@ -1003,6 +1216,7 @@
     }
 
     initPrivacyMode();
+    renderGroupTabs();
     checkAndApplyNewData();
   </script>
 </body>
