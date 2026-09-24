@@ -1,5 +1,15 @@
 {
-  "order": ["Podcast", "Kênh Chính", "ALL", "__NONE__"],
-  "groups": ["Podcast", "Kênh Chính"],
-  "channel_map": {}
+  "order": [
+    "Podcast",
+    "Kênh Chính",
+    "ALL",
+    "__NONE__"
+  ],
+  "groups": [
+    "Podcast",
+    "Kênh Chính"
+  ],
+  "channel_map": {
+    "UCa25HQwhQLumaCep7PVkx5g": "Kênh Chính"
+  }
 }
