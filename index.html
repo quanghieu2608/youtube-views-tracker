@@ -29,7 +29,6 @@
     .header-row { display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 1rem; color: var(--text-bright); display: flex; align-items: center; gap: 6px; font-weight: 700; }
     
-    /* Chấm tín hiệu với các trạng thái */
     .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); transition: all 0.3s; }
     .live-dot.syncing { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
     .live-dot.flash-white { 
@@ -45,7 +44,6 @@
     .btn-header { background: #21262d; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
     .btn-header:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Thanh tiến trình thông minh */
     .progress-wrap { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 6px; overflow: hidden; position: relative; }
     .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.8s linear; }
     .progress-fill.syncing-mode { background: linear-gradient(90deg, var(--warning), #ffb020); }
@@ -116,30 +114,39 @@
     .card.is-collapsed .video-drawer,
     .card.is-collapsed .badges-row { display: none !important; }
 
-    .stats-grid-custom { display: grid; grid-template-columns: 0.9fr 0.9fr 2.4fr; gap: 6px; margin-top: 8px; }
-    .stat-box-compact { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 4px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-    .stat-label-compact { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
-    .stat-val-compact { font-size: 0.92rem; font-weight: 800; margin-top: 3px; line-height: 1.1; }
+    /* NHÓM LUỒNG 1: 48H & 60P (Top 100 Video Mới) */
+    .stream-header { font-size: 0.58rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; margin-top: 8px; margin-bottom: 4px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
+    .stream1-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    
+    .box-stream1 { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; min-height: 80px; }
+    .box-header-metric { display: flex; justify-content: space-between; align-items: baseline; }
+    .metric-label { font-size: 0.62rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
+    .metric-val-main { font-size: 1.05rem; font-weight: 800; line-height: 1.1; }
 
-    .box-60p-wrapper { background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .box-60p-info { display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 52px; }
-    .box-60p-title { font-size: 0.6rem; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
-    .box-60p-total { font-size: 1.05rem; font-weight: 800; color: var(--accent); margin-top: 2px; }
+    /* Biểu đồ 48 cột (mỗi cột 1 giờ) */
+    .bars-container-48 { display: flex; align-items: flex-end; gap: 1.5px; height: 38px; width: 100%; margin-top: 6px; background: rgba(255,255,255,0.02); border-radius: 3px; padding: 2px 1px; }
+    .bar-col-48 { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+    .bar-fill-48 { width: 100%; background: #265999; border-radius: 1px 1px 0 0; min-height: 2px; transition: height 0.3s ease; }
+    .bar-col-48:hover .bar-fill-48 { background: var(--primary); }
 
-    .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 44px; flex: 1; justify-content: flex-end; }
-    .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 40px; height: 100%; justify-content: flex-end; }
-    .bar-track-4 { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
+    /* Biểu đồ 4 cột (mỗi cột 15 phút) */
+    .bars-container-4 { display: flex; align-items: flex-end; gap: 4px; height: 38px; width: 100%; margin-top: 6px; }
+    .bar-col-4 { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+    .bar-track-4 { width: 100%; height: 26px; background: rgba(255,255,255,0.04); border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; }
     .bar-fill-4 { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
-    .bar-val-4 { font-size: 0.52rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin-top: 2px; line-height: 1; white-space: nowrap; }
+    .bar-val-4 { font-size: 0.52rem; font-weight: 700; margin-top: 2px; line-height: 1; white-space: nowrap; }
 
+    /* NHÓM LUỒNG 2: 24H & 48H (Quét Toàn Bộ Catalog Đối Soát) */
+    .stream2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .stat-box-catalog { background: var(--card-sub); border: 1px dashed var(--border); border-radius: 6px; padding: 5px 8px; text-align: center; }
+    .stat-label-catalog { font-size: 0.58rem; color: var(--orange); font-weight: 700; text-transform: uppercase; }
+    .stat-val-catalog { font-size: 0.92rem; font-weight: 800; margin-top: 2px; color: var(--text-bright); }
+
+    /* NHÓM LUỒNG 3: Dài hạn (7N, 30N, 90N, Tổng) */
     .longterm-strip { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
     .lt-item { display: flex; flex-direction: column; }
     .lt-label { font-size: 0.58rem; color: var(--subtext); font-weight: 600; }
     .lt-val { font-size: 0.78rem; font-weight: 700; color: var(--text-bright); margin-top: 1px; }
-
-    .sparkline-container { margin-top: 6px; background: var(--card-sub); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; display: flex; justify-content: space-between; align-items: center; }
-    .sparkline-title { font-size: 0.6rem; color: var(--subtext); font-weight: 600; }
-    .sparkline-bars { font-family: monospace; font-size: 0.85rem; color: var(--primary); letter-spacing: 1px; }
 
     .video-drawer { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; display: none; }
     .drawer-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
@@ -152,7 +159,6 @@
     .btn-delete-channel { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     .btn-delete-channel:hover { background: var(--danger); color: #fff; }
 
-    /* Cuộn danh sách video */
     .v-scroll-area { max-height: 380px; overflow-y: auto; padding-right: 4px; }
     .v-scroll-area::-webkit-scrollbar { width: 4px; }
     .v-scroll-area::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
@@ -246,7 +252,7 @@
       return token;
     }
 
-    function animateValue(elementId, start, end, prefix = '+', duration = 1300) {
+    function animateValue(elementId, start, end, prefix = '+', duration = 1200) {
       const el = document.getElementById(elementId);
       if (!el) return;
 
@@ -494,13 +500,11 @@
       }
     }
 
-    /* --- LẤY DỮ LIỆU & HIỆU ỨNG BÙNG NỔ KHI CÓ VIEW MỚI --- */
     async function checkAndApplyNewData() {
       try {
         const res = await fetch('data.json?t=' + Date.now());
         const newData = await res.json();
 
-        // Lần đầu tải trang
         if (!db) {
           db = newData;
           render();
@@ -510,24 +514,17 @@
           return true;
         }
 
-        // Kiểm tra xem đã có bản ghi mới hơn bản ghi hiện tại chưa
         if (db.updated_at !== newData.updated_at) {
           isFinishingAnimation = true;
           const progressBar = document.getElementById('progressBar');
           const liveDot = document.getElementById('liveDot');
 
-          // 1. Chấm trắng nhấp nháy báo hiệu
-          if (liveDot) {
-            liveDot.className = "live-dot flash-white";
-          }
-
-          // 2. Cho progress bar phóng nhanh từ 80% về 100%
+          if (liveDot) liveDot.className = "live-dot flash-white";
           if (progressBar) {
             progressBar.classList.add('rush-to-finish');
             progressBar.style.width = "100%";
           }
 
-          // 3. Giữ lại trong 450ms cho hiệu ứng chạy xong, sau đó mới chính thức bung số liệu
           setTimeout(() => {
             db = newData;
             render();
@@ -536,7 +533,6 @@
               document.getElementById('lastUpdatedLabel').innerText = `Cập nhật: ${new Date(db.updated_at).toLocaleTimeString()}`;
             }
 
-            // Trả lại trạng thái bình thường
             setTimeout(() => {
               if (liveDot) liveDot.className = "live-dot";
               if (progressBar) {
@@ -548,7 +544,6 @@
               isFinishingAnimation = false;
               document.getElementById('timerLabel').innerText = "Kế tiếp:";
             }, 600);
-
           }, 450);
 
           return true;
@@ -559,7 +554,6 @@
       }
     }
 
-    /* --- VÒNG LẶP ĐỒNG BỘ: CĂN THEO DB.UPDATED_AT CHUẨN XÁC --- */
     setInterval(() => {
       if (!db || !db.updated_at || isFinishingAnimation) return;
 
@@ -573,7 +567,6 @@
       const progressBar = document.getElementById('progressBar');
       const liveDot = document.getElementById('liveDot');
 
-      // Đã quá chu kỳ 15 phút mà data.json chưa có bản mới
       if (diffSecs <= 0) {
         isWaitingForNewData = true;
         if (!syncStartTs) syncStartTs = Date.now();
@@ -585,7 +578,6 @@
           liveDot.className = "live-dot syncing";
         }
 
-        // Thanh tiến trình chạy mượt từ 0% lên 80% trong 35 giây và DỪNG LẠI Ở 80% CHỜ VIEW
         if (progressBar && !progressBar.classList.contains('rush-to-finish')) {
           progressBar.classList.add('syncing-mode');
           const elapsed = (Date.now() - syncStartTs) / 1000;
@@ -594,7 +586,6 @@
           progressBar.style.width = pct + "%";
         }
 
-        // Thăm dò dữ liệu mới mỗi 2.5 giây
         if (!pollInterval && !isFetching) {
           isFetching = true;
           checkAndApplyNewData().then(success => {
@@ -618,7 +609,6 @@
           }, 2500);
         }
       } else {
-        // Đang trong 15 phút bình thường
         isWaitingForNewData = false;
         syncStartTs = null;
 
@@ -659,9 +649,9 @@
         if (sortMode === '30m') return (b.v_30m || 0) - (a.v_30m || 0);
         if (sortMode === '24h') return (b.v_24h || 0) - (a.v_24h || 0);
         if (sortMode === '48h') return (b.v_48h || 0) - (a.v_48h || 0);
-        if (sortMode === 'd_7') return (b.v_7d || b.longterm?.d_7 || 0) - (a.v_7d || a.longterm?.d_7 || 0);
-        if (sortMode === 'd_30') return (b.v_30d || b.longterm?.d_30 || 0) - (a.v_30d || a.longterm?.d_30 || 0);
-        if (sortMode === 'd_90') return (b.v_90d || b.longterm?.d_90 || 0) - (a.v_90d || a.longterm?.d_90 || 0);
+        if (sortMode === 'd_7') return (b.v_7d || 0) - (a.v_7d || 0);
+        if (sortMode === 'd_30') return (b.v_30d || 0) - (a.v_30d || 0);
+        if (sortMode === 'd_90') return (b.v_90d || 0) - (a.v_90d || 0);
         return (b.total_channel_views || b.views || 0) - (a.total_channel_views || a.views || 0);
       });
 
@@ -672,22 +662,42 @@
       chList.forEach((ch, idx) => {
         const isCollapsed = !!collapsedMap[ch.id];
 
+        // Dữ liệu luồng 1
+        const v_48h_pool = ch.v_48h_recent !== undefined ? ch.v_48h_recent : (ch.v_48h || 0);
         const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
         const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
 
-        const maxVal = Math.max(c1, c2, c3, c4, 1);
-        const h1 = Math.max(8, Math.round((c1 / maxVal) * 100));
-        const h2 = Math.max(8, Math.round((c2 / maxVal) * 100));
-        const h3 = Math.max(8, Math.round((c3 / maxVal) * 100));
-        const h4 = Math.max(8, Math.round((c4 / maxVal) * 100));
-
+        // Tạo 4 cột mini 15P
+        const maxVal4 = Math.max(c1, c2, c3, c4, 1);
+        const h1 = Math.max(8, Math.round((c1 / maxVal4) * 100));
+        const h2 = Math.max(8, Math.round((c2 / maxVal4) * 100));
+        const h3 = Math.max(8, Math.round((c3 / maxVal4) * 100));
+        const h4 = Math.max(8, Math.round((c4 / maxVal4) * 100));
         const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
-        const activeVTab = channelVideoTabState[ch.id] || 'latest';
 
-        // Lấy số liệu dài hạn (ưu tiên v_7d từ mốc toàn kênh mới)
-        const d7 = ch.v_7d !== undefined ? ch.v_7d : ch.longterm?.d_7;
-        const d30 = ch.v_30d !== undefined ? ch.v_30d : ch.longterm?.d_30;
-        const d90 = ch.v_90d !== undefined ? ch.v_90d : ch.longterm?.d_90;
+        // Tạo 48 cột mini 1 giờ (trải dài ô 48H)
+        let s48 = ch.slices_48h || [];
+        if (!s48.length) s48 = new Array(48).fill(0);
+        const maxVal48 = Math.max(...s48, 1);
+        const bars48Html = s48.map((val, i) => {
+          const barH = Math.max(6, Math.round((val / maxVal48) * 100));
+          return `
+            <div class="bar-col-48" title="${48 - i} giờ trước: +${val.toLocaleString()} views">
+              <div class="bar-fill-48" style="height: ${barH}%;"></div>
+            </div>
+          `;
+        }).join('');
+
+        // Dữ liệu luồng 2 (Full Catalog)
+        const v_24h_catalog = ch.v_24h || 0;
+        const v_48h_catalog = ch.v_48h || 0;
+
+        // Dữ liệu luồng 3 (Tổng kênh)
+        const d7 = ch.v_7d;
+        const d30 = ch.v_30d;
+        const d90 = ch.v_90d;
+
+        const activeVTab = channelVideoTabState[ch.id] || 'latest';
 
         const card = document.createElement('div');
         card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
@@ -714,23 +724,28 @@
           </div>
 
           <div class="card-body">
-            <div class="stats-grid-custom">
-              <div class="stat-box-compact">
-                <div class="stat-label-compact">48H</div>
-                <div class="stat-val-compact" id="val-48h-${ch.id}" style="color:var(--primary);">+0</div>
-              </div>
-
-              <div class="stat-box-compact">
-                <div class="stat-label-compact">24H</div>
-                <div class="stat-val-compact" id="val-24h-${ch.id}" style="color:var(--primary);">+0</div>
-              </div>
-
-              <div class="box-60p-wrapper">
-                <div class="box-60p-info">
-                  <div class="box-60p-title">⏱ 60P</div>
-                  <div class="box-60p-total" id="val-60p-${ch.id}">+0</div>
+            <!-- LUỒNG 1: 100 VIDEO MỚI (48H có 48 cột | 60P có 4 cột kèm số) -->
+            <div class="stream-header">
+              <span>⚡ Luồng 1 (Top 100 Vid Mới - Realtime)</span>
+            </div>
+            <div class="stream1-grid">
+              <!-- Ô 48H: 48 CỘT BIỂU ĐỒ TRẢI DÀI -->
+              <div class="box-stream1">
+                <div class="box-header-metric">
+                  <span class="metric-label">🔥 48H</span>
+                  <span class="metric-val-main" id="val-48h-pool-${ch.id}" style="color:var(--primary);">+0</span>
                 </div>
+                <div class="bars-container-48">
+                  ${bars48Html}
+                </div>
+              </div>
 
+              <!-- Ô 60P: 4 CỘT 15P KÈM SỐ VIEW DƯỚI CHÂN -->
+              <div class="box-stream1">
+                <div class="box-header-metric">
+                  <span class="metric-label">⏱ 60P</span>
+                  <span class="metric-val-main" id="val-60p-${ch.id}" style="color:var(--accent);">+0</span>
+                </div>
                 <div class="bars-container-4">
                   <div class="bar-col-4">
                     <div class="bar-track-4">
@@ -738,21 +753,18 @@
                     </div>
                     <span class="bar-val-4" id="val-c1-${ch.id}" style="color: #58a6ff;">+0</span>
                   </div>
-
                   <div class="bar-col-4">
                     <div class="bar-track-4">
                       <div class="bar-fill-4" style="height: ${h2}%; background: #388bfd;"></div>
                     </div>
                     <span class="bar-val-4" id="val-c2-${ch.id}" style="color: #58a6ff;">+0</span>
                   </div>
-
                   <div class="bar-col-4">
                     <div class="bar-track-4">
                       <div class="bar-fill-4" style="height: ${h3}%; background: #388bfd;"></div>
                     </div>
                     <span class="bar-val-4" id="val-c3-${ch.id}" style="color: #58a6ff;">+0</span>
                   </div>
-
                   <div class="bar-col-4">
                     <div class="bar-track-4">
                       <div class="bar-fill-4" style="height: ${h4}%; background: ${c4Color};"></div>
@@ -763,32 +775,43 @@
               </div>
             </div>
 
+            <!-- LUỒNG 2: QUÉT TOÀN BỘ CATALOG (24H VÀ 48H ĐỐI SOÁT RIÊNG) -->
+            <div class="stream-header" style="margin-top:10px;">
+              <span>📦 Luồng 2 (Full Catalog Scan - Định Kỳ 24H)</span>
+            </div>
+            <div class="stream2-grid">
+              <div class="stat-box-catalog">
+                <div class="stat-label-catalog">24H Toàn Kênh</div>
+                <div class="stat-val-catalog" id="val-24h-cat-${ch.id}">+0</div>
+              </div>
+              <div class="stat-box-catalog">
+                <div class="stat-label-catalog">48H Toàn Kênh</div>
+                <div class="stat-val-catalog" id="val-48h-cat-${ch.id}">+0</div>
+              </div>
+            </div>
+
+            <!-- LUỒNG 3: DÀI HẠN & TỔNG TOÀN KÊNH -->
             <div class="longterm-strip">
               <div class="lt-item">
                 <span class="lt-label">7N</span>
-                <span class="lt-val">${d7 ? '+' + d7.toLocaleString() : '+ -'}</span>
+                <span class="lt-val">${d7 !== undefined && d7 !== null ? '+' + d7.toLocaleString() : '+ -'}</span>
               </div>
               <div class="lt-item">
                 <span class="lt-label">30N</span>
-                <span class="lt-val">${d30 ? '+' + d30.toLocaleString() : '+ -'}</span>
+                <span class="lt-val">${d30 !== undefined && d30 !== null ? '+' + d30.toLocaleString() : '+ -'}</span>
               </div>
               <div class="lt-item">
                 <span class="lt-label">90N (3T)</span>
-                <span class="lt-val">${d90 ? '+' + d90.toLocaleString() : '+ -'}</span>
+                <span class="lt-val">${d90 !== undefined && d90 !== null ? '+' + d90.toLocaleString() : '+ -'}</span>
               </div>
               <div class="lt-item">
-                <span class="lt-label">TỔNG TOÀN KÊNH</span>
+                <span class="lt-label">TỔNG KÊNH</span>
                 <span class="lt-val">${(ch.total_channel_views || ch.views || 0).toLocaleString()}</span>
               </div>
             </div>
-
-            <div class="sparkline-container">
-              <span class="sparkline-title">48H:</span>
-              <span class="sparkline-bars">${ch.sparkline && ch.sparkline.trim() ? ch.sparkline : ' ▂▃▅▆▇█'}</span>
-            </div>
           </div>
 
-          <!-- Drawer Chi Tiết Video: Mới Nhất -> Top 60P -> Top 48H -> Nổi Lại -->
+          <!-- Drawer Chi Tiết Video -->
           <div class="video-drawer" id="box-${ch.id}">
             <div class="drawer-header-row">
               <div class="v-tabs-group">
@@ -808,29 +831,33 @@
         `;
         container.appendChild(card);
 
-        const old48h = previousValues[`48h-${ch.id}`] || 0;
-        const old24h = previousValues[`24h-${ch.id}`] || 0;
+        // Hiệu ứng số chạy (Rolling Ticker)
+        const old48hPool = previousValues[`48h-pool-${ch.id}`] || 0;
         const old60p = previousValues[`60p-${ch.id}`] || 0;
         const oldC1 = previousValues[`c1-${ch.id}`] || 0;
         const oldC2 = previousValues[`c2-${ch.id}`] || 0;
         const oldC3 = previousValues[`c3-${ch.id}`] || 0;
         const oldC4 = previousValues[`c4-${ch.id}`] || 0;
+        const old24hCat = previousValues[`24h-cat-${ch.id}`] || 0;
+        const old48hCat = previousValues[`48h-cat-${ch.id}`] || 0;
 
-        animateValue(`val-48h-${ch.id}`, old48h, ch.v_48h || 0);
-        animateValue(`val-24h-${ch.id}`, old24h, ch.v_24h || 0);
+        animateValue(`val-48h-pool-${ch.id}`, old48hPool, v_48h_pool);
         animateValue(`val-60p-${ch.id}`, old60p, v_total_60);
         animateValue(`val-c1-${ch.id}`, oldC1, c1);
         animateValue(`val-c2-${ch.id}`, oldC2, c2);
         animateValue(`val-c3-${ch.id}`, oldC3, c3);
         animateValue(`val-c4-${ch.id}`, oldC4, c4);
+        animateValue(`val-24h-cat-${ch.id}`, old24hCat, v_24h_catalog);
+        animateValue(`val-48h-cat-${ch.id}`, old48hCat, v_48h_catalog);
 
-        previousValues[`48h-${ch.id}`] = ch.v_48h || 0;
-        previousValues[`24h-${ch.id}`] = ch.v_24h || 0;
+        previousValues[`48h-pool-${ch.id}`] = v_48h_pool;
         previousValues[`60p-${ch.id}`] = v_total_60;
         previousValues[`c1-${ch.id}`] = c1;
         previousValues[`c2-${ch.id}`] = c2;
         previousValues[`c3-${ch.id}`] = c3;
         previousValues[`c4-${ch.id}`] = c4;
+        previousValues[`24h-cat-${ch.id}`] = v_24h_catalog;
+        previousValues[`48h-cat-${ch.id}`] = v_48h_catalog;
       });
     }
 
@@ -881,7 +908,6 @@
         vCopy.sort((a, b) => (b.v_48h || 0) - (a.v_48h || 0) || (new Date(b.published_at || 0) - new Date(a.published_at || 0)));
       }
 
-      // Giới hạn 20 video mỗi tab và cuộn xem tiếp
       return vCopy.slice(0, 20).map((v, i) => {
         let badgeInfo = '';
         if (tab === 'latest') {
