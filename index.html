@@ -30,6 +30,7 @@
       padding-bottom: 60px; 
       max-width: 1600px;
       margin: 0 auto;
+      overflow-x: hidden;
     }
 
     header { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
@@ -170,7 +171,8 @@
       border-color: #388bfd66;
     }
 
-#appContainer {
+    /* KHUNG CHỨA CÁC THẺ KÊNH & HIỆU ỨNG TRƯỢT KHI VUỐT */
+    #appContainer {
       display: grid;
       grid-template-columns: 1fr;
       gap: 10px;
@@ -180,7 +182,6 @@
       will-change: transform, opacity;
     }
 
-    /* Hiệu ứng trượt lướt khi chuyển nhóm */
     .slide-out-left {
       transform: translateX(-40px);
       opacity: 0;
@@ -197,6 +198,7 @@
       transform: translateX(-40px);
       opacity: 0;
     }
+
     @media (min-width: 820px) {
       #appContainer {
         grid-template-columns: repeat(2, 1fr);
@@ -507,17 +509,17 @@
       }
     }
 
-function changeGroupFilter(groupKey, direction = null) {
+    /* --- CHUYỂN ĐỔI NHÓM CÓ HIỆU ỨNG TRƯỢT MƯỢT MÀ --- */
+    function changeGroupFilter(groupKey, direction = null) {
       if (selectedGroup === groupKey && !direction) return;
 
       const container = document.getElementById('appContainer');
 
-      // Nếu có hướng vuốt (trái hoặc phải), thực hiện hiệu ứng trượt 2 pha
       if (direction && container) {
         const outClass = direction === 'left' ? 'slide-out-left' : 'slide-out-right';
         const inClass = direction === 'left' ? 'slide-in-left' : 'slide-in-right';
 
-        // Pha 1: Trượt lướt nhóm cũ ra ngoài
+        container.classList.remove('slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
         container.classList.add(outClass);
 
         setTimeout(() => {
@@ -525,76 +527,27 @@ function changeGroupFilter(groupKey, direction = null) {
           renderGroupTabs();
           render();
 
-          // Đưa nhóm mới về vị trí chuẩn bị xuất hiện từ hướng đối diện
           container.classList.remove(outClass);
           container.classList.add(inClass);
 
-          // Force reflow để trình duyệt ghi nhận vị trí ban đầu
-          void container.offsetWidth;
+          void container.offsetWidth; // Force reflow để trình duyệt ăn animation
 
-          // Pha 2: Trượt êm ái nhóm mới vào chính giữa
-          container.classList.remove(inClass);
-        }, 160); // 160ms là độ trễ tối ưu cho mắt nhìn thấy chuyển động
+          requestAnimationFrame(() => {
+            container.classList.remove(inClass);
+          });
+        }, 160);
       } else {
         selectedGroup = groupKey;
         renderGroupTabs();
         render();
       }
 
-      // Cuộn tab nhóm tương ứng vào giữa màn hình
+      // Cuộn tab đang chọn vào khung nhìn
       const activeBtn = document.querySelector(`.btn-group-pill[data-group-key="${CSS.escape(groupKey)}"]`);
       if (activeBtn) {
         activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
       }
     }
-
-    /* --- CỬ CHỈ VUỐT MÀN HÌNH ĐỔI NHÓM CÓ HIỆU ỨNG TRƯỢT --- */
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    window.addEventListener('touchstart', (e) => {
-      if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = Date.now();
-      }
-    }, { passive: true });
-
-    window.addEventListener('touchend', (e) => {
-      if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
-      if (!touchStartTime || e.changedTouches.length === 0) return;
-
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      const duration = Date.now() - touchStartTime;
-
-      touchStartTime = 0;
-
-      // Nhận diện vuốt dứt khoát theo trục ngang
-      if (duration < 500 && Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-        const order = groupData.order || [];
-        if (order.length <= 1) return;
-
-        const currentIndex = order.indexOf(selectedGroup);
-        if (currentIndex === -1) return;
-
-        if (deltaX < 0) {
-          // Vuốt sang trái (←) -> Trượt nhóm tiếp theo từ phải sang
-          const nextIndex = (currentIndex + 1) % order.length;
-          changeGroupFilter(order[nextIndex], 'left');
-          if (navigator.vibrate) navigator.vibrate(25); // Rung nhẹ xác nhận cử chỉ
-        } else {
-          // Vuốt sang phải (→) -> Trượt nhóm trước đó từ trái sang
-          const prevIndex = (currentIndex - 1 + order.length) % order.length;
-          changeGroupFilter(order[prevIndex], 'right');
-          if (navigator.vibrate) navigator.vibrate(25);
-        }
-      }
-    }, { passive: true });
 
     /* --- VẼ DẢI TABS NHÓM VÀ TÍCH HỢP DRAG & DROP ĐA NỀN TẢNG --- */
     let draggedItemKey = null;
@@ -754,7 +707,6 @@ function changeGroupFilter(groupKey, direction = null) {
     let touchStartTime = 0;
 
     window.addEventListener('touchstart', (e) => {
-      // Không bắt sự kiện vuốt đổi nhóm nếu đang chạm vào dải tab hoặc drawer danh sách video
       if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;
@@ -775,7 +727,6 @@ function changeGroupFilter(groupKey, direction = null) {
 
       touchStartTime = 0;
 
-      // Điều kiện nhận diện vuốt: Quãng đường vuốt ngang đủ dài (> 45px), trong thời gian < 500ms, và góc ngang lớn hơn góc dọc
       if (duration < 500 && Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
         const order = groupData.order || [];
         if (order.length <= 1) return;
@@ -786,11 +737,13 @@ function changeGroupFilter(groupKey, direction = null) {
         if (deltaX < 0) {
           // Vuốt sang trái (←) -> Chuyển sang nhóm kế tiếp
           const nextIndex = (currentIndex + 1) % order.length;
-          changeGroupFilter(order[nextIndex]);
+          changeGroupFilter(order[nextIndex], 'left');
+          if (navigator.vibrate) navigator.vibrate(25);
         } else {
           // Vuốt sang phải (→) -> Quay lại nhóm trước
           const prevIndex = (currentIndex - 1 + order.length) % order.length;
-          changeGroupFilter(order[prevIndex]);
+          changeGroupFilter(order[prevIndex], 'right');
+          if (navigator.vibrate) navigator.vibrate(25);
         }
       }
     }, { passive: true });
