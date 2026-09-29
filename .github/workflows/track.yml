@@ -2,12 +2,15 @@ name: YouTube Views Tracker
 
 on:
   schedule:
-    # Chỉ duy nhất Cron chạy định kỳ mỗi 15 phút (:00, :15, :30, :45)
+    # Dự phòng cron nội bộ GitHub Actions
     - cron: "*/15 * * * *"
+  # Cho phép cron-job.org gọi API kích hoạt chuẩn từng giây
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+# Khóa hàng đợi: chỉ cho phép 1 tiến trình chạy tại 1 thời điểm, chống đè commit
 concurrency:
   group: tracker-sync
   cancel-in-progress: false
