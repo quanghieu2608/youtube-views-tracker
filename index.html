@@ -170,12 +170,32 @@
       border-color: #388bfd66;
     }
 
-    #appContainer {
+#appContainer {
       display: grid;
       grid-template-columns: 1fr;
       gap: 10px;
       align-items: start;
       min-height: 250px;
+      transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.22s ease;
+      will-change: transform, opacity;
+    }
+
+    /* Hiệu ứng trượt lướt khi chuyển nhóm */
+    .slide-out-left {
+      transform: translateX(-40px);
+      opacity: 0;
+    }
+    .slide-out-right {
+      transform: translateX(40px);
+      opacity: 0;
+    }
+    .slide-in-left {
+      transform: translateX(40px);
+      opacity: 0;
+    }
+    .slide-in-right {
+      transform: translateX(-40px);
+      opacity: 0;
     }
     @media (min-width: 820px) {
       #appContainer {
