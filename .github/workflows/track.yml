@@ -2,14 +2,12 @@ name: YouTube Views Tracker
 
 on:
   schedule:
-    # Chạy tự động định kỳ mỗi 15 phút (:00, :15, :30, :45)
+    # Chỉ duy nhất Cron chạy định kỳ mỗi 15 phút (:00, :15, :30, :45)
     - cron: "*/15 * * * *"
-  workflow_dispatch:
 
 permissions:
   contents: write
 
-# Giới hạn chỉ cho phép đúng 1 job chạy tại 1 thời điểm trên nhánh main (chống đè commit)
 concurrency:
   group: tracker-sync
   cancel-in-progress: false
@@ -45,31 +43,16 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Kiểm tra nếu data.json có thay đổi
           if ! git diff --quiet data.json; then
+            cp data.json /tmp/data_new.json
+            git fetch origin main
+            git reset --hard origin/main
+            cp /tmp/data_new.json data.json
             git add data.json
-            git commit -m "Auto update views 15m [skip ci]"
-
-            # Vòng lặp thử lại tối đa 5 lần nếu gặp xung đột lock ref
-            success=false
-            for i in {1..5}; do
-              echo "Dang dong bo va push commit (lan $i/5)..."
-              git fetch origin main
-              if git rebase origin/main; then
-                if git push origin main; then
-                  echo "Push thanh cong!"
-                  success=true
-                  break
-                fi
-              else
-                git rebase --abort
-              fi
-              sleep 2
-            done
-
-            if [ "$success" = false ]; then
-              echo "Khong the push sau 5 lan thu."
-              exit 1
+            if ! git diff --staged --quiet; then
+              git commit -m "Auto update views 15m [skip ci]"
+              git push origin main
+              echo "Push data.json thanh cong!"
             fi
           else
             echo "Khong co thay doi nao trong data.json."
