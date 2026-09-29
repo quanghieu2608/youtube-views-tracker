@@ -171,41 +171,38 @@
       border-color: #388bfd66;
     }
 
-    /* KHUNG CHỨA CÁC THẺ KÊNH & HIỆU ỨNG TRƯỢT KHI VUỐT */
-    #appContainer {
+    /* KIẾN TRÚC CAROUSEL 1:1 VUỐT DÍNH NGÓN TAY */
+    #carouselViewport {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y;
+    }
+    #carouselTrack {
+      display: flex;
+      width: 300%;
+      transform: translateX(-33.333333%);
+      will-change: transform;
+    }
+    #carouselTrack.is-animating {
+      transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .carousel-pane {
+      width: 33.333333%;
+      flex-shrink: 0;
       display: grid;
       grid-template-columns: 1fr;
       gap: 10px;
       align-items: start;
-      min-height: 250px;
-      transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.22s ease;
-      will-change: transform, opacity;
-    }
-
-    .slide-out-left {
-      transform: translateX(-40px);
-      opacity: 0;
-    }
-    .slide-out-right {
-      transform: translateX(40px);
-      opacity: 0;
-    }
-    .slide-in-left {
-      transform: translateX(40px);
-      opacity: 0;
-    }
-    .slide-in-right {
-      transform: translateX(-40px);
-      opacity: 0;
     }
 
     @media (min-width: 820px) {
-      #appContainer {
+      .carousel-pane {
         grid-template-columns: repeat(2, 1fr);
       }
     }
     @media (min-width: 1260px) {
-      #appContainer {
+      .carousel-pane {
         grid-template-columns: repeat(3, 1fr);
       }
     }
@@ -368,7 +365,14 @@
     </div>
   </div>
 
-  <div id="appContainer">Đang tải dữ liệu...</div>
+  <!-- CAROUSEL TRACKER 1:1 VUỐT DÍNH THEO NGÓN TAY -->
+  <div id="carouselViewport">
+    <div id="carouselTrack">
+      <div class="carousel-pane" id="panePrev"></div>
+      <div class="carousel-pane" id="paneCurrent">Đang tải dữ liệu...</div>
+      <div class="carousel-pane" id="paneNext"></div>
+    </div>
+  </div>
 
   <script>
     function escapeHTML(str) {
@@ -421,7 +425,7 @@
               selectedGroup = groupData.order[0];
             }
             renderGroupTabs();
-            render();
+            renderCarousel();
             return;
           }
         }
@@ -438,7 +442,7 @@
       } catch (e) {}
 
       renderGroupTabs();
-      render();
+      renderCarousel();
     }
 
     async function saveGroupsToGitHub() {
@@ -488,7 +492,7 @@
         groupData.channel_map[chId] = groupName;
       }
       renderGroupTabs();
-      render();
+      renderCarousel();
       saveGroupsToGitHub();
     }
 
@@ -502,47 +506,19 @@
         groupData.order.push(cleanName);
         selectedGroup = cleanName;
         renderGroupTabs();
-        render();
+        renderCarousel();
         saveGroupsToGitHub();
       } else {
         alert("Nhóm này đã tồn tại!");
       }
     }
 
-    /* --- CHUYỂN ĐỔI NHÓM CÓ HIỆU ỨNG TRƯỢT MƯỢT MÀ --- */
-    function changeGroupFilter(groupKey, direction = null) {
-      if (selectedGroup === groupKey && !direction) return;
+    function changeGroupFilter(groupKey) {
+      if (selectedGroup === groupKey) return;
+      selectedGroup = groupKey;
+      renderGroupTabs();
+      renderCarousel();
 
-      const container = document.getElementById('appContainer');
-
-      if (direction && container) {
-        const outClass = direction === 'left' ? 'slide-out-left' : 'slide-out-right';
-        const inClass = direction === 'left' ? 'slide-in-left' : 'slide-in-right';
-
-        container.classList.remove('slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
-        container.classList.add(outClass);
-
-        setTimeout(() => {
-          selectedGroup = groupKey;
-          renderGroupTabs();
-          render();
-
-          container.classList.remove(outClass);
-          container.classList.add(inClass);
-
-          void container.offsetWidth; // Force reflow để trình duyệt ăn animation
-
-          requestAnimationFrame(() => {
-            container.classList.remove(inClass);
-          });
-        }, 160);
-      } else {
-        selectedGroup = groupKey;
-        renderGroupTabs();
-        render();
-      }
-
-      // Cuộn tab đang chọn vào khung nhìn
       const activeBtn = document.querySelector(`.btn-group-pill[data-group-key="${CSS.escape(groupKey)}"]`);
       if (activeBtn) {
         activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -701,52 +677,372 @@
       }
     }
 
-    /* --- CỬ CHỈ VUỐT MÀN HÌNH ĐỔI NHÓM (SWIPE TO SWITCH GROUP) --- */
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
+    function getAdjacentGroupKeys() {
+      const order = groupData.order || [];
+      if (!order.length) return { prev: null, current: null, next: null };
+      const curIdx = order.indexOf(selectedGroup);
+      if (curIdx === -1) return { prev: null, current: order[0], next: order[1] || null };
 
-    window.addEventListener('touchstart', (e) => {
-      if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = Date.now();
+      const prev = order[(curIdx - 1 + order.length) % order.length];
+      const current = order[curIdx];
+      const next = order[(curIdx + 1) % order.length];
+      return { prev, current, next };
+    }
+
+    function renderGroupHTML(groupKey) {
+      if (!db || !db.channels || !groupKey) return '';
+      const allChannels = Object.values(db.channels);
+      const groupMap = groupData.channel_map || {};
+      const existingGroups = groupData.groups || [];
+      const collapsedMap = getCollapsedChannels();
+
+      const chList = allChannels.filter(ch => {
+        const assignedGroup = groupMap[ch.id];
+        if (groupKey === 'ALL') return true;
+        if (groupKey === '__NONE__') return !assignedGroup;
+        return assignedGroup === groupKey;
+      });
+
+      chList.sort((a, b) => {
+        if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0);
+        if (sortMode === '30m') return (b.v_30m || 0) - (a.v_30m || 0);
+        if (sortMode === '24h') return (b.v_24h || 0) - (a.v_24h || 0);
+        if (sortMode === '48h') return (b.v_48h || 0) - (a.v_48h || 0);
+        if (sortMode === 'd_7') return (b.v_7d || 0) - (a.v_7d || 0);
+        if (sortMode === 'd_30') return (b.v_30d || 0) - (a.v_30d || 0);
+        if (sortMode === 'd_90') return (b.v_90d || 0) - (a.v_90d || 0);
+        return (b.total_channel_views || b.views || 0) - (a.total_channel_views || a.views || 0);
+      });
+
+      let globalMax15m = 1; 
+      let globalMax48h = 1;
+
+      chList.forEach(ch => {
+        const isCollapsed = !!collapsedMap[ch.id];
+        if (!isCollapsed) {
+          const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
+          const localMax15 = Math.max(c1, c2, c3, c4);
+          if (localMax15 > globalMax15m) globalMax15m = localMax15;
+
+          let s48 = ch.slices_48h || [];
+          if (!s48.length) s48 = new Array(48).fill(0);
+          const localMax48 = Math.max(...s48);
+          if (localMax48 > globalMax48h) globalMax48h = localMax48;
+        }
+      });
+
+      if (chList.length === 0) {
+        return `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 10px; color: var(--subtext); font-size: 0.85rem;">
+            Chưa có kênh nào trong nhóm này. Hãy bấm chọn nhóm trực tiếp trên thẻ kênh để thêm vào đây.
+          </div>
+        `;
       }
+
+      return chList.map((ch, idx) => {
+        const isCollapsed = !!collapsedMap[ch.id];
+        const v_48h_pool = ch.v_48h_recent !== undefined ? ch.v_48h_recent : (ch.v_48h || 0);
+        const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
+        const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
+
+        const h1 = Math.max(2, (c1 / globalMax15m) * 100);
+        const h2 = Math.max(2, (c2 / globalMax15m) * 100);
+        const h3 = Math.max(2, (c3 / globalMax15m) * 100);
+        const h4 = Math.max(2, (c4 / globalMax15m) * 100);
+        const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
+
+        let s48 = ch.slices_48h || [];
+        if (!s48.length) s48 = new Array(48).fill(0);
+        
+        const bars48Html = s48.map((val, i) => {
+          const barH = Math.max(1.5, (val / globalMax48h) * 100);
+          return `
+            <div class="bar-col-48" title="${48 - i} giờ trước: +${val.toLocaleString()} views">
+              <div class="bar-fill-48" style="height: ${barH}%;"></div>
+            </div>
+          `;
+        }).join('');
+
+        const v_24h_catalog = ch.v_24h || 0;
+        const v_48h_catalog = ch.v_48h || 0;
+        const d7 = ch.v_7d;
+        const d30 = ch.v_30d;
+        const d90 = ch.v_90d;
+
+        const activeVTab = channelVideoTabState[ch.id] || 'latest';
+        const safeChTitle = escapeHTML(ch.title || 'Kênh');
+        const currentAssignedGroup = groupMap[ch.id] || "";
+
+        let groupSelectOptions = `<option value="">📁 Chưa nhóm</option>`;
+        existingGroups.forEach(g => {
+          const isSel = g === currentAssignedGroup ? 'selected' : '';
+          groupSelectOptions += `<option value="${escapeHTML(g)}" ${isSel}>📁 ${escapeHTML(g)}</option>`;
+        });
+
+        return `
+          <div class="card ${isCollapsed ? 'is-collapsed' : ''}" id="card-${ch.id}">
+            <div class="card-top" onclick="toggleCollapse('${ch.id}', event)">
+              <div class="ch-title-wrap">
+                <span class="toggle-icon">▼</span>
+                <div class="ch-title">
+                  #${idx + 1}. <span class="ch-title-text">${safeChTitle}</span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:5px;" onclick="event.stopPropagation();">
+                ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
+                ${ch.has_revived_anomaly ? `<span class="badge badge-revived" title="Lệch view 24h: +${(ch.anomaly_diff_24h || 0).toLocaleString()}">⚡ CÓ VIDEO CŨ NỔ</span>` : ''}
+                
+                <select class="channel-group-selector" onchange="setChannelGroup('${ch.id}', this.value)" title="Gán nhóm cho kênh">
+                  ${groupSelectOptions}
+                </select>
+
+                <span style="font-size:0.68rem; color:var(--primary); cursor:pointer; padding:2px 4px;" onclick="toggleDrawer('${ch.id}')">Chi tiết ▾</span>
+              </div>
+            </div>
+
+            <div class="badges-row">
+              <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
+              <span class="badge badge-gray">${ch.videos_count || 0} Vid</span>
+              <span class="badge badge-gray">Pool: 100 Vid mới</span>
+            </div>
+
+            <div class="card-body">
+              <div class="stream-header">
+                <span>⚡ Luồng 1 (Top 100 Vid Mới - Realtime)</span>
+              </div>
+              <div class="stream1-grid">
+                <div class="box-stream1">
+                  <div class="box-header-metric">
+                    <span class="metric-label">🔥 48H</span>
+                    <span class="metric-val-main" id="val-48h-pool-${ch.id}" style="color:var(--primary);">+${v_48h_pool.toLocaleString()}</span>
+                  </div>
+                  <div class="bars-container-48">
+                    ${bars48Html}
+                  </div>
+                </div>
+
+                <div class="box-stream1">
+                  <div class="box-header-metric">
+                    <span class="metric-label">⏱ 60P</span>
+                    <span class="metric-val-main" id="val-60p-${ch.id}" style="color:var(--accent);">+${v_total_60.toLocaleString()}</span>
+                  </div>
+                  <div class="bars-container-4">
+                    <div class="bar-col-4">
+                      <div class="bar-track-4">
+                        <div class="bar-fill-4" style="height: ${h1}%; background: #265999;"></div>
+                      </div>
+                      <span class="bar-val-4" id="val-c1-${ch.id}" style="color: #58a6ff;">+${c1.toLocaleString()}</span>
+                    </div>
+                    <div class="bar-col-4">
+                      <div class="bar-track-4">
+                        <div class="bar-fill-4" style="height: ${h2}%; background: #388bfd;"></div>
+                      </div>
+                      <span class="bar-val-4" id="val-c2-${ch.id}" style="color: #58a6ff;">+${c2.toLocaleString()}</span>
+                    </div>
+                    <div class="bar-col-4">
+                      <div class="bar-track-4">
+                        <div class="bar-fill-4" style="height: ${h3}%; background: #388bfd;"></div>
+                      </div>
+                      <span class="bar-val-4" id="val-c3-${ch.id}" style="color: #58a6ff;">+${c3.toLocaleString()}</span>
+                    </div>
+                    <div class="bar-col-4">
+                      <div class="bar-track-4">
+                        <div class="bar-fill-4" style="height: ${h4}%; background: ${c4Color};"></div>
+                      </div>
+                      <span class="bar-val-4" id="val-c4-${ch.id}" style="color: ${c4Color};">+${c4.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="stream-header" style="margin-top:10px;">
+                <span>📦 Luồng 2 (Full Catalog Scan - Định Kỳ 24H)</span>
+              </div>
+              <div class="stream2-grid">
+                <div class="stat-box-catalog">
+                  <div class="stat-label-catalog">24H Toàn Kênh</div>
+                  <div class="stat-val-catalog" id="val-24h-cat-${ch.id}">+${v_24h_catalog.toLocaleString()}</div>
+                </div>
+                <div class="stat-box-catalog">
+                  <div class="stat-label-catalog">48H Toàn Kênh</div>
+                  <div class="stat-val-catalog" id="val-48h-cat-${ch.id}">+${v_48h_catalog.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div class="longterm-strip">
+                <div class="lt-item">
+                  <span class="lt-label">7N</span>
+                  <span class="lt-val">${d7 !== undefined && d7 !== null ? '+' + d7.toLocaleString() : '+ -'}</span>
+                </div>
+                <div class="lt-item">
+                  <span class="lt-label">30N</span>
+                  <span class="lt-val">${d30 !== undefined && d30 !== null ? '+' + d30.toLocaleString() : '+ -'}</span>
+                </div>
+                <div class="lt-item">
+                  <span class="lt-label">90N (3T)</span>
+                  <span class="lt-val">${d90 !== undefined && d90 !== null ? '+' + d90.toLocaleString() : '+ -'}</span>
+                </div>
+                <div class="lt-item">
+                  <span class="lt-label">TỔNG KÊNH</span>
+                  <span class="lt-val">${(ch.total_channel_views || ch.views || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="video-drawer" id="box-${ch.id}">
+              <div class="drawer-header-row">
+                <div class="v-tabs-group">
+                  <button class="btn-v-tab ${activeVTab === 'latest' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', 'latest')">🕒 Mới nhất</button>
+                  <button class="btn-v-tab ${activeVTab === '60m' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', '60m')">⏱ Top 60P</button>
+                  <button class="btn-v-tab ${activeVTab === '48h' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', '48h')">🔥 Top 48H</button>
+                  <button class="btn-v-tab tab-orange ${activeVTab === 'revived' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', 'revived')">
+                    ⚡ Nổi lại (${(ch.revived_videos || []).length})
+                  </button>
+                </div>
+                <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${safeChTitle}')">🗑 Xóa kênh</button>
+              </div>
+              <div class="v-scroll-area" id="v-list-${ch.id}">
+                ${renderVideos(ch, activeVTab)}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCarousel() {
+      if (!db || !db.channels) return;
+      const { prev, current, next } = getAdjacentGroupKeys();
+      const track = document.getElementById('carouselTrack');
+      const panePrev = document.getElementById('panePrev');
+      const paneCurrent = document.getElementById('paneCurrent');
+      const paneNext = document.getElementById('paneNext');
+
+      track.classList.remove('is-animating');
+      track.style.transform = 'translateX(-33.333333%)';
+
+      paneCurrent.innerHTML = renderGroupHTML(current);
+      panePrev.innerHTML = prev && prev !== current ? renderGroupHTML(prev) : '';
+      paneNext.innerHTML = next && next !== current ? renderGroupHTML(next) : '';
+
+      const allChannels = Object.values(db.channels);
+      const groupMap = groupData.channel_map || {};
+      const activeCount = allChannels.filter(ch => {
+        const assignedGroup = groupMap[ch.id];
+        if (current === 'ALL') return true;
+        if (current === '__NONE__') return !assignedGroup;
+        return assignedGroup === current;
+      }).length;
+
+      document.getElementById('channelSummary').innerText = `${activeCount} / ${allChannels.length} Kênh`;
+    }
+
+    /* --- BỘ ĐIỀU KHIỂN VUỐT CAROUSEL THỜI GIAN THỰC (DRAG 1:1) --- */
+    let startX = 0;
+    let startY = 0;
+    let currentDeltaX = 0;
+    let isTracking = false;
+    let isHorizontalGesture = null;
+    let startTimestamp = 0;
+
+    const viewport = document.getElementById('carouselViewport');
+    const track = document.getElementById('carouselTrack');
+
+    viewport.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.group-bar-wrap') || e.target.closest('.v-scroll-area') || e.target.closest('select')) return;
+      if (e.touches.length !== 1) return;
+
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      currentDeltaX = 0;
+      isTracking = true;
+      isHorizontalGesture = null;
+      startTimestamp = Date.now();
+
+      track.classList.remove('is-animating');
     }, { passive: true });
 
-    window.addEventListener('touchend', (e) => {
-      if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
-      if (!touchStartTime || e.changedTouches.length === 0) return;
+    viewport.addEventListener('touchmove', (e) => {
+      if (!isTracking) return;
 
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      const duration = Date.now() - touchStartTime;
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const diffX = touchX - startX;
+      const diffY = touchY - startY;
 
-      touchStartTime = 0;
-
-      if (duration < 500 && Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-        const order = groupData.order || [];
-        if (order.length <= 1) return;
-
-        const currentIndex = order.indexOf(selectedGroup);
-        if (currentIndex === -1) return;
-
-        if (deltaX < 0) {
-          // Vuốt sang trái (←) -> Chuyển sang nhóm kế tiếp
-          const nextIndex = (currentIndex + 1) % order.length;
-          changeGroupFilter(order[nextIndex], 'left');
-          if (navigator.vibrate) navigator.vibrate(25);
-        } else {
-          // Vuốt sang phải (→) -> Quay lại nhóm trước
-          const prevIndex = (currentIndex - 1 + order.length) % order.length;
-          changeGroupFilter(order[prevIndex], 'right');
-          if (navigator.vibrate) navigator.vibrate(25);
+      // Phán đoán hướng cử chỉ ban đầu
+      if (isHorizontalGesture === null) {
+        if (Math.abs(diffX) > 8 || Math.abs(diffY) > 8) {
+          isHorizontalGesture = Math.abs(diffX) > Math.abs(diffY);
+          if (!isHorizontalGesture) {
+            isTracking = false;
+            return;
+          }
         }
       }
-    }, { passive: true });
+
+      if (isHorizontalGesture) {
+        if (e.cancelable) e.preventDefault();
+        currentDeltaX = diffX;
+
+        // Cho phép khung dính và di chuyển theo đầu ngón tay
+        track.style.transform = `translateX(calc(-33.333333% + ${currentDeltaX}px))`;
+      }
+    }, { passive: false });
+
+    viewport.addEventListener('touchend', (e) => {
+      if (!isTracking || !isHorizontalGesture) {
+        isTracking = false;
+        return;
+      }
+      isTracking = false;
+
+      const duration = Date.now() - startTimestamp;
+      const viewportWidth = viewport.offsetWidth || window.innerWidth;
+      const threshold = viewportWidth * 0.22;
+      const isFlick = duration < 250 && Math.abs(currentDeltaX) > 40;
+
+      track.classList.add('is-animating');
+
+      if ((currentDeltaX < -threshold || (isFlick && currentDeltaX < 0))) {
+        // Vuốt sang trái (←) -> Trượt tới nhóm tiếp theo
+        track.style.transform = 'translateX(-66.666666%)';
+        setTimeout(() => {
+          const { next } = getAdjacentGroupKeys();
+          if (next) {
+            selectedGroup = next;
+            renderGroupTabs();
+            renderCarousel();
+            if (navigator.vibrate) navigator.vibrate(20);
+
+            const activeBtn = document.querySelector(`.btn-group-pill[data-group-key="${CSS.escape(next)}"]`);
+            if (activeBtn) {
+              activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+          }
+        }, 280);
+      } else if ((currentDeltaX > threshold || (isFlick && currentDeltaX > 0))) {
+        // Vuốt sang phải (→) -> Trượt về nhóm trước
+        track.style.transform = 'translateX(0%)';
+        setTimeout(() => {
+          const { prev } = getAdjacentGroupKeys();
+          if (prev) {
+            selectedGroup = prev;
+            renderGroupTabs();
+            renderCarousel();
+            if (navigator.vibrate) navigator.vibrate(20);
+
+            const activeBtn = document.querySelector(`.btn-group-pill[data-group-key="${CSS.escape(prev)}"]`);
+            if (activeBtn) {
+              activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+          }
+        }, 280);
+      } else {
+        // Chưa đủ ngưỡng -> Tự đàn hồi bật về vị trí cũ (Snap back)
+        track.style.transform = 'translateX(-33.333333%)';
+      }
+    });
 
     function getStoredToken() {
       let token = localStorage.getItem('gh_token');
@@ -755,31 +1051,6 @@
         if (token) localStorage.setItem('gh_token', token.trim());
       }
       return token;
-    }
-
-    function animateValue(elementId, start, end, prefix = '+', duration = 1200) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-
-      if (start === end) {
-        el.innerText = `${prefix}${Number(end).toLocaleString()}`;
-        return;
-      }
-
-      let startTimestamp = null;
-      const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const current = Math.floor(start + (end - start) * easeOut);
-        el.innerText = `${prefix}${current.toLocaleString()}`;
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        } else {
-          el.innerText = `${prefix}${Number(end).toLocaleString()}`;
-        }
-      };
-      window.requestAnimationFrame(step);
     }
 
     function togglePrivacyMode() {
@@ -816,7 +1087,7 @@
         }
       });
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
-      render(); 
+      renderCarousel(); 
     }
 
     function getCollapsedChannels() {
@@ -837,7 +1108,7 @@
         collapsedMap[chId] = true; 
       }
       localStorage.setItem('collapsed_channels', JSON.stringify(collapsedMap));
-      render(); 
+      renderCarousel(); 
     }
 
     function toggleAddBox() {
@@ -942,7 +1213,7 @@
           delete groupData.channel_map[chId];
           saveGroupsToGitHub();
           renderGroupTabs();
-          render();
+          renderCarousel();
         }
         alert(`Đã xóa thành công kênh "${chTitle}"!`);
       } catch (err) {
@@ -959,7 +1230,7 @@
         if (!db) {
           db = newData;
           renderGroupTabs();
-          render();
+          renderCarousel();
           if (db.updated_at) {
             document.getElementById('lastUpdatedLabel').innerText = `Cập nhật: ${new Date(db.updated_at).toLocaleTimeString()}`;
           }
@@ -980,7 +1251,7 @@
           setTimeout(() => {
             db = newData;
             renderGroupTabs();
-            render();
+            renderCarousel();
 
             if (db.updated_at) {
               document.getElementById('lastUpdatedLabel').innerText = `Cập nhật: ${new Date(db.updated_at).toLocaleTimeString()}`;
@@ -1097,267 +1368,7 @@
       sortMode = mode;
       document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
       event.target.classList.add('active');
-      render();
-    }
-
-    function render() {
-      if (!db || !db.channels) return;
-      const allChannels = Object.values(db.channels);
-      const groupMap = groupData.channel_map || {};
-      const existingGroups = groupData.groups || [];
-
-      // LỌC KÊNH THEO NHÓM
-      const chList = allChannels.filter(ch => {
-        const assignedGroup = groupMap[ch.id];
-        if (selectedGroup === 'ALL') return true;
-        if (selectedGroup === '__NONE__') return !assignedGroup;
-        return assignedGroup === selectedGroup;
-      });
-
-      document.getElementById('channelSummary').innerText = `${chList.length} / ${allChannels.length} Kênh`;
-
-      chList.sort((a, b) => {
-        if (sortMode === '60m') return (b.v_60m || 0) - (a.v_60m || 0);
-        if (sortMode === '30m') return (b.v_30m || 0) - (a.v_30m || 0);
-        if (sortMode === '24h') return (b.v_24h || 0) - (a.v_24h || 0);
-        if (sortMode === '48h') return (b.v_48h || 0) - (a.v_48h || 0);
-        if (sortMode === 'd_7') return (b.v_7d || 0) - (a.v_7d || 0);
-        if (sortMode === 'd_30') return (b.v_30d || 0) - (a.v_30d || 0);
-        if (sortMode === 'd_90') return (b.v_90d || 0) - (a.v_90d || 0);
-        return (b.total_channel_views || b.views || 0) - (a.total_channel_views || a.views || 0);
-      });
-
-      const container = document.getElementById('appContainer');
-      container.innerHTML = '';
-      const collapsedMap = getCollapsedChannels();
-
-      // TÍNH MẪU SỐ CHUNG CHO CÁC KÊNH ĐANG HIỆN & ĐANG MỞ
-      let globalMax15m = 1; 
-      let globalMax48h = 1;
-
-      chList.forEach(ch => {
-        const isCollapsed = !!collapsedMap[ch.id];
-        if (!isCollapsed) {
-          const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
-          const localMax15 = Math.max(c1, c2, c3, c4);
-          if (localMax15 > globalMax15m) globalMax15m = localMax15;
-
-          let s48 = ch.slices_48h || [];
-          if (!s48.length) s48 = new Array(48).fill(0);
-          const localMax48 = Math.max(...s48);
-          if (localMax48 > globalMax48h) globalMax48h = localMax48;
-        }
-      });
-
-      if (chList.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 10px; color: var(--subtext); font-size: 0.85rem;">
-            Chưa có kênh nào trong nhóm này. Hãy bấm chọn nhóm trực tiếp trên thẻ kênh để thêm vào đây.
-          </div>
-        `;
-        return;
-      }
-
-      chList.forEach((ch, idx) => {
-        const isCollapsed = !!collapsedMap[ch.id];
-
-        const v_48h_pool = ch.v_48h_recent !== undefined ? ch.v_48h_recent : (ch.v_48h || 0);
-        const [c1, c2, c3, c4] = ch.slices_15m || [0, 0, 0, 0];
-        const v_total_60 = ch.v_60m !== undefined ? ch.v_60m : (c1 + c2 + c3 + c4);
-
-        const h1 = Math.max(2, (c1 / globalMax15m) * 100);
-        const h2 = Math.max(2, (c2 / globalMax15m) * 100);
-        const h3 = Math.max(2, (c3 / globalMax15m) * 100);
-        const h4 = Math.max(2, (c4 / globalMax15m) * 100);
-        const c4Color = c4 >= c3 ? 'var(--accent)' : 'var(--warning)';
-
-        let s48 = ch.slices_48h || [];
-        if (!s48.length) s48 = new Array(48).fill(0);
-        
-        const bars48Html = s48.map((val, i) => {
-          const barH = Math.max(1.5, (val / globalMax48h) * 100);
-          return `
-            <div class="bar-col-48" title="${48 - i} giờ trước: +${val.toLocaleString()} views">
-              <div class="bar-fill-48" style="height: ${barH}%;"></div>
-            </div>
-          `;
-        }).join('');
-
-        const v_24h_catalog = ch.v_24h || 0;
-        const v_48h_catalog = ch.v_48h || 0;
-
-        const d7 = ch.v_7d;
-        const d30 = ch.v_30d;
-        const d90 = ch.v_90d;
-
-        const activeVTab = channelVideoTabState[ch.id] || 'latest';
-        const safeChTitle = escapeHTML(ch.title || 'Kênh');
-        const currentAssignedGroup = groupMap[ch.id] || "";
-
-        let groupSelectOptions = `<option value="">📁 Chưa nhóm</option>`;
-        existingGroups.forEach(g => {
-          const isSel = g === currentAssignedGroup ? 'selected' : '';
-          groupSelectOptions += `<option value="${escapeHTML(g)}" ${isSel}>📁 ${escapeHTML(g)}</option>`;
-        });
-
-        const card = document.createElement('div');
-        card.className = `card ${isCollapsed ? 'is-collapsed' : ''}`;
-        card.id = `card-${ch.id}`;
-        card.innerHTML = `
-          <div class="card-top" onclick="toggleCollapse('${ch.id}', event)">
-            <div class="ch-title-wrap">
-              <span class="toggle-icon">▼</span>
-              <div class="ch-title">
-                #${idx + 1}. <span class="ch-title-text">${safeChTitle}</span>
-              </div>
-            </div>
-            <div style="display:flex; align-items:center; gap:5px;" onclick="event.stopPropagation();">
-              ${ch.is_spike ? `<span class="badge badge-spike">🔥 CẮN ĐỀ XUẤT</span>` : ''}
-              ${ch.has_revived_anomaly ? `<span class="badge badge-revived" title="Lệch view 24h: +${(ch.anomaly_diff_24h || 0).toLocaleString()}">⚡ CÓ VIDEO CŨ NỔ</span>` : ''}
-              
-              <select class="channel-group-selector" onchange="setChannelGroup('${ch.id}', this.value)" title="Gán nhóm cho kênh">
-                ${groupSelectOptions}
-              </select>
-
-              <span style="font-size:0.68rem; color:var(--primary); cursor:pointer; padding:2px 4px;" onclick="toggleDrawer('${ch.id}')">Chi tiết ▾</span>
-            </div>
-          </div>
-
-          <div class="badges-row">
-            <span class="badge badge-gray">${(ch.subs || 0).toLocaleString()} Subs</span>
-            <span class="badge badge-gray">${ch.videos_count || 0} Vid</span>
-            <span class="badge badge-gray">Pool: 100 Vid mới</span>
-          </div>
-
-          <div class="card-body">
-            <div class="stream-header">
-              <span>⚡ Luồng 1 (Top 100 Vid Mới - Realtime)</span>
-            </div>
-            <div class="stream1-grid">
-              <div class="box-stream1">
-                <div class="box-header-metric">
-                  <span class="metric-label">🔥 48H</span>
-                  <span class="metric-val-main" id="val-48h-pool-${ch.id}" style="color:var(--primary);">+0</span>
-                </div>
-                <div class="bars-container-48">
-                  ${bars48Html}
-                </div>
-              </div>
-
-              <div class="box-stream1">
-                <div class="box-header-metric">
-                  <span class="metric-label">⏱ 60P</span>
-                  <span class="metric-val-main" id="val-60p-${ch.id}" style="color:var(--accent);">+0</span>
-                </div>
-                <div class="bars-container-4">
-                  <div class="bar-col-4">
-                    <div class="bar-track-4">
-                      <div class="bar-fill-4" style="height: ${h1}%; background: #265999;"></div>
-                    </div>
-                    <span class="bar-val-4" id="val-c1-${ch.id}" style="color: #58a6ff;">+0</span>
-                  </div>
-                  <div class="bar-col-4">
-                    <div class="bar-track-4">
-                      <div class="bar-fill-4" style="height: ${h2}%; background: #388bfd;"></div>
-                    </div>
-                    <span class="bar-val-4" id="val-c2-${ch.id}" style="color: #58a6ff;">+0</span>
-                  </div>
-                  <div class="bar-col-4">
-                    <div class="bar-track-4">
-                      <div class="bar-fill-4" style="height: ${h3}%; background: #388bfd;"></div>
-                    </div>
-                    <span class="bar-val-4" id="val-c3-${ch.id}" style="color: #58a6ff;">+0</span>
-                  </div>
-                  <div class="bar-col-4">
-                    <div class="bar-track-4">
-                      <div class="bar-fill-4" style="height: ${h4}%; background: ${c4Color};"></div>
-                    </div>
-                    <span class="bar-val-4" id="val-c4-${ch.id}" style="color: ${c4Color};">+0</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="stream-header" style="margin-top:10px;">
-              <span>📦 Luồng 2 (Full Catalog Scan - Định Kỳ 24H)</span>
-            </div>
-            <div class="stream2-grid">
-              <div class="stat-box-catalog">
-                <div class="stat-label-catalog">24H Toàn Kênh</div>
-                <div class="stat-val-catalog" id="val-24h-cat-${ch.id}">+0</div>
-              </div>
-              <div class="stat-box-catalog">
-                <div class="stat-label-catalog">48H Toàn Kênh</div>
-                <div class="stat-val-catalog" id="val-48h-cat-${ch.id}">+0</div>
-              </div>
-            </div>
-
-            <div class="longterm-strip">
-              <div class="lt-item">
-                <span class="lt-label">7N</span>
-                <span class="lt-val">${d7 !== undefined && d7 !== null ? '+' + d7.toLocaleString() : '+ -'}</span>
-              </div>
-              <div class="lt-item">
-                <span class="lt-label">30N</span>
-                <span class="lt-val">${d30 !== undefined && d30 !== null ? '+' + d30.toLocaleString() : '+ -'}</span>
-              </div>
-              <div class="lt-item">
-                <span class="lt-label">90N (3T)</span>
-                <span class="lt-val">${d90 !== undefined && d90 !== null ? '+' + d90.toLocaleString() : '+ -'}</span>
-              </div>
-              <div class="lt-item">
-                <span class="lt-label">TỔNG KÊNH</span>
-                <span class="lt-val">${(ch.total_channel_views || ch.views || 0).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="video-drawer" id="box-${ch.id}">
-            <div class="drawer-header-row">
-              <div class="v-tabs-group">
-                <button class="btn-v-tab ${activeVTab === 'latest' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', 'latest')">🕒 Mới nhất</button>
-                <button class="btn-v-tab ${activeVTab === '60m' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', '60m')">⏱ Top 60P</button>
-                <button class="btn-v-tab ${activeVTab === '48h' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', '48h')">🔥 Top 48H</button>
-                <button class="btn-v-tab tab-orange ${activeVTab === 'revived' ? 'active' : ''}" onclick="switchVideoTab('${ch.id}', 'revived')">
-                  ⚡ Nổi lại (${(ch.revived_videos || []).length})
-                </button>
-              </div>
-              <button class="btn-delete-channel" onclick="deleteChannel('${ch.id}', '${safeChTitle}')">🗑 Xóa kênh</button>
-            </div>
-            <div class="v-scroll-area" id="v-list-${ch.id}">
-              ${renderVideos(ch, activeVTab)}
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-
-        const old48hPool = previousValues[`48h-pool-${ch.id}`] || 0;
-        const old60p = previousValues[`60p-${ch.id}`] || 0;
-        const oldC1 = previousValues[`c1-${ch.id}`] || 0;
-        const oldC2 = previousValues[`c2-${ch.id}`] || 0;
-        const oldC3 = previousValues[`c3-${ch.id}`] || 0;
-        const oldC4 = previousValues[`c4-${ch.id}`] || 0;
-        const old24hCat = previousValues[`24h-cat-${ch.id}`] || 0;
-        const old48hCat = previousValues[`48h-cat-${ch.id}`] || 0;
-
-        animateValue(`val-48h-pool-${ch.id}`, old48hPool, v_48h_pool);
-        animateValue(`val-60p-${ch.id}`, old60p, v_total_60);
-        animateValue(`val-c1-${ch.id}`, oldC1, c1);
-        animateValue(`val-c2-${ch.id}`, oldC2, c2);
-        animateValue(`val-c3-${ch.id}`, oldC3, c3);
-        animateValue(`val-c4-${ch.id}`, oldC4, c4);
-        animateValue(`val-24h-cat-${ch.id}`, old24hCat, v_24h_catalog);
-        animateValue(`val-48h-cat-${ch.id}`, old48hCat, v_48h_catalog);
-
-        previousValues[`48h-pool-${ch.id}`] = v_48h_pool;
-        previousValues[`60p-${ch.id}`] = v_total_60;
-        previousValues[`c1-${ch.id}`] = c1;
-        previousValues[`c2-${ch.id}`] = c2;
-        previousValues[`c3-${ch.id}`] = c3;
-        previousValues[`c4-${ch.id}`] = c4;
-        previousValues[`24h-cat-${ch.id}`] = v_24h_catalog;
-        previousValues[`48h-cat-${ch.id}`] = v_48h_catalog;
-      });
+      renderCarousel();
     }
 
     function switchVideoTab(chId, tab) {
