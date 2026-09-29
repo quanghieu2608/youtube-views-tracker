@@ -71,7 +71,7 @@
     .btn-action:disabled { background: #333; color: #777; }
     .status-msg { font-size: 0.7rem; margin-top: 4px; }
 
-    /* DẢI TAB NHÓM (HỖ TRỢ DRAG TRÊN CẢ DESKTOP & MOBILE) */
+    /* DẢI TAB NHÓM */
     .group-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; overflow: hidden; }
     .group-tabs { 
       display: flex; 
@@ -175,6 +175,7 @@
       grid-template-columns: 1fr;
       gap: 10px;
       align-items: start;
+      min-height: 250px;
     }
     @media (min-width: 820px) {
       #appContainer {
@@ -289,8 +290,7 @@
     <div class="header-row">
       <h1><span class="live-dot" id="liveDot"></span> YouTube Realtime Pro</h1>
       <div style="display:flex; gap:5px;">
-        <button class="btn-header" onclick="toggleAddBox()">➕ Thêm</button>
-        <button class="btn-header" id="btnTriggerScan" onclick="triggerRunWorkflow()">⚡ Quét Ngay</button>
+        <button class="btn-header" onclick="toggleAddBox()">➕ Thêm Kênh</button>
       </div>
     </div>
     <div class="timer-pill">
@@ -311,13 +311,13 @@
 
   <!-- FORM THÊM KÊNH & GÁN NHÓM MẶC ĐỊNH -->
   <div class="add-channel-box" id="addChannelBox">
-    <div style="font-size:0.75rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới và quét ngay:</div>
+    <div style="font-size:0.75rem; font-weight:bold; color:var(--text-bright);">Thêm kênh mới:</div>
     <div class="input-group">
       <input type="text" id="channelInput" class="input-box" placeholder="Dán link Channel hoặc ID (UC...)">
       <select id="newChannelGroup" class="select-group-box">
         <option value="">-- Chưa có nhóm --</option>
       </select>
-      <button class="btn-action" id="btnAdd" onclick="submitNewChannel()">Thêm & Quét</button>
+      <button class="btn-action" id="btnAdd" onclick="submitNewChannel()">Lưu Kênh</button>
     </div>
     <div class="status-msg" id="statusMsg"></div>
   </div>
@@ -364,7 +364,6 @@
 
     const REPO_OWNER = 'quanghieu2608';
     const REPO_NAME = 'youtube-views-tracker';
-    const WORKFLOW_ID = 'track.yml';
     const TOTAL_CYCLE_SECONDS = 15 * 60;
 
     let db = null;
@@ -406,10 +405,9 @@
         }
       } catch (e) {}
 
-      // Fallback nếu chưa tải được groups.json từ mạng
       try {
         const cached = JSON.parse(localStorage.getItem('cached_groups'));
-        if (cached) {
+        if (cached && cached.groups) {
           groupData = cached;
           if (groupData.order && groupData.order.length > 0) {
             selectedGroup = groupData.order[0];
@@ -422,7 +420,6 @@
     }
 
     async function saveGroupsToGitHub() {
-      // Lưu tức thì vào bộ nhớ đệm
       localStorage.setItem('cached_groups', JSON.stringify(groupData));
 
       const token = localStorage.getItem('gh_token');
@@ -430,7 +427,13 @@
 
       try {
         const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/groups.json`;
-        const res = await fetch(getUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(getUrl, { 
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          } 
+        });
+        
         let sha = null;
         if (res.ok) {
           const currentFile = await res.json();
@@ -440,9 +443,13 @@
         const updatedContent = JSON.stringify(groupData, null, 2);
         await fetch(getUrl, {
           method: 'PUT',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          headers: { 
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.github.v3+json'
+          },
           body: JSON.stringify({
-            message: `Update groups sync via App`,
+            message: `Update groups.json via Web App`,
             content: btoa(unescape(encodeURIComponent(updatedContent))),
             sha: sha
           })
@@ -484,6 +491,12 @@
       selectedGroup = groupKey;
       renderGroupTabs();
       render();
+
+      // Cuộn tab đang chọn vào khung nhìn
+      const activeBtn = document.querySelector(`.btn-group-pill[data-group-key="${CSS.escape(groupKey)}"]`);
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
     }
 
     /* --- VẼ DẢI TABS NHÓM VÀ TÍCH HỢP DRAG & DROP ĐA NỀN TẢNG --- */
@@ -526,7 +539,7 @@
         }
         btn.innerHTML = labelText;
 
-        // --- XỬ LÝ CHUỘT (DESKTOP) ---
+        // Xử lý kéo thả bằng chuột trên Desktop
         btn.draggable = true;
         btn.addEventListener('dragstart', (e) => {
           draggedItemKey = key;
@@ -557,7 +570,7 @@
           }
         });
 
-        // --- XỬ LÝ CẢM ỨNG CHẠM GIỮ (MOBILE TOUCH ENGINE) ---
+        // Xử lý chạm giữ đổi vị trí nút trên Mobile
         let pressTimer = null;
         let isDraggingMobile = false;
 
@@ -567,7 +580,7 @@
             draggedItemKey = key;
             btn.classList.add('touch-active');
             if (navigator.vibrate) navigator.vibrate(40);
-          }, 200);
+          }, 220);
         }, { passive: true });
 
         btn.addEventListener('touchmove', (e) => {
@@ -637,6 +650,53 @@
         saveGroupsToGitHub();
       }
     }
+
+    /* --- CỬ CHỈ VUỐT MÀN HÌNH ĐỔI NHÓM (SWIPE TO SWITCH GROUP) --- */
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    window.addEventListener('touchstart', (e) => {
+      // Không bắt sự kiện vuốt đổi nhóm nếu đang chạm vào dải tab hoặc drawer danh sách video
+      if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      if (e.target.closest('#groupTabsContainer') || e.target.closest('.v-scroll-area')) return;
+      if (!touchStartTime || e.changedTouches.length === 0) return;
+
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const duration = Date.now() - touchStartTime;
+
+      touchStartTime = 0;
+
+      // Điều kiện nhận diện vuốt: Quãng đường vuốt ngang đủ dài (> 45px), trong thời gian < 500ms, và góc ngang lớn hơn góc dọc
+      if (duration < 500 && Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+        const order = groupData.order || [];
+        if (order.length <= 1) return;
+
+        const currentIndex = order.indexOf(selectedGroup);
+        if (currentIndex === -1) return;
+
+        if (deltaX < 0) {
+          // Vuốt sang trái (←) -> Chuyển sang nhóm kế tiếp
+          const nextIndex = (currentIndex + 1) % order.length;
+          changeGroupFilter(order[nextIndex]);
+        } else {
+          // Vuốt sang phải (→) -> Quay lại nhóm trước
+          const prevIndex = (currentIndex - 1 + order.length) % order.length;
+          changeGroupFilter(order[prevIndex]);
+        }
+      }
+    }, { passive: true });
 
     function getStoredToken() {
       let token = localStorage.getItem('gh_token');
@@ -709,44 +769,6 @@
       render(); 
     }
 
-    async function triggerRunWorkflow() {
-      const btn = document.getElementById('btnTriggerScan');
-      const timerLabel = document.getElementById('timerLabel');
-      const token = getStoredToken();
-      if (!token) return;
-
-      btn.disabled = true;
-      btn.innerText = "⏳ Đang chạy...";
-      timerLabel.innerText = "⏳ Đang quét Actions...";
-
-      try {
-        const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
-        const res = await fetch(triggerUrl, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ref: 'main' })
-        });
-
-        if (!res.ok) throw new Error("Lỗi Token hoặc quyền hạn Workflow!");
-
-        let tries = 0;
-        const scanPoll = setInterval(async () => {
-          tries++;
-          const hasNew = await checkAndApplyNewData();
-          if (hasNew || tries > 15) {
-            clearInterval(scanPoll);
-            btn.disabled = false;
-            btn.innerText = "⚡ Quét Ngay";
-          }
-        }, 3000);
-      } catch (err) {
-        alert("Lỗi kích hoạt: " + err.message);
-        btn.disabled = false;
-        btn.innerText = "⚡ Quét Ngay";
-        timerLabel.innerText = "Kế tiếp:";
-      }
-    }
-
     function getCollapsedChannels() {
       try {
         return JSON.parse(localStorage.getItem('collapsed_channels') || '{}');
@@ -799,7 +821,7 @@
       if (!token) return;
 
       btn.disabled = true;
-      msg.innerHTML = '<span style="color:var(--primary)">1/2. Đang ghi file channels.txt...</span>';
+      msg.innerHTML = '<span style="color:var(--primary)">Đang cập nhật channels.txt...</span>';
 
       try {
         const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/channels.txt`;
@@ -825,17 +847,9 @@
           setChannelGroup(chId, targetGroup);
         }
 
-        msg.innerHTML = '<span style="color:var(--accent)">2/2. Đang kích hoạt Action track.yml...</span>';
-        const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
-        await fetch(triggerUrl, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ref: 'main' })
-        });
-
-        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã thêm! Trang tự làm mới sau 20s...</span>';
+        msg.innerHTML = '<span style="color:var(--accent)">✅ Đã lưu kênh! Kênh sẽ được cập nhật số liệu ở lần quét tự động kế tiếp.</span>';
         input.value = '';
-        setTimeout(() => { checkAndApplyNewData(); toggleAddBox(); msg.innerHTML = ''; }, 20000);
+        setTimeout(() => { toggleAddBox(); msg.innerHTML = ''; }, 3000);
       } catch (err) {
         msg.innerHTML = `<span style="color:var(--danger)">Lỗi: ${err.message}</span>`;
       } finally {
@@ -871,13 +885,6 @@
             content: btoa(unescape(encodeURIComponent(updatedContent))),
             sha: data.sha
           })
-        });
-
-        const triggerUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
-        await fetch(triggerUrl, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ref: 'main' })
         });
 
         if (db && db.channels && db.channels[chId]) {
